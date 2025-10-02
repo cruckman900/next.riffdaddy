@@ -28,3 +28,11 @@ Options:
 Decision: Using explicit imports for clarity and future-proofing  
 Status: Styling pipeline now aligned with Tailwind v4 best practices  
 
+## 📐 Responsive Layout Scaffolding — Header & Footer Locked In — Oct 2, 2025 @ 2:40 AM EDT
+
+Components:
+- `Header.tsx`: Glowing badge, site title, mobile-friendly flex layout
+- `Footer.tsx`: Centered copyright
+- `layout.tsx`: Box layout using Tailwind’s flex and container utilities
+
+Status: Layout now responsive and expressive. Ready for tab preview integration.  
