@@ -1,0 +1,47 @@
+Copyright © 2025 Christopher Ruckman
+
+This software is proprietary and confidential. Unauthorized copying, distribution, modification, or use of this code is strictly prohibited.
+
+Access to this repository is granted only to licensed users under explicit written agreement. No part of this software may be reproduced or transmitted in any form or by any means without prior written permission from the author.
+
+Commercial use, resale, or sublicensing is prohibited unless authorized through a formal purchase agreement.
+
+Violators will be subject to legal action under applicable intellectual property laws.
+
+⚖️ Jurisdiction Clause
+
+Copyright © 2025 Christopher Ruckman
+
+This software is proprietary and confidential. Unauthorized copying, distribution, modification, or use of this code is strictly prohibited.
+
+Access to this repository is granted only to licensed users under explicit written agreement. No part of this software may be reproduced or transmitted in any form or by any means without prior written permission from the author.
+
+Commercial use, resale, or sublicensing is prohibited unless authorized through a formal purchase agreement.
+
+Violators will be subject to legal action under applicable intellectual property laws.
+
+🛡️ Enforcement Terms
+
+Unauthorized use, reproduction, distribution, or modification of this software constitutes a breach of this Agreement and may result in civil and/or criminal liability under applicable intellectual property laws. The Licensor reserves the right to pursue all available legal remedies, including injunctive relief, damages, and attorney’s fees.
+
+🔍 Audit Rights
+
+Licensee shall maintain complete and accurate records relating to their use of the Software, including any distribution, modification, or deployment. Licensor reserves the right to audit such records upon thirty (30) days’ written notice, no more than once per calendar year, during normal business hours. If any audit reveals unauthorized use or underpayment exceeding five percent (5%), Licensee shall reimburse Licensor for the cost of the audit and immediately rectify the discrepancy.
+
+⛔ Termination Clause
+
+Licensor may terminate this Agreement immediately upon written notice if Licensee breaches any term of this Agreement, including unauthorized use, distribution, or modification of the Software. Upon termination, Licensee shall cease all use of the Software, destroy all copies in their possession, and certify such destruction in writing. Termination shall not affect any rights or obligations accrued prior to termination.
+
+🧬 Survivability Clause
+
+The following provisions shall survive termination of this Agreement: Intellectual Property Rights, Confidentiality, Audit Rights, Indemnification, Payment Obligations, and Governing Law. These clauses remain enforceable to protect the Licensor’s proprietary interests and ensure compliance beyond the term of the Agreement.
+
+🎟️ Licensing Tiers
+
+Licensing is available under the following tiers:
+
+- **Personal License**: For individual use only. No commercial deployment or resale.
+- **Commercial License**: For business use, including deployment in commercial products or services. Requires formal purchase agreement.
+- **Enterprise License**: For large-scale use across multiple teams or divisions. Includes priority support and custom integration rights.
+
+All licenses are non-transferable and subject to approval by the Licensor.
