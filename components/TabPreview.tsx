@@ -1,26 +1,11 @@
 'use client'
 
+import type { TabData } from '@/types/Tab'
 import { motion } from 'framer-motion'
 
-type TabPreviewProps = {
-    title: string
-    artist: string
-    genre: 'metal' | 'jazz' | 'blues' | 'rock' | 'classical' | 'country' | 'other'
-    key: string
-    tempo: number
-    timeSignature: string
-    tab: string
-}
+export default function TabPreview(props: TabData) {
+    const { title, artist, genre, musicalKey, tempo, timeSignature, tab } = props
 
-export default function TabPreview({
-    title,
-    artist,
-    genre,
-    key,
-    tempo,
-    timeSignature,
-    tab,
-}: TabPreviewProps) {
     const genreColor = {
         metal: 'bg-gray-900 text-red-500',
         jazz: 'bg-indigo-900 text-yellow-300',
@@ -40,7 +25,7 @@ export default function TabPreview({
         >
             <h2 className='text-2xl font-bold mb-2'>{`🎶 “${title}” — ${artist}`}</h2>
             <p className='text-sm mb-4 opacity-80'>
-                Key: {key} · Tempo: {tempo} BPM · Time Signature: {timeSignature}
+                Key: {musicalKey} · Tempo: {tempo} BPM · Time Signature: {timeSignature}
             </p>
             <pre className="text-mono text-sm whitespace-pre-wrap leading-relaxed">
                 {tab}

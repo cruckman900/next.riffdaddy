@@ -1,4 +1,7 @@
 // app/page.tsx or app/layout.tsx
+import TabPreview from '@/components/TabPreview'
+import { mockTabs } from '@/lib/mockTabs'
+
 export const metadata = {
   title: 'fanTABulous — Riff-Ready Tab Parsing',
   description: 'A platform for expressive musicians to preview, parse, and riff on guitar tabs.',
@@ -25,4 +28,14 @@ export const metadata = {
     creator: '@riffdaddy',
     images: ['https://next.riffdaddy.netlify.app/twitter-image.png'],
   },
+}
+
+export default function HomePage() {
+  return (
+    <div className="space-y-12">
+      {mockTabs.map((tab, index) => (
+        <TabPreview key={index} {...tab} />
+      ))}
+    </div>
+  )
 }
