@@ -1,75 +1,36 @@
-# Nuxt Minimal Starter
+# 🎸 NEXTRiff — Riff-Ready Tab Parsing
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Welcome to **NEXTRiff**, a platform for expressive musicians to preview, parse, and riff on guitar tabs with glowing transitions and genre-based themes.
 
-## Setup
+![NEXTRiff Badge](./public/nextriff_badge.png)
 
-Make sure to install dependencies:
+---
+
+## 🚀 Features
+
+- 🎛️ Genre-based tab previews (metal, jazz, blues, rock, classical, country, other)
+- 🎨 Responsive UI with Tailwind + Framer Motion
+- 🎼 Metadata display: key, tempo, time signature
+- 🧪 Mock tab upload form (client-side)
+- 🔍 Tab filtering by genre
+- 🧠 TypeScript-powered components with clean prop types
+- 🌐 OG/Twitter metadata for social sharing
+
+---
+
+## 🧱 Tech Stack
+
+- **Frontend**: Next.js (App Router), Tailwind CSS, Framer Motion
+- **Backend**: FastAPI (coming soon)
+- **Deployment**: Netlify
+- **Design**: Custom badge, OG image, favicon
+
+---
+
+## 📦 Setup
 
 ```bash
-# npm
+git clone https://github.com/cruckman900/next.riffdaddy
+cd next.riffdaddy
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.

@@ -1,8 +1,8 @@
 // components/GenreFilter.tsx
 import { motion } from 'framer-motion'
 
-const genres = ['all', 'metal', 'jazz', 'blues', 'rock', 'classical', 'country', 'other']
 type Genre = 'metal' | 'jazz' | 'blues' | 'rock' | 'classical' | 'country' | 'other' | 'all'
+const genres: Genre[] = ['all', 'metal', 'jazz', 'blues', 'rock', 'classical', 'country', 'other']
 
 type GenreFilterProps = {
   activeGenre: Genre
