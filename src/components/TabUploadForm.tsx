@@ -1,5 +1,9 @@
 'use client'
 import { useState } from 'react'
+import toast from 'react-hot-toast'
+import { Genre } from '@/types/genre'
+
+const genres: Genre[] = Object.values(Genre)
 
 export default function TabUploadForm() {
     const [form, setForm] = useState({
@@ -12,6 +16,7 @@ export default function TabUploadForm() {
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
+        toast.success("Tab uploaded successfully 🎉")
         console.log('Mock upload:', form)
     }
 
@@ -21,13 +26,9 @@ export default function TabUploadForm() {
             <input name="artist" placeholder="Artist" onChange={handleChange} className="w-full p-2 rounded bg-gray-800" />
             <select name="genre" onChange={handleChange} className="w-full p-2 rounded bg-gray-800">
                 <option value="">Select Genre</option>
-                <option value="metal">Metal</option>
-                <option value="jazz">Jazz</option>
-                <option value="blues">Blues</option>
-                <option value="rock">Rock</option>
-                <option value="classical">Classical</option>
-                <option value="country">Country</option>
-                <option value="other">Other</option>
+                {genres.map((genre) => (
+                    <option key={genre} value={genre}>{genre}</option>
+                ))}
             </select>
             <textarea name="tab" placeholder="Paste tab here..." rows={6} onChange={handleChange} className="w-full p-2 rounded bg-gray-800" />
             <button type="submit" className="bg-riff text-black px-4 py-2 rounded hover:scale-105 transition">Upload Tab</button>

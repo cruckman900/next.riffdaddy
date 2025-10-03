@@ -1,4 +1,110 @@
 /* styles/globals.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@layer components {
+  /* Scrollbar base */
+  ::-webkit-scrollbar {
+    width: 2px;
+    height: 2px;
+  }
+
+  /* Track (background) */
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Thumb (the draggable part) */
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #00ff00, #b366ff);
+    border-radius: 999px;
+    box-shadow: 0 0 4px #00ff00;
+  }
+
+  /* Hover effect */
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #00e5ff, #b366ff);
+  }
+
+  .powered-by {
+    opacity: 0.8;
+  }
+
+  .linear-descent {
+    color: #00e5ff;
+    text-shadow: 0 0 5px #00e5ff, 0 0 10px #00e5ff;
+    font-family: "Orbitron", sans-serif;
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  .nextriff-title {
+    color: #00ff00;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-shadow: 0 0 6px #00ff00, 0 0 12px #00ff00;
+    font-family: "Orbitron", sans-serif;
+    animation: pulseGreen 2s ease-in-out infinite alternate;
+  }
+
+  .animate-marquee {
+    animation: marquee 15s linear infinite;
+  }
+
+  .footer-core {
+    animation: glowPurple 2s ease-in-out infinite alternate;
+  }
+
+  .fade-out {
+    animation: fadeOut 2.5s ease-in forwards;
+  }
+
+  @keyframes glow {
+    from {
+      text-shadow: 0 0 5px #00e5ff;
+    }
+    to {
+      text-shadow: 0 0 20px #00e5ff 30px #00e5ff;
+    }
+  }
+
+  @keyframes pulseGreen {
+    from {
+      text-shadow: 0 0 6px #00ff00;
+    }
+    to {
+      text-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00;
+    }
+  }
+
+  @keyframes glowPurple {
+    from {
+      text-shadow: 0 0 6px #b366ff;
+    }
+    to {
+      text-shadow: 0 0 20px #b366ff, 0 0 30px #b366ff;
+    }
+  }
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+
+  @keyframes fadeOut {
+    0% {
+      opacity: 1;
+    }
+    80% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      display: none;
+    }
+  }
+}

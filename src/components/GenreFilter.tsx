@@ -1,12 +1,12 @@
 // components/GenreFilter.tsx
 import { motion } from 'framer-motion'
+import { Genre } from '@/types/genre'
 
-type Genre = 'metal' | 'jazz' | 'blues' | 'rock' | 'classical' | 'country' | 'other' | 'all'
-const genres: Genre[] = ['all', 'metal', 'jazz', 'blues', 'rock', 'classical', 'country', 'other']
+const genres: Genre[] = Object.values(Genre)
 
 type GenreFilterProps = {
   activeGenre: Genre
-  setGenre: React.Dispatch<React.SetStateAction<Genre>>
+  setGenre: (genre: Genre) => void
 }
 
 export default function GenreFilter({ activeGenre, setGenre }: GenreFilterProps) {

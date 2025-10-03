@@ -122,3 +122,77 @@ Fixes:
 - Returned a single JSX tree starting with `<html>`
 
 Status: Layout now recognized. App Router rendering cleanly.  
+
+## 🎛️ Genre Filter, Tab Switcher, Upload Form — UI Ensemble Expanded — Oct 2, 2025 @ 4:45 AM EDT
+
+Components Added:
+- `GenreFilter.tsx`: Glowing genre buttons with Framer Motion
+- `TabGallery.tsx`: Animated tab transitions with genre filtering
+- `TabUploadForm.tsx`: Mock tab upload form with client-side logging
+
+Status: UI now interactive, expressive, and ready for backend wiring.  
+
+## 🎨 Rebrand Complete — NEXTRiff Badge & OG Image — Oct 2, 2025 @ 4:50 AM EDT
+
+Action:
+- Rebranded from fanTABulous to NEXTRiff
+- Created new badge and OG image with glowing accents and musical styling
+- Updated metadata in `layout.tsx` for Open Graph and Twitter cards
+- Deployed assets to `/public` for social sharing and favicon
+
+Status: NEXTRiff now visually branded and socially optimized.  
+
+## 🧠 setGenre Typed — Dispatch with Genre Enum — Oct 2, 2025 @ 10:45 AM EDT
+
+Fix:
+- Defined `Genre` union type for genre values
+- Typed `setGenre` as `React.Dispatch<React.SetStateAction<Genre>>`
+- Passed to `GenreFilter` for full type safety
+
+Status: No more guessing. Genre state now typed and expressive.  
+
+## 🧠 GenreFilter Signature Fixed — Props & Return — Oct 2, 2025 @ 10:55 AM EDT
+
+Issue:
+- Incorrect function signature: `{ GenreFilterProps }` instead of `GenreFilterProps`
+- Missing `return` statement in JSX block
+
+Fix:
+- Updated signature to `({ activeGenre, setGenre }: GenreFilterProps)`
+- Added `return` to wrap JSX
+
+Status: Component now compiles cleanly and renders genre buttons with motion.  
+
+## 🧠 Genre Type Mismatch — Cast & Array Typed — Oct 2, 2025 @ 11:00 AM EDT
+
+Issue: `setGenre(genre)` throws error — string not assignable to `Genre`  
+Fixes:
+- Cast `genre` as `Genre` in `onClick`
+- Typed `genres` array as `Genre[]` to avoid future casts
+
+Status: TypeScript now recognizes genre values as valid. No more setter errors.  
+
+## 🧠 Form Submit Typed — React.FormEvent<HTMLFormElement> — Oct 2, 2025 @ 11:50 AM EDT
+
+Fix:
+- Typed `e` in `handleSubmit` as `React.FormEvent<HTMLFormElement>`
+- Prevents reload and logs mock upload data
+
+Status: Form submission now fully typed and ready for backend wiring.  
+
+## 🧠 Input Change Typed — Multi-Element Support — Oct 2, 2025 @ 11:55 AM EDT
+
+Fix:
+- Replaced `React.FormEvent<HTMLFormElement>` with `React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>`
+- Ensures `e.target.name` and `e.target.value` are fully typed
+
+Status: Input change handler now supports all form elements cleanly.  
+
+## ✅ Toast Simulated — Upload Flow Activated — Oct 2, 2025 @ 12:00 PM EDT
+
+Steps:
+- Installed `react-hot-toast`
+- Added `<Toaster />` to layout
+- Triggered `toast.success()` on form submit
+
+Status: Upload flow now gives instant feedback. Backend wiring next.  
