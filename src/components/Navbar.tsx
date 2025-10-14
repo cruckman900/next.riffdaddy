@@ -6,17 +6,24 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import Link from 'next/link'
 
-const navItems = [
-    { label: 'Upload', path: '/upload' },
-    { label: 'Tabs', path: '/tabs' },
-    { label: 'Themes', path: '/themes' },
-    { label: 'About', path: '/about' },
-    { label: 'Login', path: '/login' },
-    { label: 'Register', path: '/register' }
-]
-
 const Navbar = () => {
     const [drawerOpen, setDrawerOpen] = useState(false)
+    const isLoggedIn = typeof window !== "undefined" && localStorage.getItem("user_id")
+
+    const navItems = [
+        { label: 'Home', path: '/'},
+        { label: 'About', path: '/about' },
+        ... (!isLoggedIn ? [
+            { label: 'Login', path: '/login' },
+            { label: 'Register', path: '/register' },
+        ] : []),
+        ... (isLoggedIn ? [
+            { label: 'Upload', path: '/upload' },
+            { label: 'Tabs', path: '/tabs' },
+            { label: 'Themes', path: '/themes' },
+        ] : [])
+    ]
+
     return (
         <>
             <AppBar position="static" color="primary">

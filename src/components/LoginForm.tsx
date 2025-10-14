@@ -1,5 +1,6 @@
 'use client';
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import { TextField, Button, Box, Typography, InputAdornment, Divider } from "@mui/material";
 import { z } from "zod";
@@ -17,6 +18,8 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
+    const router = useRouter()
+
     // 2️⃣ React Hook Form setup
     const {
         register,
@@ -36,7 +39,7 @@ export default function LoginForm() {
         try {
             const res = await axios.post<{ user_id: string }>("/users/login", data);
             localStorage.setItem("user_id", res.data.user_id);
-            // redirect to /tabs or dashboard
+            router.push("/tabs")
         } catch (err) {
             console.error("Login failed", err);
             setErrorMsg("Invalid credentials. Please try again.");
@@ -58,7 +61,7 @@ export default function LoginForm() {
                 </Typography>
 
                 <Divider textAlign="left" sx={{ p: 1.5 }}>
-                    <Typography variant="caption" color="textSecondary">
+                    <Typography variant="caption" fontSize={16} color="textSecondary">
                         Login Credentials
                     </Typography>
                 </Divider>

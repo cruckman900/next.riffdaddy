@@ -11,7 +11,7 @@ export interface UserLogin {
 }
 
 export interface UserRead {
-    id: string
+    user_id: string
     username: string
     created_at: string
 }

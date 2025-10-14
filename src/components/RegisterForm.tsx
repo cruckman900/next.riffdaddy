@@ -1,14 +1,15 @@
 // components/RegisterForm.tsx
 'use client'
-import { useState } from "react";
-import axios from "axios";
-import { TextField, Button, Box, Typography, InputAdornment, Divider } from "@mui/material";
-import { UserRead } from "@/types/user";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { motion } from "framer-motion";
-import { EnvelopeIcon, LockClosedIcon, UserIcon } from "@heroicons/react/24/outline";
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import axios from "axios"
+import { TextField, Button, Box, Typography, InputAdornment, Divider } from "@mui/material"
+import { UserRead } from "@/types/user"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { motion } from "framer-motion"
+import { EnvelopeIcon, LockClosedIcon, UserIcon } from "@heroicons/react/24/outline"
 
 // 1️⃣ Zod schema
 const registerSchema = z.object({
@@ -17,9 +18,11 @@ const registerSchema = z.object({
     password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-type RegisterFormValues = z.infer<typeof registerSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>
 
 export default function RegisterForm() {
+    const router = useRouter()
+
     // 2️⃣ React Hook Form setup
     const {
         register,
@@ -36,9 +39,10 @@ export default function RegisterForm() {
     const onSubmit = async (data: RegisterFormValues) => {
         setLoading(true);
         try {
-            await axios.post<UserRead>("/users/", data);
+            const res = await axios.post<UserRead>("/users/", data)
             setSuccess(true);
-            // redirect to login or auto-login
+            localStorage.setItem("user_id", res.data.user_id)
+            router.push("/tabs")
         } catch (err) {
             console.error("Registration failed", err);
         } finally {
@@ -133,5 +137,5 @@ export default function RegisterForm() {
                 )}
             </Box>
         </motion.div>
-    );
+    )
 }
