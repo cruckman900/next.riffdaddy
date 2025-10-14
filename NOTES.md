@@ -196,3 +196,55 @@ Steps:
 - Triggered `toast.success()` on form submit
 
 Status: Upload flow now gives instant feedback. Backend wiring next.  
+
+### [2025-10-03] 🌗 Theme Switch Prep & Scrollbar Stylization
+
+- Enabled `darkMode: 'class'` in Tailwind config for theme switching
+- Added custom colors: `riff` (lime green) and `jam` (purple)
+- Styled scrollbar with 2px width, gradient thumb, and glowing hover effect
+- Scrollbar now riffs in harmony with header/footer palette
+
+### [2025-10-03] 🧹 Folder Refactor: Roadie Cleanup
+
+- Refactored project structure to give `src/` meaningful depth
+- Added `components`, `context`, `lib`, and other folders under `src/`
+- Fixed path alias `@/*` to resolve cleanly to `src/*`
+- Previous structure was too shallow—like a mop closet backstage
+- Now importing like a pro: `@/components/Header`, `@/context/ThemeContext`
+
+### [2025-10-03] 🎭 Theme Switcher: The Fat Lady Sang
+
+- Implemented dynamic theme switching with Tailwind + MUI
+- Synced `dark` class on `<html>` via client-side hydration
+- Refactored MUI theme to respond to `'light' | 'dark'` context
+- Fixed TypeScript union mismatch and layout hydration quirks
+- UI now toggles like a lighting rig—Dark Riff vs Light Jam
+- 🎤 The band took 5 and let the fat lady sing—theme switcher complete!
+
+### [2025-10-03] 🎶 Toast Cue: Now Playing
+
+- Added toast notification to ThemeSwitcher toggle
+- Displays “Now Playing: Dark Riff” or “Light Jam” after theme change
+- Mounted `react-hot-toast` in layout with bottom-center positioning
+- Toast acts like a stage-side LED cue—short, punchy, and expressive
+
+### [2025-10-03] 🎛️ Theme Strategy Clarified
+
+- Confirmed MUI handles global theming via `theme.ts`
+- Tailwind used for utility classes and non-MUI elements
+- Avoided manual `bg-white dark:bg-black` duplication
+- Theme switching now centralized and expressive—like a lighting desk for the whole stage
+
+### [2025-10-03] 🎭 Theme Switcher Paused
+
+- Temporarily removed theme toggle button to reduce complexity
+- Default MUI theme delivers clean, expressive UI out of the box
+- Bottleneck resolved—focus shifted to core layout and performance
+- Theme switching can return later with refined strategy and animation
+
+### [2025-10-03] 🎤 Splash Centering + Entry Trigger
+
+- Centered splash image and “Click to Enter” text using flex layout
+- Button now triggers entry event via `setEntered(true)`
+- Splash hides on click—ready for transition or route change
+- UI now riffs like a concert intro—spotlight, cue, and entry

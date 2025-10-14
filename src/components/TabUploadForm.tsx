@@ -21,8 +21,8 @@ export default function TabUploadForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="bg-gray-900 p-6 rounded-xl space-y-4 text-white">
-            <input name="title" placeholder="Title" onChange={handleChange} className="w-full p-2 rounded bg-gray-800" />
+        <form onSubmit={handleSubmit} className="bg-gray-900 dark:bg-white p-6 rounded-xl space-y-4 text-white dark:text-gray-900">
+            <input name="title" placeholder="Title" onChange={handleChange} className="w-full p-2 rounded bg-gray-800 dark:bg-white" />
             <input name="artist" placeholder="Artist" onChange={handleChange} className="w-full p-2 rounded bg-gray-800" />
             <select name="genre" onChange={handleChange} className="w-full p-2 rounded bg-gray-800">
                 <option value="">Select Genre</option>
@@ -30,7 +30,7 @@ export default function TabUploadForm() {
                     <option key={genre} value={genre}>{genre}</option>
                 ))}
             </select>
-            <textarea name="tab" placeholder="Paste tab here..." rows={6} onChange={handleChange} className="w-full p-2 rounded bg-gray-800" />
+            <textarea name="tab" placeholder="Paste tab here..." rows={6} onChange={handleChange} className="w-full p-2 rounded bg-gray-800 dark:bg-white" />
             <button type="submit" className="bg-riff text-black px-4 py-2 rounded hover:scale-105 transition">Upload Tab</button>
         </form>
     )

@@ -11,6 +11,8 @@ const navItems = [
     { label: 'Tabs', path: '/tabs' },
     { label: 'Themes', path: '/themes' },
     { label: 'About', path: '/about' },
+    { label: 'Login', path: '/login' },
+    { label: 'Register', path: '/register' }
 ]
 
 const Navbar = () => {
