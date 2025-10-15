@@ -10,7 +10,7 @@ export default function InstrumentSelector() {
             id="instrument"
             value={instrument}
             onChange={(e) => setInstrument(e.target.value)}
-            className="px-2 py-1 border rounded"
+            className="px-2 py-1 border rounded print:hidden"
         >
             {instruments.map((inst) => (
                 <option key={inst}>{inst}</option>

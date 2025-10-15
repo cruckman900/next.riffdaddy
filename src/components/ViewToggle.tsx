@@ -10,9 +10,9 @@ export default function ViewToggle({
     useEffect(() => {
         onChange(viewMode)
     }, [viewMode, onChange])
-    
+
     return (
-        <div className="flex gap-2">
+        <div className="flex gap-2 print:hidden">
             <button onClick={() => setViewMode("tab")} className="px-2 py-1 border rounded">Tab</button>
             <button onClick={() => setViewMode("staff")} className="px-2 py-1 border rounded">Staff</button>
             <button onClick={() => setViewMode("both")} className="px-2 py-1 border rounded">Both</button>

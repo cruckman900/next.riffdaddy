@@ -10,13 +10,13 @@ import Link from 'next/link'
 
 const Navbar = () => {
     const { user, logout } = useAuthContext()
-    
+
     const [drawerOpen, setDrawerOpen] = useState(false)
 
     const router = useRouter()
 
     const navItems = [
-        { label: 'Home', path: '/'},
+        { label: 'Home', path: '/' },
         { label: 'About', path: '/about' },
         ... (!user ? [
             { label: 'Login', path: '/login' },
@@ -36,7 +36,11 @@ const Navbar = () => {
 
     return (
         <>
-            <AppBar position="static" color="primary">
+            <AppBar position="static" color="primary" sx={{
+                '@media print': {
+                    display: 'none'
+                }
+            }}>
                 <Toolbar>
                     <IconButton edge="start" color='inherit' aria-label="logo">
                         <MusicNoteIcon />

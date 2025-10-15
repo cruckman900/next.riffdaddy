@@ -21,7 +21,7 @@ const TabRenderer = ({ tuning, notes }: TabRendererProps) => {
     const vf = new Factory({
       renderer: {
         elementId: containerRef.current.id,
-        width: 600,
+        width: 800,
         height: 180,
       },
     });
@@ -53,7 +53,7 @@ const TabRenderer = ({ tuning, notes }: TabRendererProps) => {
       <select
         onChange={(e) => setTimeSignature(e.target.value)}
         value={timeSignature}
-        className="text-sm px-2 py-1 border rounded mb-2"
+        className="text-sm px-2 py-1 border rounded mb-2 print:hidden"
       >
         {timeSignatures.map((sig, i) => (
           <option key={i}>{sig}</option>

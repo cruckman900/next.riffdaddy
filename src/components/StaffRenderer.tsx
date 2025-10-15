@@ -18,7 +18,7 @@ const StaffRenderer = ({ notes, timeSignature = "4/4" }: StaffRendererProps) => 
     const vf = new Factory({
       renderer: {
         elementId: containerRef.current.id,
-        width: 600,
+        width: 800,
         height: 150,
       },
     });

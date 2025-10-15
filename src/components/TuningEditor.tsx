@@ -12,7 +12,7 @@ export default function TuningEditor() {
     }
 
     return (
-        <div className="flex gap-1 flex-wrap text-sm">
+        <div className="flex gap-1 flex-wrap text-sm print:hidden">
             {tuning.map((note, i) => (
                 <input
                     key={i}
