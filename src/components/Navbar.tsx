@@ -1,28 +1,38 @@
 // components/Navbar.tsx
 "use client"
 import { useState } from 'react'
+import { useRouter } from 'next/navigation';
+import { useAuthContext } from '@/context/AuthProvider';
 import { AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItemButton, ListItemText, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import Link from 'next/link'
 
 const Navbar = () => {
+    const { user, logout } = useAuthContext()
+    
     const [drawerOpen, setDrawerOpen] = useState(false)
-    const isLoggedIn = typeof window !== "undefined" && localStorage.getItem("user_id")
+
+    const router = useRouter()
 
     const navItems = [
         { label: 'Home', path: '/'},
         { label: 'About', path: '/about' },
-        ... (!isLoggedIn ? [
+        ... (!user ? [
             { label: 'Login', path: '/login' },
             { label: 'Register', path: '/register' },
         ] : []),
-        ... (isLoggedIn ? [
+        ... (user ? [
             { label: 'Upload', path: '/upload' },
             { label: 'Tabs', path: '/tabs' },
             { label: 'Themes', path: '/themes' },
         ] : [])
     ]
+
+    function handleLogout() {
+        logout()
+        router.push("/")
+    }
 
     return (
         <>
@@ -37,11 +47,33 @@ const Navbar = () => {
                     <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
                         {navItems.map(({ label, path }) => (
                             <Link key={label} href={path} passHref>
-                                <Typography variant="button" sx={{ mx: 1, color: 'white', textDecoration: 'none' }}>
+                                <Typography
+                                    variant="button"
+                                    sx={{
+                                        mx: 1,
+                                        color: 'white',
+                                        textDecoration: 'none'
+                                    }}
+                                >
                                     {label}
                                 </Typography>
                             </Link>
                         ))}
+                        {user && (
+                            <Typography
+                                variant='button'
+                                sx={{
+                                    mx: 1,
+                                    color: 'white',
+                                    textDecoration: 'none',
+                                    cursor: 'pointer',
+                                    display: 'inline-block'
+                                }}
+                                onClick={handleLogout}
+                            >
+                                Log out
+                            </Typography>
+                        )}
                     </Box>
                     <IconButton
                         edge="end"

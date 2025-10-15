@@ -19,7 +19,7 @@ export const getTheme = (mode: 'light' | 'dark') =>
       },
       text: {
         primary: mode === 'dark' ? '#ffffff' : '#000000',
-        secondary: mode === 'dark' ? '#b0bec5' : '#555555',
+        secondary: mode === 'dark' ? '#b0bec5' : '#90ee90',
         disabled: mode === 'dark' ? '#666666' : '#999999',
       },
       divider: mode === 'dark' ? '#333333' : '#dddddd',

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import axios from "axios"
+import { useAuthContext } from "@/context/AuthProvider"
 import { TextField, Button, Box, Typography, InputAdornment, Divider } from "@mui/material"
 import { UserRead } from "@/types/user"
 import { z } from "zod"
@@ -21,6 +22,7 @@ const registerSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerSchema>
 
 export default function RegisterForm() {
+    const { login } = useAuthContext()
     const router = useRouter()
 
     // 2️⃣ React Hook Form setup
@@ -39,9 +41,12 @@ export default function RegisterForm() {
     const onSubmit = async (data: RegisterFormValues) => {
         setLoading(true);
         try {
-            const res = await axios.post<UserRead>("/users/", data)
+            const res = await axios.post<UserRead>(`${process.env.NEXT_PUBLIC_API_URL}/users/`, data)
             setSuccess(true);
-            localStorage.setItem("user_id", res.data.user_id)
+            const user_id = res.data.user_id
+            const userData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}`)
+            console.log("User Data", userData);
+            login(userData.data)
             router.push("/tabs")
         } catch (err) {
             console.error("Registration failed", err);
@@ -72,6 +77,7 @@ export default function RegisterForm() {
                     label="Username"
                     variant="outlined"
                     {...register("username")}
+                    autoComplete="username"
                     error={!!errors.username}
                     helperText={errors.username?.message}
                     fullWidth
@@ -89,6 +95,7 @@ export default function RegisterForm() {
                     variant="outlined"
                     type="email"
                     {...register("email")}
+                    autoComplete="email"
                     error={!!errors.email}
                     helperText={errors.email?.message}
                     fullWidth
@@ -106,6 +113,7 @@ export default function RegisterForm() {
                     variant="outlined"
                     type="password"
                     {...register("password")}
+                    autoComplete="password"
                     error={!!errors.password}
                     helperText={errors.password?.message}
                     fullWidth

@@ -1,4 +1,5 @@
 // app/page.tsx or app/layout.tsx
+
 import TabPreview from '@/components/TabPreview'
 import { mockTabs } from '@/lib/mockTabs'
 

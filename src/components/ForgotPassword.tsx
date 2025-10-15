@@ -1,25 +1,22 @@
-'use client'
-
+'use client';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { useAuthContext } from "@/context/AuthProvider";
 import { TextField, Button, Box, Typography, InputAdornment, Divider } from "@mui/material";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
-import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
+import { EnvelopeIcon } from "@heroicons/react/24/outline";
 
 // 1️⃣ Zod schema
 const loginSchema = z.object({
     email: z.string().email("Invalid email"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export default function LoginForm() {
+export default function ForgotPasswordForm() {
     const router = useRouter()
 
     // 2️⃣ React Hook Form setup
@@ -34,19 +31,16 @@ export default function LoginForm() {
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
-    const { login } = useAuthContext()
-
     // 3️⃣ Submit handler
     const onSubmit = async (data: LoginFormValues) => {
         setLoading(true);
         setErrorMsg("");
         try {
-            const res = await axios.post<{ user_id: string }>(`${process.env.NEXT_PUBLIC_API_URL}/users/login`, data);
-            const user_id = res.data.user_id
-            const userData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}`)
-            console.log("User Data", userData);
-            login(userData.data)
-            router.push("/tabs")
+            const res = await axios.post<{ user_id: string }>(`${process.env.NEXT_PUBLIC_API_URL}/users/forget-password`, data);
+            localStorage.setItem("user_id", res.data.user_id);
+            if (res.statusText == "Reset link sent")
+                alert("email sent")
+            // router.push("/tabs")
         } catch (err) {
             console.error("Login failed", err);
             setErrorMsg("Invalid credentials. Please try again.");
@@ -54,10 +48,6 @@ export default function LoginForm() {
             setLoading(false);
         }
     };
-
-    const handleClick = () => {
-        router.push("/forgot-password")
-    }
 
     return (
         <motion.div
@@ -68,12 +58,12 @@ export default function LoginForm() {
         >
             <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ p: 2 }}>
                 <Typography variant="h5" className="mb-4 text-center font-bold">
-                    Welcome Back
+                    Forgot Password?
                 </Typography>
 
                 <Divider textAlign="left" sx={{ p: 1.5 }}>
                     <Typography variant="caption" fontSize={16} color="textSecondary">
-                        Login Credentials
+                        Login Email
                     </Typography>
                 </Divider>
 
@@ -94,41 +84,6 @@ export default function LoginForm() {
                         ),
                     }}
                 />
-
-                <TextField
-                    label="Password"
-                    variant="outlined"
-                    type="password"
-                    {...register("password")}
-                    autoComplete="password"
-                    error={!!errors.password}
-                    helperText={errors.password?.message}
-                    fullWidth
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <LockClosedIcon className="h-5 w-5 text-gray-500" />
-                            </InputAdornment>
-                        ),
-                    }}
-                />
-
-                <Typography
-                    variant='button'
-                    sx={{
-                        mx: '50%',
-                        translate: '-50%',
-                        color: 'red',
-                        textDecoration: 'none',
-                        cursor: 'pointer',
-                        display: 'inline-block',
-                        textAlign: 'center',
-                        width: '100%'
-                    }}
-                    onClick={handleClick}
-                >
-                    Forgot Password
-                </Typography>
 
                 <motion.div whileHover={{ scale: 1.02 }} className="mt-4">
                     <Button
