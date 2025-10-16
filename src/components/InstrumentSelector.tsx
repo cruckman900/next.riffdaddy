@@ -9,11 +9,14 @@ import {
     MenuItem,
     ListItemIcon,
     ListItemText,
+    Box,
 } from '@mui/material'
 import { motion } from "framer-motion"
 
 export default function InstrumentSelector() {
     const [selected, setSelected] = useState("Guitar")
+
+    const selectedInstrument = instruments.find((inst) => inst.value == selected)
 
     return (
         <motion.div
@@ -22,12 +25,18 @@ export default function InstrumentSelector() {
             transition={{ duration: 0.4, ease: "easeOut" }}
         >
             <FormControl fullWidth>
-                <InputLabel id="instrument-label">Instrument</InputLabel>
+                <InputLabel id="instrument-label">Choose Instrument</InputLabel>
                 <Select
                     labelId="instrument-label"
                     value={selected}
-                    label="Instrument"
+                    label="Choose Instrument"
                     onChange={(e) => setSelected(e.target.value)}
+                    renderValue={() => (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {selectedInstrument?.icon && <selectedInstrument.icon />}
+                            {selectedInstrument?.label}
+                        </Box>
+                    )}
                 >
                     {instruments.map(({ value, label, icon: Icon }) => (
                         <MenuItem key={value} value={value}>
