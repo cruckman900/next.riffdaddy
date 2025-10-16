@@ -1,7 +1,23 @@
-import { Box, Typography } from '@mui/material'
+import { Box, } from '@mui/material'
 import { motion } from 'framer-motion'
+import { noteIndexMap } from '@/utils/tunings'
 
-export default function RadarDial({ tuning }: { tuning: string[] }) {
+export default function RadarDial({ tuning, showArcs }: { tuning: string[], showArcs: boolean }) {
+    const notePositions = tuning.map((note, i) => {
+        const angle = (360 / tuning.length) * i
+        const rad = (angle * Math.PI) / 180
+        const x = center + radius * Math.cos(rad)
+        const y = center + radius * Math.sin(rad)
+        return { note, x, y }
+    })
+
+    const harmonicColors: Record<number, string> = {
+        0: '#90caf9',   // unison
+        5: '#f48fb1',   // perfect fouth
+        7: '#aed501',   // perfect fifth
+        12: '#ffb74d',  // octave
+    }
+
     const radius = 80
     const center = 100
 
@@ -17,6 +33,38 @@ export default function RadarDial({ tuning }: { tuning: string[] }) {
                 boxShadow: 3,
             }}
         >
+            {/* SVG Arc Layer */}
+            {showArcs && (
+                <svg
+                    width="200"
+                    height="200"
+                    style={{ position: 'absolute', top: 0, left: 0 }}
+                >
+                    {/* TOOD: Add arcs between note positions */}
+                    {notePositions.map((pos, i) => {
+                        const next = notePositions[(i + 1) % notePositions.length]
+                        const semitoneDistance = Math.abs(noteIndexMap[pos.note] - noteIndexMap[next.note]) % 12
+                        const strokeColor = harmonicColors[semitoneDistance] || '#ccc'
+
+                        return (
+                            <motion.line
+                                key={`${pos.note}-${next.note}`}
+                                x1={pos.x}
+                                y1={pos.y}
+                                x2={next.x}
+                                y2={next.y}
+                                stroke={strokeColor}
+                                strokeWidth="2"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.5, delay: i * 0.1 }}
+                            />
+                        )
+                    })}
+                </svg>
+            )}
+
+            {/* Note Pulsed */}
             {tuning.map((note, i) => {
                 const angle = (360 / tuning.length) * i
                 const rad = (angle * Math.PI) / 100

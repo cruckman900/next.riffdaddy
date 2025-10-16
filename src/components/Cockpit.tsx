@@ -5,11 +5,20 @@ import Typography from '@mui/material/Typography'
 
 import InstrumentSelector from './InstrumentSelector'
 import RadarDial from './RadarDial'
-import { tuningPresets } from '@/utils/tunings'
+import { tuningPresets, alternateTunings } from '@/utils/tunings'
+import { FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch } from '@mui/material'
 
 export default function Cockpit() {
     const [instrument, setInstrument] = useState("guitar")
-    const tuning = tuningPresets[instrument] || []
+    const [showArcs, setShowArcs] = useState(true)
+    const [useAlternate, setUseAlternate] = useState(false)
+    const [selectedTuningName, setSelectedTuningName] = useState('Drop D')
+
+    const tuningOptions = useAlternate
+        ? alternateTunings[instrument] || []
+        : [{ name: 'Standard', notes: tuningPresets[instrument] || [] }]
+
+    const selectedTuning = tuningOptions.find((t) => t.name == selectedTuningName) || tuningOptions[0]
 
     return (
         <Grid container spacing={4}>
@@ -33,7 +42,30 @@ export default function Cockpit() {
                         Renderer Slab
                     </Typography>
                     {/* TODO: Add Tab/Staff/Both view */}
-                    <RadarDial tuning={tuning} />
+                    <FormControlLabel
+                        control={<Switch checked={showArcs} onChange={()=> setShowArcs(!showArcs)} /> }
+                        label="Show Harmonic Arcs"
+                    />
+                    <FormControlLabel
+                        control={<Switch checked={useAlternate} onChange={() => setUseAlternate(!useAlternate)} />}
+                        label="Use Alternate Tuning"
+                    />
+                    <FormControl fullWidth>
+                        <InputLabel id="tuning-label">Tuning</InputLabel>
+                        <Select
+                            labelId="tuning-label"
+                            value={selectedTuningName}
+                            label="Tuning"
+                            onChange={(e) => setSelectedTuningName(e.target.value)}
+                        >
+                            {tuningOptions.map((tuning) => (
+                                <MenuItem key={tuning.name} value={tuning.name}>
+                                    {tuning.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                   <RadarDial tuning={selectedTuning?.notes ?? []} showArcs={showArcs} />
                 </Box>
             </Grid>
         </Grid>
