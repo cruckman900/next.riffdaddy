@@ -5,25 +5,46 @@ import Typography from '@mui/material/Typography'
 
 import InstrumentSelector from './InstrumentSelector'
 import RadarDial from './RadarDial'
-import { tuningPresets, alternateTunings } from '@/utils/tunings'
-import { FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch } from '@mui/material'
+import { tuningPresets, alternateTunings, Tuning } from '@/utils/tunings'
+import { Button, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, TextField } from '@mui/material'
 
 export default function Cockpit() {
     const [instrument, setInstrument] = useState("guitar")
     const [showArcs, setShowArcs] = useState(true)
     const [useAlternate, setUseAlternate] = useState(false)
     const [selectedTuningName, setSelectedTuningName] = useState('Drop D')
+
+    const [newTuningName, setNewTuningName] = useState('')
+    const [newTuningNotes, setNewTuningNotes] = useState('')
+    const [newTuningGenre, setNewTuningGenre] = useState('')
+
     const [selectedGenre, setSelectedGenre] = useState('All')
+    const [userTunings, setUserTunings] = useState<Tuning[]>([])
 
-    const rawOptions = useAlternate
-        ? alternateTunings[instrument] || []
-        : [{ name: 'Standard', notes: tuningPresets[instrument] || [] }]
-
+    const rawOptions = [
+        ...(useAlternate ? alternateTunings[instrument] || [] : [{ name: 'Standard', notes: tuningPresets[instrument] || [] }]),
+        ...userTunings,
+    ];
     const tuningOptions = useAlternate
         ? rawOptions
         : rawOptions.filter((t) => t.genre == selectedGenre)
 
     const selectedTuning = tuningOptions.find((t) => t.name == selectedTuningName) || tuningOptions[0]
+
+    const handleAddTuning = () => {
+        const notes = newTuningNotes.split(',')
+        const newTuning: Tuning = {
+            name: newTuningName,
+            notes,
+            genre: newTuningGenre,
+            description: 'User-defined tuning',
+        }
+        setUserTunings([...userTunings, newTuning])
+        setSelectedTuningName(newTuning.name)
+        setNewTuningName('')
+        setNewTuningNotes('')
+        setNewTuningGenre('')
+    }
 
     return (
         <Grid container spacing={4}>
@@ -38,7 +59,7 @@ export default function Cockpit() {
                         <InstrumentSelector onChange={setInstrument} />
                     </Box>
                     <FormControlLabel
-                        control={<Switch checked={showArcs} onChange={()=> setShowArcs(!showArcs)} /> }
+                        control={<Switch checked={showArcs} onChange={() => setShowArcs(!showArcs)} />}
                         label="Show Harmonic Arcs"
                     />
                     <FormControlLabel
@@ -76,6 +97,13 @@ export default function Cockpit() {
                             ))}
                         </Select>
                     </FormControl>
+                    <Box sx={{ mt: 2 }}>
+                        <Typography variant="subtitle2">Add Your Own Tuning</Typography>
+                        <TextField label="Name" value={newTuningName} onChange={(e) => setNewTuningName(e.target.value)} fullWidth sx={{ mb: 1 }} />
+                        <TextField label="Notes (comma-separated)" value={newTuningNotes} onChange={(e) => setNewTuningNotes(e.target.value)} fullWidth sx={{ mb: 1 }} />
+                        <TextField label="Genre" value={newTuningGenre} onChange={(e) => setNewTuningGenre(e.target.value)} fullWidth sx={{ mb: 1 }} />
+                        <Button variant="contained" onClick={handleAddTuning}>Add Tuning</Button>
+                    </Box>
                     <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
                         <Typography variant="subtitle1">{selectedTuning.name}</Typography>
                         <Typography variant='body2' color="text.secondary">
@@ -85,7 +113,7 @@ export default function Cockpit() {
                             Notes: {selectedTuning.notes.join(' - ')}
                         </Typography>
                     </Box>
-                   <RadarDial tuning={selectedTuning?.notes ?? []} showArcs={showArcs} />
+                    <RadarDial tuning={selectedTuning?.notes ?? []} showArcs={showArcs} genre={selectedTuning.genre || ''} />
                 </Box>
             </Grid>
 

@@ -2,7 +2,7 @@ import { Box, } from '@mui/material'
 import { motion } from 'framer-motion'
 import { noteIndexMap } from '@/utils/tunings'
 
-export default function RadarDial({ tuning, showArcs }: { tuning: string[], showArcs: boolean }) {
+export default function RadarDial({ tuning, showArcs, genre }: { tuning: string[], showArcs: boolean, genre: string }) {
     const notePositions = tuning.map((note, i) => {
         const angle = (360 / tuning.length) * i
         const rad = (angle * Math.PI) / 180
@@ -17,6 +17,16 @@ export default function RadarDial({ tuning, showArcs }: { tuning: string[], show
         7: '#aed501',   // perfect fifth
         12: '#ffb74d',  // octave
     }
+
+    const genreColors: Record<string, string> = {
+        'Rock/Metal': '#f44338',
+        Blues: '#2196f3',
+        'Celtic/Fingerstyle': '#4caf50',
+        Folk: '#ff9800',
+        Experimental: '#9c27b0',
+    }
+
+    const genreColor = genreColors[genre] || '#98caf9'
 
     const radius = 80
     const center = 100
@@ -47,18 +57,26 @@ export default function RadarDial({ tuning, showArcs }: { tuning: string[], show
                         const strokeColor = harmonicColors[semitoneDistance] || '#ccc'
 
                         return (
-                            <motion.line
-                                key={`${pos.note}-${next.note}`}
-                                x1={pos.x}
-                                y1={pos.y}
-                                x2={next.x}
-                                y2={next.y}
-                                stroke={strokeColor}
-                                strokeWidth="2"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.5, delay: i * 0.1 }}
-                            />
+                            <>
+                                <defs>
+                                    <filter id="glow">
+                                        <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={genreColor} floodOpacity="0.8" />
+                                    </filter>
+                                </defs>
+                                <motion.line
+                                    key={`${pos.note}-${next.note}`}
+                                    x1={pos.x}
+                                    y1={pos.y}
+                                    x2={next.x}
+                                    y2={next.y}
+                                    stroke={strokeColor}
+                                    strokeWidth="2"
+                                    filter="url(#glow)"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                                />
+                            </>
                         )
                     })}
                 </svg>
