@@ -49,12 +49,23 @@ const TabRenderer = ({ tuning, notes }: TabRendererProps) => {
   }, [tuning, notes, timeSignature]);
 
   return (
-    <div
-      id="vex-tab"
-      ref={containerRef}
-      className="overflow-x-auto"
-      style={{ paddingBottom: '20px' }}
-    />
+    <>
+      <select
+        onChange={(e) => setTimeSignature(e.target.value)}
+        value={timeSignature}
+        className="text-sm px-2 py-1 border rounded mb-2 print:hidden"
+      >
+        {timeSignatures.map((sig, i) => (
+          <option key={i}>{sig}</option>
+        ))}
+      </select>
+      <div
+        id="vex-tab"
+        ref={containerRef}
+        className="overflow-x-auto"
+        style={{ paddingBottom: '20px' }}
+      />
+    </>
   );
 };
 

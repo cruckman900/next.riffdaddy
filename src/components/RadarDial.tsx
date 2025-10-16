@@ -105,7 +105,7 @@ export default function RadarDial({
 
                 return (
                     <motion.div
-                        key={note}
+                        key={i}
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1.2, opacity: 1 }}
                         transition={{ duration: 0.6, delay: 1 * 0.1, repeat: Infinity, repeatType: 'reverse' }}
