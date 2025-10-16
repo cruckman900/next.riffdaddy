@@ -1,3 +1,5 @@
+'use client'
+
 import { Box, } from '@mui/material'
 import { motion } from 'framer-motion'
 import { noteIndexMap } from '@/utils/tunings'
@@ -14,6 +16,9 @@ export default function RadarDial({
     genre: string,
     playedNotes?: string[]
 }) {
+    const radius = 80
+    const center = 100
+
     const notePositions = tuning.map((note, i) => {
         const angle = (360 / tuning.length) * i
         const rad = (angle * Math.PI) / 180
@@ -38,9 +43,6 @@ export default function RadarDial({
     }
 
     const genreColor = genreColors[genre] || '#98caf9'
-
-    const radius = 80
-    const center = 100
 
     return (
         <Box

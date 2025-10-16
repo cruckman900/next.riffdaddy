@@ -2,7 +2,7 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthContext } from "@/context/AuthProvider"
-import Slab from "@/components/Slab"
+import Cockpit from "@/components/Cockpit"
 
 export default function TabsPage() {
     const { user } = useAuthContext()
@@ -15,6 +15,6 @@ export default function TabsPage() {
     }, [router, user])
 
     return (
-        <Slab />
+        <Cockpit />
     )
 }

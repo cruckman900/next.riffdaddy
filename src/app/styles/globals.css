@@ -114,11 +114,13 @@
     margin: 0;
     padding: 0;
     background: white;
+    overflow: hidden;
   }
 
   * {
     box-shadow: none !important;
     border-radius: 0 !important;
+    overflow: hidden;
   }
 
   #slab-box {
