@@ -2,7 +2,18 @@ import { Box, } from '@mui/material'
 import { motion } from 'framer-motion'
 import { noteIndexMap } from '@/utils/tunings'
 
-export default function RadarDial({ tuning, showArcs, genre }: { tuning: string[], showArcs: boolean, genre: string }) {
+export default function RadarDial({
+    tuning,
+    showArcs,
+    genre,
+    playedNotes = [] 
+
+} : {
+    tuning: string[],
+    showArcs: boolean,
+    genre: string,
+    playedNotes?: string[]
+}) {
     const notePositions = tuning.map((note, i) => {
         const angle = (360 / tuning.length) * i
         const rad = (angle * Math.PI) / 180
@@ -55,6 +66,7 @@ export default function RadarDial({ tuning, showArcs, genre }: { tuning: string[
                         const next = notePositions[(i + 1) % notePositions.length]
                         const semitoneDistance = Math.abs(noteIndexMap[pos.note] - noteIndexMap[next.note]) % 12
                         const strokeColor = harmonicColors[semitoneDistance] || '#ccc'
+                        const isActive = playedNotes.includes(pos.note) || playedNotes.includes(next.note)
 
                         return (
                             <>
@@ -70,10 +82,10 @@ export default function RadarDial({ tuning, showArcs, genre }: { tuning: string[
                                     x2={next.x}
                                     y2={next.y}
                                     stroke={strokeColor}
-                                    strokeWidth="2"
+                                    strokeWidth={isActive ? 3 : 1}
                                     filter="url(#glow)"
                                     initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
+                                    animate={{ opacity: isActive ? 1 : 0.4 }}
                                     transition={{ duration: 0.5, delay: i * 0.1 }}
                                 />
                             </>

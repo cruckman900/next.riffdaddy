@@ -46,6 +46,8 @@ export default function Cockpit() {
         setNewTuningGenre('')
     }
 
+    const [playedNotes, setPlayedNotes] = useState<string[]>([])
+
     return (
         <Grid container spacing={4}>
             {/* Control Panel */}
@@ -113,7 +115,12 @@ export default function Cockpit() {
                             Notes: {selectedTuning.notes.join(' - ')}
                         </Typography>
                     </Box>
-                    <RadarDial tuning={selectedTuning?.notes ?? []} showArcs={showArcs} genre={selectedTuning.genre || ''} />
+                    <RadarDial
+                        tuning={selectedTuning?.notes ?? []}
+                        showArcs={showArcs}
+                        genre={selectedTuning.genre || ''}
+                        playedNotes={playedNotes}
+                    />
                 </Box>
             </Grid>
 
