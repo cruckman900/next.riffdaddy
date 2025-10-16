@@ -1,20 +1,42 @@
 // /components/InstrumentSelector.tsx
 
 import { useState } from "react"
+import { instruments } from "@/utils/instruments"
+import {
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    ListItemIcon,
+    ListItemText,
+} from '@mui/material'
+import { motion } from "framer-motion"
+
 export default function InstrumentSelector() {
-    const instruments = ["Guitar", "Bass", "Ukulele", "Violin"]
-    const [instrument, setInstrument] = useState("Guitar")
+    const [selected, setSelected] = useState("Guitar")
 
     return (
-        <select
-            id="instrument"
-            value={instrument}
-            onChange={(e) => setInstrument(e.target.value)}
-            className="px-2 py-1 border rounded print:hidden"
+        <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
         >
-            {instruments.map((inst) => (
-                <option key={inst}>{inst}</option>
-            ))}
-        </select>
+            <FormControl fullWidth>
+                <InputLabel id="instrument-label">Instrument</InputLabel>
+                <Select
+                    labelId="instrument-label"
+                    value={selected}
+                    label="Instrument"
+                    onChange={(e) => setSelected(e.target.value)}
+                >
+                    {instruments.map(({ value, label, icon: Icon }) => (
+                        <MenuItem key={value} value={value}>
+                            <ListItemIcon><Icon /></ListItemIcon>
+                            <ListItemText primary={label} />
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+        </motion.div >
     )
 }

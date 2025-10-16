@@ -2,6 +2,8 @@ import Grid from '@mui/material/Grid'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 
+import InstrumentSelector from './InstrumentSelector'
+
 export default function Cockpit() {
     return (
         <Grid container spacing={4}>
@@ -12,6 +14,9 @@ export default function Cockpit() {
                         Control Panel
                     </Typography>
                     {/* TODO: Add Instrument, Tuning, View Mode, Radar*/}
+                    <Box sx={{ mb: 2 }}>
+                        <InstrumentSelector />
+                    </Box>
                 </Box>
             </Grid>
 
