@@ -13,10 +13,13 @@ import {
 } from '@mui/material'
 import { motion } from "framer-motion"
 
-export default function InstrumentSelector() {
+export default function InstrumentSelector({ onChange }: { onChange: (value: string) => void }) {
     const [selected, setSelected] = useState("Guitar")
 
-    const selectedInstrument = instruments.find((inst) => inst.value == selected)
+    const handleChange = (value: string) => {
+        setSelected(value)
+        onChange(value)
+    }
 
     return (
         <motion.div
@@ -30,13 +33,16 @@ export default function InstrumentSelector() {
                     labelId="instrument-label"
                     value={selected}
                     label="Choose Instrument"
-                    onChange={(e) => setSelected(e.target.value)}
-                    renderValue={() => (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {selectedInstrument?.icon && <selectedInstrument.icon />}
-                            {selectedInstrument?.label}
-                        </Box>
-                    )}
+                    onChange={(e) => handleChange(e.target.value)}
+                    renderValue={() => {
+                        const inst = instruments.find((i) => i.value === selected);
+                        return (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {inst?.icon && <inst.icon />}
+                                {inst?.label}
+                            </Box>
+                        );
+                    }}
                 >
                     {instruments.map(({ value, label, icon: Icon }) => (
                         <MenuItem key={value} value={value}>
