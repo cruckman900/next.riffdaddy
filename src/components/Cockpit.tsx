@@ -8,6 +8,9 @@ import RadarDial from './RadarDial'
 import { tuningPresets, alternateTunings, Tuning } from '@/utils/tunings'
 import { Button, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, TextField } from '@mui/material'
 
+import TabRenderer from './TabRenderer'
+import StaffRenderer from './StaffRenderer'
+
 export default function Cockpit() {
     const [instrument, setInstrument] = useState("guitar")
     const [showArcs, setShowArcs] = useState(true)
@@ -47,6 +50,8 @@ export default function Cockpit() {
     }
 
     const [playedNotes, setPlayedNotes] = useState<string[]>([])
+
+    const [viewMode, setViewMode] = useState<'tab' | 'staff' | 'both'>('tab')
 
     return (
         <Grid container spacing={4}>
@@ -131,6 +136,28 @@ export default function Cockpit() {
                         Renderer Slab
                     </Typography>
                     {/* TODO: Add Tab/Staff/Both view */}
+                    <FormControl fullWidth sx={{ mt: 2 }}>
+                        <InputLabel id="view-mode-label">View Mode</InputLabel>
+                        <Select
+                            labelId="view-mode-label"
+                            value={viewMode}
+                            label="View Mode"
+                            onChange={(e) => setViewMode(e.target.value as 'tab' | 'staff' | 'both')}
+                        >
+                            <MenuItem value="tab">Tab</MenuItem>
+                            <MenuItem value="staff">Staff</MenuItem>
+                            <MenuItem value="both">Both</MenuItem>
+                        </Select>
+                    </FormControl>
+
+                    {viewMode == 'tab' && <TabRenderer tuning={selectedTuning.notes} notes={[]} />}
+                    {viewMode == 'staff' && <StaffRenderer notes={[]} timeSignature='4/4' />}
+                    {viewMode == 'both' && (
+                        <Grid container spacing={2}>
+                            <Grid item xs={6}><TabRenderer tuning={selectedTuning.notes} notes={[]} /></Grid>
+                            <Grid item xs={6}><StaffRenderer notes={[]} timeSignature='4/4' /></Grid>
+                        </Grid>
+                    )}
                 </Box>
             </Grid>
         </Grid>
