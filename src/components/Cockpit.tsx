@@ -1,10 +1,16 @@
+import { useState } from 'react'
 import Grid from '@mui/material/Grid'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 
 import InstrumentSelector from './InstrumentSelector'
+import RadarDial from './RadarDial'
+import { tuningPresets } from '@/utils/tunings'
 
 export default function Cockpit() {
+    const [instrument, setInstrument] = useState("guitar")
+    const tuning = tuningPresets[instrument] || []
+
     return (
         <Grid container spacing={4}>
             {/* Control Panel */}
@@ -15,7 +21,7 @@ export default function Cockpit() {
                     </Typography>
                     {/* TODO: Add Instrument, Tuning, View Mode, Radar*/}
                     <Box sx={{ mb: 2 }}>
-                        <InstrumentSelector />
+                        <InstrumentSelector onChange={setInstrument} />
                     </Box>
                 </Box>
             </Grid>
@@ -27,6 +33,7 @@ export default function Cockpit() {
                         Renderer Slab
                     </Typography>
                     {/* TODO: Add Tab/Staff/Both view */}
+                    <RadarDial tuning={tuning} />
                 </Box>
             </Grid>
         </Grid>
