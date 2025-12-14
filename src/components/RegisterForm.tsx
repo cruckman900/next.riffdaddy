@@ -43,7 +43,7 @@ export default function RegisterForm() {
         try {
             const res = await axios.post<UserRead>(`${process.env.NEXT_PUBLIC_API_URL}/users/`, data)
             setSuccess(true);
-            const user_id = res.data.user_id
+            const user_id = res.data.id
             const userData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}`)
             console.log("User Data", userData);
             login(userData.data)
