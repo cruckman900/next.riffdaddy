@@ -8,9 +8,9 @@ export default function RadarDial({
     tuning,
     showArcs,
     genre,
-    playedNotes = [] 
+    playedNotes = []
 
-} : {
+}: {
     tuning: string[],
     showArcs: boolean,
     genre: string,
@@ -71,7 +71,7 @@ export default function RadarDial({
                         const isActive = playedNotes.includes(pos.note) || playedNotes.includes(next.note)
 
                         return (
-                            <>
+                            <div key={i}>
                                 <defs>
                                     <filter id="glow">
                                         <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={genreColor} floodOpacity="0.8" />
@@ -90,7 +90,7 @@ export default function RadarDial({
                                     animate={{ opacity: isActive ? 1 : 0.4 }}
                                     transition={{ duration: 0.5, delay: i * 0.1 }}
                                 />
-                            </>
+                            </div>
                         )
                     })}
                 </svg>

@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from "react"
-import {Grid, Box, Divider, Paper, Typography } from "@mui/material"
+import { Grid, Box, Divider, Paper, Typography } from "@mui/material"
 import InstrumentSelector from "./InstrumentSelector"
 import TuningEditor from "./TuningEditor"
 import ViewToggle from "./ViewToggle"
@@ -22,7 +22,10 @@ const Slab = () => {
                         <Divider />
                         <Box>
                             <Typography variant="subtitle2">Instrument</Typography>
-                            <InstrumentSelector />
+                            <InstrumentSelector onChange={function (value: string): void {
+                                console.log(value);
+                                throw new Error("Function not implemented.")
+                            }} />
                         </Box>
                         <Box>
                             <Typography variant="subtitle2">Tuning</Typography>
