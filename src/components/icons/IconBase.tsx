@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import React from 'react';
 
-interface IconProps {
+export interface IconProps {
     active?: boolean;
     hovered?: boolean;
     size?: number;
