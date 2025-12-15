@@ -13,6 +13,7 @@ import DocumentWrapper from '@/components/DocumentWrapper'
 import './styles/globals.css'
 import { AuthProvider } from '@/context/AuthProvider'
 import { Marquee } from '@/components/Marquee'
+import { TabsProvider } from '@/context/TabsContext'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -26,11 +27,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                             <ThemeRegistry>
                                 <AuthProvider>
                                     <Header />
-                                    <Navbar />
-                                    <Marquee />
-                                    <main className="flex-1 overflow-y-auto flex min-h-0">
-                                        {children}
-                                    </main>
+                                    <TabsProvider>
+                                        <Navbar />
+                                        <Marquee />
+                                        <main className="flex-1 overflow-y-auto flex min-h-0">
+                                            {children}
+                                        </main>
+                                    </TabsProvider>
                                     <Footer />
                                     <ToastMount />
                                 </AuthProvider>

@@ -4,11 +4,11 @@
 import React, { useEffect } from 'react'
 import { Box, Button, List, ListItemButton, Typography } from '@mui/material'
 import { useRouter } from 'next/navigation'
-import { useTabs } from '@/context/TabsContext'
+import { useTabsStrict } from '@/context/TabsContext'
 
 export default function Landing() {
     const router = useRouter()
-    const tabs = useTabs()
+    const tabs = useTabsStrict()
 
     // Example: if user is authenticated, redirect to workspace automatically
     useEffect(() => {

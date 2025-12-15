@@ -3,10 +3,10 @@
 
 import React from "react"
 import { Box, Typography } from '@mui/material'
-import { useTabs } from "@/context/TabsContext"
+import { useTabsStrict } from "@/context/TabsContext"
 
 export default function TabContentRenderer() {
-    const tabs = useTabs()
+    const tabs = useTabsStrict()
     const active = tabs.activeTab
 
     if (!active) {

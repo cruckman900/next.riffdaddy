@@ -46,7 +46,7 @@ export default function LoginForm() {
             const userData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}`)
             console.log("User Data", userData);
             login(userData.data)
-            router.push("/tabs")
+            router.push("/workspace")
         } catch (err) {
             console.error("Login failed", err);
             setErrorMsg("Invalid credentials. Please try again.");

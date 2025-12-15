@@ -1,4 +1,7 @@
 // src/context/TabsContext.tsx
+// keep TabsContext creation, but export two hooks:
+// - useTabsStrict() throws (optional)
+// - useTabs() returns TabsApi | null (safe)
 'use client'
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
@@ -33,7 +36,13 @@ const STORAGE_KEY = 'app:tabs:v1'
 
 const TabsContext = createContext<TabsApi | null>(null)
 
+// safe hook: returns null when provider missing
 export function useTabs() {
+    return useContext(TabsContext)
+}
+
+// strict mode: throws if provider missing (use in components that must have provider)
+export function useTabsStrict(): TabsApi {
     const ctx = useContext(TabsContext)
     if (!ctx) throw new Error('useTabs must be used inside TabsProvider')
     return ctx
@@ -51,6 +60,42 @@ export const TabsProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch { }
         return { tabs: [], activeTabId: undefined, history: [] }
     })
+
+    useEffect(() => {
+        function onKey(e: KeyboardEvent) {
+            const isMac = navigator.platform.toLowerCase().includes('mac')
+            const mod = isMac ? e.metaKey : e.ctrlKey
+
+            // New tab: Ctrl/Cmd+T
+            if (mod && e.key.toLowerCase() === 't') {
+                e.preventDefault()
+                newTab({ title: 'Untitled', type: 'editor', payload: { content: '' } })
+                return
+            }
+
+            // Close tab: Ctrl/Cmd+W
+            if (mod && e.key.toLowerCase() === 'w') {
+                e.preventDefault()
+                if (state.activeTabId) closeTab(state.activeTabId)
+                return
+            }
+
+            // Switch tab: Ctrl/Cmd+Tab (and Shift for reverse)
+            if (mod && e.key === 'Tab') {
+                e.preventDefault()
+                const ids = state.tabs.map(t => t.id)
+                if (ids.length <= 1) return
+                const currentIndex = ids.indexOf(state.activeTabId || '')
+                const dir = e.shiftKey ? -1 : 1
+                const nextIndex = (currentIndex + dir + ids.length) % ids.length
+                switchTab(ids[nextIndex])
+                return
+            }
+        }
+
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+    }, [state.tabs, state.activeTabId])
 
     useEffect(() => {
         try {
