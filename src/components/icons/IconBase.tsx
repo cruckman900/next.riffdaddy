@@ -6,6 +6,9 @@ export interface IconProps {
     hovered?: boolean;
     size?: number;
     color?: string;
+}
+
+interface IconBaseProps extends IconProps {
     children: React.ReactNode;
 }
 
@@ -15,7 +18,7 @@ export function IconBase({
     size = 28,
     color,
     children,
-}: IconProps) {
+}: IconBaseProps) {
     // Color logic
     const defaultColor = "#7f8a99";
     const hoverColor = "#cfd8e3";
