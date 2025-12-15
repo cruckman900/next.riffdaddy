@@ -1,0 +1,45 @@
+'use client'
+
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Divider from '@mui/material/Divider'
+
+export function ToolTemplate({
+    title,
+    shortcut,
+    children,
+}: {
+    title: string
+    shortcut: string
+    children?: React.ReactNode
+}) {
+    return (
+        <Box display="flex" flexDirection="column" height="100%">
+            {/* Header */}
+            <Box
+                px={2}
+                py={1.5}
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{
+                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    bgcolor: 'rgba(255,255,255,0.03)',
+                }}
+            >
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {title}
+                </Typography>
+
+                <Typography variant="body2" sx={{ opacity: 0.6 }}>
+                    Shortcut: {shortcut}
+                </Typography>
+            </Box>
+
+            {/* Content */}
+            <Box flex={1} p={3} overflow="auto">
+                {children}
+            </Box>
+        </Box>
+    )
+}
