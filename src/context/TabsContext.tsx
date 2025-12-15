@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // src/context/TabsContext.tsx
 'use client'
 
@@ -22,6 +23,7 @@ type TabsApi = {
     activeTab?: Tab | undefined
     history: Tab[]
     newTab: (tab: Omit<Tab, 'id' | 'createdAt'>) => Tab
+    renameTab: (id: string, newtitle: string) => void
     openTab: (tab: Tab) => void
     switchTab: (id: string) => void
     closeTab: (id: string) => void
@@ -76,6 +78,15 @@ export const TabsProvider: React.FC<{ children: React.ReactNode }> = ({ children
             history: [tab, ...prev.history].slice(0, 50),
         }))
         return tab
+    }
+
+    const renameTab = (id: string, newTitle: string) => {
+        setState(prev => {
+            const tabs = prev.tabs.map(t =>
+                t.id === id ? { ...t, title: newTitle } : t
+            )
+            return { ...prev, tabs }
+        })
     }
 
     const openTab = (tab: Tab) => {
@@ -171,6 +182,7 @@ export const TabsProvider: React.FC<{ children: React.ReactNode }> = ({ children
             activeTab: state.tabs.find(t => t.id === state.activeTabId),
             history: state.history,
             newTab,
+            renameTab,
             openTab,
             switchTab,
             closeTab,

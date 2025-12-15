@@ -1,31 +1,31 @@
 // src/components/TabContentRenderer.tsx
 'use client'
-
-import React from "react"
+import { useTabs } from '@/context/TabsContext'
 import { Box, Typography } from '@mui/material'
-import { useTabsStrict } from "@/context/TabsContext"
 
 export default function TabContentRenderer() {
-    const tabs = useTabsStrict()
-    const active = tabs.activeTab
+    const tabs = useTabs()
+    const active = tabs?.activeTab
 
     if (!active) {
-        return <Box sx={{ p: 4 }}><Typography variant="h6">No tab open</Typography></Box>
+        return null
     }
 
     switch (active.type) {
         case 'editor':
             return (
-                <Box sx={{ p: 3 }}>
-                    <Typography variant="h6">{active.title}</Typography>
-                    <Typography variant="body2" color="text.secondary">Editor content placeholder</Typography>
+                <Box sx={{ p: 2 }}>
+                    {/* Replace this with your real editor */}
+                    <Typography variant="body1" color="text.secondary">
+                        Editor goes here…
+                    </Typography>
                 </Box>
             )
         case 'settings':
-            return <Box sx={{ p: 3 }}><Typography>Settings</Typography></Box>
+            return <Box sx={{ p: 2 }}>Settings panel</Box>
         case 'history':
-            return <Box sx={{ p: 3 }}><Typography>History</Typography></Box>
+            return <Box sx={{ p: 2 }}>History view</Box>
         default:
-            return <Box sx={{ p: 3 }}><Typography>Unknown tab type</Typography></Box>
+            return <Box sx={{ p: 2 }}>Unknown tab type</Box>
     }
 }
