@@ -2,7 +2,7 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthContext } from "@/context/AuthProvider"
-import Cockpit from "@/components/Cockpit"
+import Workbench from "@/components/Workbench"
 
 export default function TabsPage() {
     const { user } = useAuthContext()
@@ -15,6 +15,6 @@ export default function TabsPage() {
     }, [router, user])
 
     return (
-        <Cockpit />
+        <Workbench />
     )
 }
