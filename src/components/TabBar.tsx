@@ -65,7 +65,7 @@ export default function TabBar() {
 
     if (tabs.tabs.length === 0) {
         return (
-            <Box ref={containerRef} sx={{ display: 'flex', alignItems: 'center', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', px: 2, height: 48 }}>
+            <Box ref={containerRef} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', px: 2, height: 48 }}>
                 <Box sx={{ color: 'text.secondary' }}>No tabs open</Box>
             </Box>
         )
