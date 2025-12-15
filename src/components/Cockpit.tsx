@@ -17,7 +17,7 @@ export default function Cockpit() {
     const [useAlternate, setUseAlternate] = useState(false)
 
     // selectedTuningName may be set by user or auto-chosen
-    const [selectedTuningName, setSelectedTuningName] = useState('Drop D')
+    const [selectedTuningName, setSelectedTuningName] = useState('Standard')
     const [userSelectedTuning, setUserSelectedTuning] = useState(false) // <-- track manual selection
 
     const [newTuningName, setNewTuningName] = useState('')

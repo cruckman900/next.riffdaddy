@@ -1,15 +1,12 @@
 // src/context/TabsContext.tsx
-// keep TabsContext creation, but export two hooks:
-// - useTabsStrict() throws (optional)
-// - useTabs() returns TabsApi | null (safe)
 'use client'
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
 export type Tab = {
     id: string
     title: string
-    type: 'editor' | 'preview' | 'settings' | string
+    type: 'editor' | 'preview' | 'settings' | 'history' | string
     payload?: unknown
     createdAt: number
 }
@@ -17,7 +14,7 @@ export type Tab = {
 type TabsState = {
     tabs: Tab[]
     activeTabId?: string
-    history: Tab[] // recent closed/opened tabs
+    history: Tab[]
 }
 
 type TabsApi = {
@@ -30,18 +27,19 @@ type TabsApi = {
     closeTab: (id: string) => void
     reopenFromHistory: (id: string) => void
     clearHistory: () => void
+    reorderTabs: (fromIndex: number, toIndex: number) => void
 }
 
-const STORAGE_KEY = 'app:tabs:v1'
+const STORAGE_KEY = 'riffdaddy:tabs:v1'
 
 const TabsContext = createContext<TabsApi | null>(null)
 
-// safe hook: returns null when provider missing
-export function useTabs() {
+// safe hook: returns null if provider missing
+export function useTabs(): TabsApi | null {
     return useContext(TabsContext)
 }
 
-// strict mode: throws if provider missing (use in components that must have provider)
+// strict hook: throws if provider missing
 export function useTabsStrict(): TabsApi {
     const ctx = useContext(TabsContext)
     if (!ctx) throw new Error('useTabs must be used inside TabsProvider')
@@ -61,9 +59,79 @@ export const TabsProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { tabs: [], activeTabId: undefined, history: [] }
     })
 
+    // persist to localStorage
+    useEffect(() => {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+        } catch { }
+    }, [state])
+
+    // core actions
+    const newTab = (tabPartial: Omit<Tab, 'id' | 'createdAt'>) => {
+        const tab: Tab = { ...tabPartial, id: uid('tab_'), createdAt: Date.now() }
+        setState(prev => ({
+            ...prev,
+            tabs: [...prev.tabs, tab],
+            activeTabId: tab.id,
+            history: [tab, ...prev.history].slice(0, 50),
+        }))
+        return tab
+    }
+
+    const openTab = (tab: Tab) => {
+        setState(prev => {
+            const exists = prev.tabs.find(t => t.id === tab.id)
+            if (exists) {
+                return { ...prev, activeTabId: tab.id }
+            }
+            return {
+                ...prev,
+                tabs: [...prev.tabs, tab],
+                activeTabId: tab.id,
+                history: [tab, ...prev.history].slice(0, 50),
+            }
+        })
+    }
+
+    const switchTab = (id: string) => {
+        setState(prev => ({ ...prev, activeTabId: id }))
+    }
+
+    const closeTab = (id: string) => {
+        setState(prev => {
+            const tabs = prev.tabs.filter(t => t.id !== id)
+            const closed = prev.tabs.find(t => t.id === id)
+            const history = closed ? [closed, ...prev.history].slice(0, 50) : prev.history
+            let activeTabId = prev.activeTabId
+            if (activeTabId === id) {
+                activeTabId = tabs.length ? tabs[tabs.length - 1].id : undefined
+            }
+            return { ...prev, tabs, activeTabId, history }
+        })
+    }
+
+    const reopenFromHistory = (id: string) => {
+        const tab = state.history.find(h => h.id === id)
+        if (!tab) return
+        openTab({ ...tab, id: uid('tab_'), createdAt: Date.now() })
+    }
+
+    const clearHistory = () => setState(prev => ({ ...prev, history: [] }))
+
+    const reorderTabs = (fromIndex: number, toIndex: number) => {
+        setState(prev => {
+            const tabs = [...prev.tabs]
+            if (fromIndex < 0 || fromIndex >= tabs.length || toIndex < 0 || toIndex >= tabs.length) return prev
+            const [moved] = tabs.splice(fromIndex, 1)
+            tabs.splice(toIndex, 0, moved)
+            return { ...prev, tabs }
+        })
+    }
+
+    // keyboard shortcuts (global)
     useEffect(() => {
         function onKey(e: KeyboardEvent) {
-            const isMac = navigator.platform.toLowerCase().includes('mac')
+            const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform)
             const mod = isMac ? e.metaKey : e.ctrlKey
 
             // New tab: Ctrl/Cmd+T
@@ -85,7 +153,7 @@ export const TabsProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 e.preventDefault()
                 const ids = state.tabs.map(t => t.id)
                 if (ids.length <= 1) return
-                const currentIndex = ids.indexOf(state.activeTabId || '')
+                const currentIndex = Math.max(0, ids.indexOf(state.activeTabId || ''))
                 const dir = e.shiftKey ? -1 : 1
                 const nextIndex = (currentIndex + dir + ids.length) % ids.length
                 switchTab(ids[nextIndex])
@@ -96,64 +164,6 @@ export const TabsProvider: React.FC<{ children: React.ReactNode }> = ({ children
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
     }, [state.tabs, state.activeTabId])
-
-    useEffect(() => {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-        } catch { }
-    }, [state])
-
-    const newTab = (tabPartial: Omit<Tab, 'id' | 'createdAt'>) => {
-        const tab: Tab = { ...tabPartial, id: uid('tab_'), createdAt: Date.now() }
-        setState(prev => ({
-            ...prev,
-            tabs: [...prev.tabs, tab],
-            activeTabId: tab.id,
-            history: [tab, ...prev.history].slice(0, 50),
-        }))
-        return tab
-    }
-
-    const openTab = (tab: Tab) => {
-        // if already open, switch to it
-        const exists = state.tabs.find(t => t.id === tab.id)
-        if (exists) {
-            setState(prev => ({ ...prev, activeTabId: tab.id }))
-            return
-        }
-        setState(prev => ({
-            ...prev,
-            tabs: [...prev.tabs, tab],
-            activeTabId: tab.id,
-            history: [tab, ...prev.history].slice(0, 50),
-        }))
-    }
-
-    const switchTab = (id: string) => {
-        setState(prev => ({ ...prev, activeTabId: id }))
-    }
-
-    const closeTab = (id: string) => {
-        setState(prev => {
-            const tabs = prev.tabs.filter(t => t.id !== id)
-            const closed = prev.tabs.find(t => t.id !== id)
-            const history = closed ? [closed, ...prev.history].slice(0, 50) : prev.history
-            let activeTabId = prev.activeTabId
-            if (activeTabId === id) {
-                // pick the previous tab or the last one
-                activeTabId = tabs.length ? tabs[tabs.length - 1].id : undefined
-            }
-            return { ...prev, tabs, activeTabId, history }
-        })
-    }
-
-    const reopenFromHistory = (id: string) => {
-        const tab = state.history.find(h => h.id === id)
-        if (!tab) return
-        openTab({ ...tab, id: uid('tab_'), createdAt: Date.now() }) // reopen as new instance
-    }
-
-    const clearHistory = () => setState(prev => ({ ...prev, history: [] }))
 
     const api = useMemo(
         () => ({
@@ -166,6 +176,7 @@ export const TabsProvider: React.FC<{ children: React.ReactNode }> = ({ children
             closeTab,
             reopenFromHistory,
             clearHistory,
+            reorderTabs,
         }),
         [state]
     )

@@ -1,5 +1,5 @@
-// components/Navbar.tsx
-"use client"
+// src/components/Navbar.tsx
+'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -9,6 +9,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import Link from 'next/link'
 import LeftMenu from '@/components/LeftMenu'
+import NextLinkComposed from '@/components/NextLinkComposed'
 
 const Navbar = () => {
     const { user, logout } = useAuthContext()
@@ -74,20 +75,17 @@ const Navbar = () => {
                 </Toolbar>
             </AppBar>
 
-            {/* Left handler menu Drawer */}
             <Drawer anchor="left" open={leftOpen} onClose={() => setLeftOpen(false)}>
                 <Box sx={{ width: 260 }} role="presentation">
                     <LeftMenu onClose={() => setLeftOpen(false)} />
                 </Box>
             </Drawer>
 
-            {/* Right navigation Drawer */}
             <Drawer anchor="right" open={rightOpen} onClose={() => setRightOpen(false)}>
                 <Box sx={{ width: 250 }} role="presentation" onClick={() => setRightOpen(false)}>
                     <List>
                         {navItems.map(({ label, path }) => (
-                            // use component="a" to avoid ref forwarding issues
-                            <ListItemButton key={label} component="a" href={path}>
+                            <ListItemButton key={label} component={NextLinkComposed} href={path}>
                                 <ListItemText primary={label} />
                             </ListItemButton>
                         ))}

@@ -1,5 +1,5 @@
-// components/LeftMenu.tsx
-"use client"
+// src/components/LeftMenu.tsx
+'use client'
 
 import React from 'react'
 import { List, ListItemButton, ListItemIcon, ListItemText, Divider, Box } from '@mui/material'
@@ -11,24 +11,20 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import { useTabs } from '@/context/TabsContext'
 
 export default function LeftMenu({ onClose }: { onClose?: () => void }) {
-    const tabs = useTabs() // always call the hook
+    const tabs = useTabs()
 
     if (!tabs) {
-        // provider missing — render fallback UI
         return (
             <Box sx={{ p: 2 }}>
                 <List>
-                    <ListItemButton onClick={onClose}>
-                        <ListItemText primary="No workspace available" />
-                    </ListItemButton>
+                    <ListItemButton onClick={onClose}><ListItemText primary="No workspace available" /></ListItemButton>
                 </List>
             </Box>
         )
     }
 
-    // provider present - normal menu
     return (
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ p: 1 }}>
             <List>
                 <ListItemButton onClick={() => { tabs.newTab({ title: 'Untitled', type: 'editor', payload: { content: '' } }); onClose?.() }}>
                     <ListItemIcon><CreateNewFolderIcon /></ListItemIcon>
