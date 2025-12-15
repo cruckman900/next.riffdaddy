@@ -14,9 +14,9 @@ export function ToolPanelManager({ activeTool }: ToolPanelManagerProps) {
         <div
             style={{
                 flex: 1,
-                padding: "20px",
+                height: "100%",
                 overflowY: "auto",
-                height: "100vh",
+                padding: "20px",
                 background: "#0f1114",
                 color: "#e5e7eb",
             }}

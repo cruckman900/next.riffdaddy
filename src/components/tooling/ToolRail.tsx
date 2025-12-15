@@ -11,6 +11,7 @@ export function ToolRail({ activeToolId, setActiveTool }: ToolRailProps) {
         <div
             style={{
                 width: "60px",
+                height: "100%",
                 background: "#1a1d21",
                 borderRight: "1px solid #2a2f35",
                 display: "flex",
@@ -18,10 +19,6 @@ export function ToolRail({ activeToolId, setActiveTool }: ToolRailProps) {
                 alignItems: "center",
                 paddingTop: "12px",
                 gap: "12px",
-                position: "fixed",
-                left: 0,
-                top: 0,
-                bottom: 0,
             }}
         >
             {TOOL_ORDER.map((id) => {

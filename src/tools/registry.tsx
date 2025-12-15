@@ -15,11 +15,11 @@ export interface ToolDefinition {
 }
 
 import { CockpitTool } from "@/components/tools/CockpitTool";
-import { NoteEntryTool } from "@/components/tools/NoteTool";
-import { RestEntryTool } from "@/components/tools/RestTool";
-import { TimeSignatureTool } from "@/components/tools/TimeSignatureTool";
-import { KeySignatureTool } from "@/components/tools/KeySignatureTool";
-import { PlaybackTool } from "@/components/tools/PlaybackTool";
+// import { NoteEntryTool } from "@/components/tools/NoteTool";
+// import { RestEntryTool } from "@/components/tools/RestTool";
+// import { TimeSignatureTool } from "@/components/tools/TimeSignatureTool";
+// import { KeySignatureTool } from "@/components/tools/KeySignatureTool";
+// import { PlaybackTool } from "@/components/tools/PlaybackTool";
 
 export const TOOL_REGISTRY: Record<string, ToolDefinition> = {
     cockpit: {
@@ -28,43 +28,43 @@ export const TOOL_REGISTRY: Record<string, ToolDefinition> = {
         icon: CockpitIcon,
         component: CockpitTool,
     },
-    notes: {
-        id: "notes",
-        label: "Note Entry",
-        icon: NoteIcon,
-        component: NoteEntryTool,
-    },
-    rests: {
-        id: "rests",
-        label: "Rest Entry",
-        icon: RestIcon,
-        component: RestEntryTool,
-    },
-    time: {
-        id: "time",
-        label: "Time Signature",
-        icon: TimeSignatureIcon,
-        component: TimeSignatureTool,
-    },
-    key: {
-        id: "key",
-        label: "Key Signature",
-        icon: KeySignatureIcon,
-        component: KeySignatureTool,
-    },
-    playback: {
-        id: "playback",
-        label: "Playback Controls",
-        icon: PlaybackIcon,
-        component: PlaybackTool,
-    },
+    // notes: {
+    //     id: "notes",
+    //     label: "Note Entry",
+    //     icon: NoteIcon,
+    //     component: NoteEntryTool,
+    // },
+    // rests: {
+    //     id: "rests",
+    //     label: "Rest Entry",
+    //     icon: RestIcon,
+    //     component: RestEntryTool,
+    // },
+    // time: {
+    //     id: "time",
+    //     label: "Time Signature",
+    //     icon: TimeSignatureIcon,
+    //     component: TimeSignatureTool,
+    // },
+    // key: {
+    //     id: "key",
+    //     label: "Key Signature",
+    //     icon: KeySignatureIcon,
+    //     component: KeySignatureTool,
+    // },
+    // playback: {
+    //     id: "playback",
+    //     label: "Playback Controls",
+    //     icon: PlaybackIcon,
+    //     component: PlaybackTool,
+    // },
 };
 
 export const TOOL_ORDER: string[] = [
     "cockpit",
-    "notes",
-    "rests",
-    "time",
-    "key",
-    "playback",
+    // "notes",
+    // "rests",
+    // "time",
+    // "key",
+    // "playback",
 ];

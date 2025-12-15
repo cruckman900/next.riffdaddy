@@ -1,3 +1,5 @@
+'use client'
+
 import YearClient from "./YearClient"
 
 export default function Footer() {
