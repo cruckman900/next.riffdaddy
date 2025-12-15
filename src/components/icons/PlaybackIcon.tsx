@@ -1,6 +1,6 @@
 import { IconBase, IconProps } from './IconBase';
 
-export function NoteIcon(props: IconProps) {
+export function PlaybackIcon(props: IconProps) {
     return (
         <IconBase {...props}>
             <circle cx="12" cy="12" r="9" />

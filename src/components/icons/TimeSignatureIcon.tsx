@@ -1,6 +1,6 @@
 import { IconBase, IconProps } from './IconBase';
 
-export function NoteIcon(props: IconProps) {
+export function TimeSignatureIcon(props: IconProps) {
     return (
         <IconBase {...props}>
             <path d="M7 4v16" />
