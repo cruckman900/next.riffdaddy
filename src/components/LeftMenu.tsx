@@ -26,7 +26,10 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
     return (
         <Box sx={{ p: 1 }}>
             <List>
-                <ListItemButton onClick={() => { tabs.newTab({ title: 'Untitled', type: 'editor', payload: { content: '' } }); onClose?.() }}>
+                <ListItemButton onClick={() => {
+                    tabs.newTab({ title: 'Untitled', type: 'editor', payload: { content: '' } })
+                    onClose?.()
+                }}>
                     <ListItemIcon><CreateNewFolderIcon /></ListItemIcon>
                     <ListItemText primary="File New" />
                 </ListItemButton>
