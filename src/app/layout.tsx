@@ -17,7 +17,7 @@ import { Marquee } from '@/components/Marquee'
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
-            <body className="h-screen flex flex-col dark:bg-purple-500 dark:text-black bg-gray-700 text-white">
+            <body className="min-h-screen flex flex-col dark:bg-purple-500 dark:text-black bg-gray-700 text-white">
                 <ThemeProvider>
                     <DocumentWrapper>
                         {/* <ThemeSwitcher /> */}
@@ -28,7 +28,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                                     <Header />
                                     <Navbar />
                                     <Marquee />
-                                    <main className="flex-1 flex min-h-0">
+                                    <main className="flex-1 overflow-y-auto flex min-h-0">
                                         {children}
                                     </main>
                                     <Footer />

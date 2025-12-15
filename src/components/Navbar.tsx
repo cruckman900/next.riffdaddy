@@ -1,5 +1,6 @@
 // components/Navbar.tsx
 "use client"
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/context/AuthProvider';

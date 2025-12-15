@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react';
 import { IconProps } from '@/components/icons/IconBase';
 import { Tooltip } from './Tooltip';
