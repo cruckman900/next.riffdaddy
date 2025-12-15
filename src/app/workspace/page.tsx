@@ -13,7 +13,7 @@ export default function Workspace() {
             <Box sx={{ display: 'flex', height: '100vh', pt: '64px' }}>
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <TabBar />
-                    <Box sx={{ flex: 1, overflow: 'auto' }}>
+                    <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
                         <TabContentRenderer />
                     </Box>
                 </Box>
