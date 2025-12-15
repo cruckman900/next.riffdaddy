@@ -58,40 +58,39 @@ export default function RadarDial({
         >
             {/* SVG Arc Layer */}
             {showArcs && (
-                <svg
-                    width="200"
-                    height="200"
-                    style={{ position: 'absolute', top: 0, left: 0 }}
-                >
-                    {/* TOOD: Add arcs between note positions */}
+                <svg width="200" height="200" style={{ position: 'absolute', top: 0, left: 0 }}>
+                    {/* create defs once as direct children of svg */}
+                    <defs>
+                        {notePositions.map((_, i) => (
+                            <filter id={`glow-${i}`} key={`filter-${i}`}>
+                                <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={genreColor} floodOpacity="0.8" />
+                            </filter>
+                        ))}
+                    </defs>
+
                     {notePositions.map((pos, i) => {
-                        const next = notePositions[(i + 1) % notePositions.length]
-                        const semitoneDistance = Math.abs(noteIndexMap[pos.note] - noteIndexMap[next.note]) % 12
-                        const strokeColor = harmonicColors[semitoneDistance] || '#ccc'
-                        const isActive = playedNotes.includes(pos.note) || playedNotes.includes(next.note)
+                        const next = notePositions[(i + 1) % notePositions.length];
+                        const semitoneDistance = Math.abs(noteIndexMap[pos.note] - noteIndexMap[next.note]) % 12;
+                        const strokeColor = harmonicColors[semitoneDistance] || '#ccc';
+                        const isActive = playedNotes.includes(pos.note) || playedNotes.includes(next.note);
 
                         return (
-                            <div key={i}>
-                                <defs>
-                                    <filter id="glow">
-                                        <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={genreColor} floodOpacity="0.8" />
-                                    </filter>
-                                </defs>
-                                <motion.line
-                                    key={`${pos.note}-${next.note}`}
-                                    x1={pos.x}
-                                    y1={pos.y}
-                                    x2={next.x}
-                                    y2={next.y}
-                                    stroke={strokeColor}
-                                    strokeWidth={isActive ? 3 : 1}
-                                    filter="url(#glow)"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: isActive ? 1 : 0.4 }}
-                                    transition={{ duration: 0.5, delay: i * 0.1 }}
-                                />
-                            </div>
-                        )
+                            <motion.line
+                                key={`${pos.note}-${next.note}`}
+                                x1={pos.x}
+                                y1={pos.y}
+                                x2={next.x}
+                                y2={next.y}
+                                stroke={strokeColor}
+                                strokeWidth={isActive ? 3 : 1}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                filter={`url(#glow-${i})`}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: isActive ? 1 : 0.4 }}
+                                transition={{ duration: 0.5, delay: i * 0.05 }}
+                            />
+                        );
                     })}
                 </svg>
             )}

@@ -1,82 +1,145 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Grid from '@mui/material/Grid'
 import Box from '@mui/material/Box'
 import Collapse from '@mui/material/Collapse'
 import Typography from '@mui/material/Typography'
-
 import InstrumentSelector from './InstrumentSelector'
 import RadarDial from './RadarDial'
 import { tuningPresets, alternateTunings, Tuning } from '@/utils/tunings'
 import { Button, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, TextField } from '@mui/material'
 
 export default function Cockpit() {
-    const [instrument, setInstrument] = useState("guitar")
+    // --- UI state
+    const [instrument, setInstrument] = useState('guitar')
     const [showArcs, setShowArcs] = useState(true)
     const [useAlternate, setUseAlternate] = useState(false)
+
+    // selectedTuningName may be set by user or auto-chosen
     const [selectedTuningName, setSelectedTuningName] = useState('Drop D')
+    const [userSelectedTuning, setUserSelectedTuning] = useState(false) // <-- track manual selection
 
     const [newTuningName, setNewTuningName] = useState('')
     const [newTuningNotes, setNewTuningNotes] = useState('')
     const [newTuningGenre, setNewTuningGenre] = useState('')
 
     const [selectedGenre, setSelectedGenre] = useState('All')
-
-    const [showCustomTuningForm, setShowCustomTuningForm] = useState(false);
+    const [showCustomTuningForm, setShowCustomTuningForm] = useState(false)
     const [userTunings, setUserTunings] = useState<Tuning[]>([])
+    const [playedNotes, setPlayedNotes] = useState<string[]>([])
 
-    const rawOptions = [
-        ...(useAlternate ? alternateTunings[instrument] || [] : [{ name: 'Standard', notes: tuningPresets[instrument] || [] }]),
+    // --- compute raw options and filtered options
+    const rawOptions = useMemo(() => [
+        ...(useAlternate ? (alternateTunings[instrument] || []) : [{ name: 'Standard', notes: tuningPresets[instrument] || [], genre: 'Standard' }]),
         ...userTunings,
-    ];
+    ], [instrument, useAlternate, userTunings])
 
-    const tuningOptions =
-        selectedGenre === 'All'
-            ? rawOptions
-            : rawOptions.filter((t) => t.genre === selectedGenre);
+    const tuningOptions = useMemo(() => {
+        return selectedGenre === 'All' ? rawOptions : rawOptions.filter(t => t.genre === selectedGenre)
+    }, [rawOptions, selectedGenre])
 
-    const selectedTuning =
-        tuningOptions.find((t) => t.name === selectedTuningName) || tuningOptions[0] || {
-            name: 'Unknown',
-            notes: [],
-            description: 'No tuning available',
-        };
+    // --- helper: choose a default tuning name from available options
+    function getDefaultTuningName(options: Tuning[], instrumentName: string) {
+        if (!options || options.length === 0) return ''
+        // Prefer common names if present
+        const preferred = ['Drop D', 'Standard', 'Open G', 'DADGAD']
+        for (const p of preferred) {
+            const found = options.find(o => o.name.toLowerCase() === p.toLowerCase())
+            if (found) return found.name
+        }
+        // fallback: if there's an option whose notes match the preset, prefer it
+        const presetNotes = tuningPresets[instrumentName] || []
+        const matchPreset = options.find(o => JSON.stringify(o.notes) === JSON.stringify(presetNotes))
+        if (matchPreset) return matchPreset.name
+        // otherwise return the first available option
+        return options[0].name
+    }
 
+    // --- keep selectedTuningName valid when options change
+    useEffect(() => {
+        // if current selection is missing from options, pick a default
+        const exists = tuningOptions.some(t => t.name === selectedTuningName)
+        if (!exists) {
+            const defaultName = getDefaultTuningName(tuningOptions, instrument)
+            setSelectedTuningName(defaultName)
+            setUserSelectedTuning(false) // we auto-picked it
+        }
+        // otherwise do nothing (keep user's selection)
+    }, [tuningOptions, selectedTuningName, instrument])
+
+    // --- when instrument / useAlternate / genre change, re-evaluate default if user hasn't chosen manually
+    useEffect(() => {
+        if (userSelectedTuning) return // respect user's explicit choice
+        const defaultName = getDefaultTuningName(tuningOptions, instrument)
+        if (defaultName && defaultName !== selectedTuningName) {
+            setSelectedTuningName(defaultName)
+        }
+    }, [instrument, useAlternate, selectedGenre, tuningOptions, userSelectedTuning, selectedTuningName])
+
+    // --- when user picks a tuning from the Select, mark it as user-selected
+    const handleTuningSelect = (value: string) => {
+        setSelectedTuningName(value)
+        setUserSelectedTuning(true)
+    }
+
+    // --- add custom tuning
     const handleAddTuning = () => {
-        const notes = newTuningNotes.split(',')
+        const notes = newTuningNotes.split(',').map(n => n.trim()).filter(Boolean)
         const newTuning: Tuning = {
-            name: newTuningName,
+            name: newTuningName || `Tuning ${userTunings.length + 1}`,
             notes,
-            genre: newTuningGenre,
+            genre: newTuningGenre || 'User',
             description: 'User-defined tuning',
         }
-        setUserTunings([...userTunings, newTuning])
+        setUserTunings(prev => [...prev, newTuning])
         setSelectedTuningName(newTuning.name)
+        setUserSelectedTuning(true)
         setNewTuningName('')
         setNewTuningNotes('')
         setNewTuningGenre('')
     }
 
-    const [playedNotes, setPlayedNotes] = useState<string[]>([])
+    // --- optional: reset defaults (clears manual selection)
+    const resetToDefaults = () => {
+        setInstrument('guitar')
+        setShowArcs(true)
+        setUseAlternate(false)
+        setSelectedGenre('All')
+        setUserTunings([])
+        setUserSelectedTuning(false)
+        // compute default for the default instrument
+        const defaultName = getDefaultTuningName([
+            { name: 'Standard', notes: tuningPresets['guitar'] || [], genre: 'Standard' }
+        ], 'guitar')
+        setSelectedTuningName(defaultName)
+    }
+
+    const selectedTuning = tuningOptions.find(t => t.name === selectedTuningName) || tuningOptions[0] || { name: 'Unknown', notes: [], description: 'No tuning available' }
 
     return (
         <Grid spacing={4}>
-            {/* Control Panel (non-printable) */}
             <Grid item xs={12} md={4}>
                 <Box className="print:hidden" sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 3 }}>
                     <Box sx={{ mb: 2 }}>
-                        <InstrumentSelector onChange={setInstrument} />
+                        {/* pass value so InstrumentSelector can show current instrument */}
+                        <InstrumentSelector value={instrument} onChange={(val) => {
+                            setInstrument(val)
+                            setUserSelectedTuning(false) // allow auto-defaulting after instrument change
+                        }} />
                     </Box>
 
                     <FormControlLabel
                         sx={{ color: 'text.primary' }}
-                        control={<Switch checked={showArcs} onChange={() => setShowArcs(!showArcs)} />}
+                        control={<Switch checked={showArcs} onChange={() => setShowArcs(s => !s)} />}
                         label="Show Harmonic Arcs"
                     />
                     <FormControlLabel
                         sx={{ color: 'text.primary' }}
-                        control={<Switch checked={useAlternate} onChange={() => setUseAlternate(!useAlternate)} />}
+                        control={<Switch checked={useAlternate} onChange={() => {
+                            setUseAlternate(s => !s)
+                            setUserSelectedTuning(false) // re-evaluate default when toggling alternate
+                        }} />}
                         label="Use Alternate Tuning"
                     />
 
@@ -86,7 +149,10 @@ export default function Cockpit() {
                             labelId="genre-label"
                             value={selectedGenre}
                             label="Genre"
-                            onChange={(e) => setSelectedGenre(e.target.value)}
+                            onChange={(e) => {
+                                setSelectedGenre(e.target.value as string)
+                                setUserSelectedTuning(false) // re-evaluate default when genre changes
+                            }}
                         >
                             <MenuItem value="All">All</MenuItem>
                             <MenuItem value="Rock/Metal">Rock/Metal</MenuItem>
@@ -103,7 +169,7 @@ export default function Cockpit() {
                             labelId="tuning-label"
                             value={selectedTuningName}
                             label="Tuning"
-                            onChange={(e) => setSelectedTuningName(e.target.value)}
+                            onChange={(e) => handleTuningSelect(e.target.value as string)}
                         >
                             {tuningOptions.length === 0 ? (
                                 <MenuItem disabled>No tunings available</MenuItem>
@@ -118,13 +184,10 @@ export default function Cockpit() {
                     </FormControl>
 
                     <Box sx={{ mt: 2 }}>
-                        <Button
-                            variant="outlined"
-                            onClick={() => setShowCustomTuningForm(!showCustomTuningForm)}
-                            sx={{ mb: 1 }}
-                        >
+                        <Button variant="outlined" onClick={() => setShowCustomTuningForm(s => !s)} sx={{ mb: 1 }}>
                             {showCustomTuningForm ? 'Hide Custom Tuning Form' : 'Add Custom Tuning'}
                         </Button>
+                        <Button variant="text" onClick={resetToDefaults} sx={{ ml: 2 }}>Reset Defaults</Button>
                     </Box>
 
                     <Collapse in={showCustomTuningForm}>

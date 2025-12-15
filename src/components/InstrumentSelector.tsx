@@ -1,6 +1,5 @@
 // /components/InstrumentSelector.tsx
-
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { instruments } from "@/utils/instruments"
 import {
     FormControl,
@@ -10,15 +9,30 @@ import {
     ListItemIcon,
     ListItemText,
     Box,
+    SelectChangeEvent,
 } from '@mui/material'
 import { motion } from "framer-motion"
 
-export default function InstrumentSelector({ onChange }: { onChange: (value: string) => void }) {
-    const [selected, setSelected] = useState("Guitar")
+type Props = {
+    value?: string
+    onChange: (value: string) => void
+}
 
-    const handleChange = (value: string) => {
-        setSelected(value)
-        onChange(value)
+export default function InstrumentSelector({ value, onChange }: Props) {
+    // internal state used when parent doesn't fully control the component
+    const [selected, setSelected] = useState<string>(value ?? "Guitar")
+
+    // keep internal state in sync when parent provides a value
+    useEffect(() => {
+        if (typeof value === 'string' && value !== selected) {
+            setSelected(value)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value])
+
+    const handleChange = (val: string) => {
+        setSelected(val)
+        onChange(val)
     }
 
     return (
@@ -33,25 +47,25 @@ export default function InstrumentSelector({ onChange }: { onChange: (value: str
                     labelId="instrument-label"
                     value={selected}
                     label="Choose Instrument"
-                    onChange={(e) => handleChange(e.target.value)}
-                    renderValue={() => {
-                        const inst = instruments.find((i) => i.value === selected);
+                    onChange={(e: SelectChangeEvent<string>) => handleChange(e.target.value as string)}
+                    renderValue={(val) => {
+                        const inst = instruments.find((i) => i.value === (val ?? selected))
                         return (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 {inst?.icon && <inst.icon />}
                                 {inst?.label}
                             </Box>
-                        );
+                        )
                     }}
                 >
-                    {instruments.map(({ value, label, icon: Icon }) => (
-                        <MenuItem key={value} value={value}>
+                    {instruments.map(({ value: v, label, icon: Icon }) => (
+                        <MenuItem key={v} value={v}>
                             <ListItemIcon><Icon /></ListItemIcon>
                             <ListItemText primary={label} />
                         </MenuItem>
                     ))}
                 </Select>
             </FormControl>
-        </motion.div >
+        </motion.div>
     )
 }

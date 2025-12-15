@@ -29,7 +29,8 @@ export default function Workbench() {
             style={{
                 display: "flex",
                 flexDirection: "column",
-                minHeight: isMobile ? 0 : "100%",
+                height: "100%",
+                // minHeight: isMobile ? 0 : "100%",
                 width: "100%",
             }}
         >
@@ -40,7 +41,8 @@ export default function Workbench() {
                     display: "flex",
                     flexDirection: "row",
                     width: "100%",
-                    height: "100%",
+                    height: isMobile ? "100%" : 'calc(100vh - 13.55rem)',
+                    minHeight: isMobile ? 0 : "100%",
                     flexShrink: 0,
                     borderBottom: "1px solid #2a2f35",
                 }}
