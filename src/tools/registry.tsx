@@ -5,15 +5,7 @@ import { RestIcon } from "@/components/icons/RestIcon"
 import { TimeSignatureIcon } from "@/components/icons/TimeSignatureIcon"
 import { KeySignatureIcon } from "@/components/icons/KeySignatureIcon"
 import { PlaybackIcon } from "@/components/icons/PlaybackIcon"
-
-// Tool component types
-export interface ToolDefinition {
-    id: string
-    label: string
-    icon: (props: IconProps) => JSX.Element
-    component: React.ComponentType<unknown>
-    shortcut?: string
-}
+import { ToolProps } from "@/types/tooling"
 
 import { CockpitTool } from "@/components/tools/CockpitTool"
 import { NoteEntryTool } from "@/components/tools/NoteEntryTool"
@@ -22,7 +14,7 @@ import { TimeSignatureTool } from "@/components/tools/TimeSignatureTool"
 import { KeySignatureTool } from "@/components/tools/KeySignatureTool"
 import { PlaybackTool } from "@/components/tools/PlaybackTool"
 
-export const TOOL_REGISTRY: Record<string, ToolDefinition> = {
+export const TOOL_REGISTRY: Record<string, { id: string; label: string; icon: (props: IconProps) => JSX.Element; shortcut: string; component: React.ComponentType<ToolProps> }> = {
     cockpit: {
         id: "cockpit",
         label: "Instrument & Tuning",

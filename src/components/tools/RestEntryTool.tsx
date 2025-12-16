@@ -1,34 +1,25 @@
 'use client'
 
 import { ToolTemplate } from "./ToolTemplate"
-import Grid from '@mui/material/Grid'
-import Button from '@mui/material/Button'
-import Typography from '@mui/material/Typography'
+import { useMusic } from '@/context/MusicContext'
+import { Button, Typography } from '@mui/material'
+import { ToolProps } from '@/types/tooling'
 
-export function RestEntryTool() {
+export function RestEntryTool({ measureId, duration }: ToolProps) {
+    const { addNote } = useMusic()
+    const dur = duration ?? 'q'
+    const mid = measureId ?? ''
+
+    const handleAddRest = () => {
+        addNote(mid, { duration: dur })
+    }
+
     return (
         <ToolTemplate title="Rest Entry" shortcut="3">
-            <Typography variant="body1" mb={2}>
-                Select a rest duration to insert into the score.
-            </Typography>
-
-            <Grid container spacing={2}>
-                <Grid item xs={12}>
-                    <Button fullWidth variant="contained">Whole Rest</Button>
-                </Grid>
-                <Grid item xs={12}>
-                    <Button fullWidth variant="contained">Half Rest</Button>
-                </Grid>
-                <Grid item xs={12}>
-                    <Button fullWidth variant="contained">Quarter Rest</Button>
-                </Grid>
-                <Grid item xs={12}>
-                    <Button fullWidth variant="contained">Eighth Rest</Button>
-                </Grid>
-                <Grid item xs={12}>
-                    <Button fullWidth variant="contained">Sixteenth Rest</Button>
-                </Grid>
-            </Grid>
+            <Typography variant="body1" mb={2}>Insert a {dur} rest.</Typography>
+            <Button fullWidth variant="contained" onClick={handleAddRest}>
+                Add Rest
+            </Button>
         </ToolTemplate>
     )
 }

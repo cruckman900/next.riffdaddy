@@ -1,25 +1,27 @@
 'use client'
 
 import { ToolTemplate } from "./ToolTemplate"
-import Grid from '@mui/material/Grid'
-import Button from '@mui/material/Button'
-import Typography from '@mui/material/Typography'
+import { useMusic } from '@/context/MusicContext'
+import { Button, Typography } from '@mui/material'
+import { ToolProps } from "@/types/tooling"
 
-export function TimeSignatureTool() {
+export function TimeSignatureTool({ measureId }: ToolProps) {
+    const { measures } = useMusic()
+    const mid = measureId ?? ''
+
+    const measure = measures.find(m => m.id === mid)
+
+    const handleChangeTS = (ts: string) => {
+        if (!measure) return
+        measure.timeSignature = ts
+    }
+
     return (
-        <ToolTemplate title="Time Signature" shortcut="4">
-            <Typography variant="body1" mb={2}>
-                Choose a time signature for your composition.
-            </Typography>
-
-            <Grid container spacing={2}>
-                <Grid item xs={12}><Button fullWidth variant="contained">4 / 4</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">3 / 4</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">2 / 4</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">6 / 8</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">5 / 4</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">7 / 8</Button></Grid>
-            </Grid>
+        <ToolTemplate title="Time Signature Tool" shortcut="5">
+            <Typography variant="body1" mb={2}>Change time signature for this measure.</Typography>
+            <Button onClick={() => handleChangeTS('3/4')}>3/4</Button>
+            <Button onClick={() => handleChangeTS('6/8')}>6/8</Button>
+            <Button onClick={() => handleChangeTS('4/4')}>4/4</Button>
         </ToolTemplate>
     )
 }

@@ -11,7 +11,7 @@ export default function ScorePreview() {
     const [viewMode, setViewMode] = useState<'tab' | 'staff' | 'both'>('tab')
 
     return (
-        <Box height="100%" overflow="auto" p="20px">
+        <Box height="100%" overflow="auto" p="10px">
             {/* Renderer Slab (printable) */}
             <Grid item xs={12} md={8}>
                 <Box sx={{ p: 2, bgcolor: 'white', borderRadius: 2, boxShadow: 1 }}>
@@ -60,37 +60,15 @@ export default function ScorePreview() {
 
                     {/* Printable Renderers */}
                     {viewMode === 'tab' && (
-                        <TabRenderer
-                            tuning={["E4", "B3", "G3", "D3", "A2", "E2"]}
-                            notes={[
-                                { str: 1, fret: 3, duration: "q" },
-                                { str: 2, fret: 0, duration: "q" },
-                                { str: 3, fret: 0, duration: "q" },
-                                { str: 4, fret: 2, duration: "q" },
-                            ]}
-                        />
+                        <TabRenderer />
                     )}
                     {viewMode === 'staff' && (
-                        <StaffRenderer
-                            notes={["C4", "E4", "C5", "C5"]}
-                            timeSignature={"4/4"}
-                        />
+                        <StaffRenderer />
                     )}
                     {viewMode === 'both' && (
                         <>
-                            <TabRenderer
-                                tuning={["E4", "B3", "G3", "D3", "A2", "E2"]}
-                                notes={[
-                                    { str: 1, fret: 3, duration: "q" },
-                                    { str: 2, fret: 0, duration: "q" },
-                                    { str: 3, fret: 0, duration: "q" },
-                                    { str: 4, fret: 2, duration: "q" },
-                                ]}
-                            />
-                            <StaffRenderer
-                                notes={["C4", "E4", "C5", "C5"]}
-                                timeSignature={"4/4"}
-                            />
+                            <TabRenderer />
+                            <StaffRenderer />
                         </>
                     )}
                 </Box>

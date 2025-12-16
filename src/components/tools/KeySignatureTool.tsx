@@ -1,10 +1,9 @@
 'use client'
 
 import { ToolTemplate } from "./ToolTemplate"
-import Grid from '@mui/material/Grid'
-import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
+import Link from '@mui/material/Link'
 
 export function KeySignatureTool() {
     const keys = [
@@ -18,28 +17,31 @@ export function KeySignatureTool() {
         "F Major / D Minor",
     ]
 
+    const handleSelect = (label: string) => {
+        // TODO: integrate with MusicContext (e.g. setKeySignature(label))
+        console.log("Selected key signature:", label)
+    }
+
     return (
-        <ToolTemplate title="Key Signature" shortcut="5">
-            <Typography variant="body2" sx={{ mb: 2 }}>
+        <ToolTemplate title="Key Signature" shortcut="6">
+            <Typography variant="body2" sx={{ mb: 1, opacity: 0.7 }}>
                 Select a key signature:
             </Typography>
 
-            <Box>
-                <Grid container spacing={2}>
-                    {keys.map((label, i) => (
-                        <Grid item xs={12} key={i}>
-                            <Button
-                                fullWidth
-                                variant="contained"
-                                size="small"
-                                sx={{ textTransform: 'none' }}
-                            >
-                                {label}
-                            </Button>
-                        </Grid>
-                    ))}
-                </Grid>
-            </Box>
+            <Stack spacing={1}>
+                {keys.map((label) => (
+                    <Link
+                        key={label}
+                        component="button"
+                        variant="body2"
+                        underline="hover"
+                        onClick={() => handleSelect(label)}
+                        sx={{ textAlign: 'left', cursor: 'pointer' }}
+                    >
+                        {label}
+                    </Link>
+                ))}
+            </Stack>
         </ToolTemplate>
     )
 }

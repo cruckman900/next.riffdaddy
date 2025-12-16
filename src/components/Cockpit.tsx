@@ -122,7 +122,7 @@ export default function Cockpit() {
     const selectedTuning = tuningOptions.find(t => t.name === selectedTuningName) || tuningOptions[0] || { name: 'Unknown', notes: [], description: 'No tuning available' }
 
     return (
-        <Grid spacing={4} height="100%">
+        <Grid spacing={4} height="89%">
             <Grid item xs={12} md={4} height="100%">
                 <Box className="print:hidden" height="100%" sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 3, overflowY: 'auto' }}>
                     <Box sx={{ mb: 2 }}>
@@ -204,7 +204,7 @@ export default function Cockpit() {
                         </Box>
                     </Collapse>
 
-                    <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+                    <Box sx={{ p: 1, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
                         <Typography variant="subtitle1">{selectedTuning.name}</Typography>
                         <Typography variant='body2' color="text.secondary">
                             {selectedTuning.description}
