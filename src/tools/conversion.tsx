@@ -17,7 +17,7 @@ export function computeTabFromPitch(pitch: string, tuning: string[]) {
     return { string: best.string, fret: best.fret }
 }
 
-export function computePitchFromTab(string: number, fret: number, tuning: string[]) {
+export function computePitchFromTab(string: number, fret: number, tuning: string[]): string {
     const openPitch = tuning[string - 1]
     const midi = pitchToMidi(openPitch) + fret
     return midiToPitch(midi)

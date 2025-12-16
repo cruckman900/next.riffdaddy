@@ -1,72 +1,76 @@
-'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+'use client'
 
-import { useState, useEffect, useRef } from 'react';
-import { Factory } from 'vexflow';
+import { useEffect, useRef } from 'react'
+import { Factory } from 'vexflow'
+import { Typography } from '@mui/material'
+import { useMusic } from '@/context/MusicContext'
+import { beatsRemaining } from '@/utils/musicUtils'
 
-interface TabRendererProps {
-  tuning: string[]; // e.g. ["E4", "B3", "G3", "D3", "A2", "E2"]
-  notes: { str: number; fret: number; duration?: string }[];
-}
-
-const TabRenderer = ({ tuning, notes }: TabRendererProps) => {
-  const [timeSignature, setTimeSignature] = useState('4/4');
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const timeSignatures = ['4/4', '3/4', '6/8', '5/4'];
+export default function TabRenderer() {
+  const { measures, tuning } = useMusic()
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    containerRef.current.innerHTML = '';
+    if (!containerRef.current) return
+    containerRef.current.innerHTML = ''
 
     const vf = new Factory({
-      renderer: {
-        elementId: containerRef.current.id,
-        width: 800,
-        height: 180,
-      },
-    });
+      renderer: { elementId: containerRef.current.id, width: 900, height: 200 * measures.length },
+    })
 
-    const system = vf.System({ x: 10, y: 40, width: 300 });
+    measures.forEach((measure, idx) => {
+      const system = vf.System({ x: 10, y: 40 + idx * 180, width: 800 })
 
-    const tabNotes = notes.map((n) =>
-      vf.TabNote({
-        positions: [{ str: n.str, fret: n.fret }],
-        duration: n.duration || 'q',
+      const tabNotes = measure.notes.map(n => {
+        if (n.string != null && n.fret != null) {
+          // Normal fretted note
+          return vf.TabNote({
+            positions: [{ str: n.string, fret: n.fret }],
+            duration: n.duration || 'q',
+          })
+        } else {
+          // Rest: dummy position, then suppress fret text
+          const rest = vf.TabNote({
+            positions: [{ str: 1, fret: 0 }],
+            duration: n.duration || 'qr',
+          })
+            ; (rest as any).drawPositions = () => { }
+          return rest
+        }
       })
-    );
 
-    const voice = vf.Voice({ time: timeSignature }).addTickables(tabNotes);
+      // If measure is completely empty, pad with a whole rest
+      if (tabNotes.length === 0) {
+        const rest = vf.TabNote({
+          positions: [{ str: 1, fret: 0 }],
+          duration: 'wr',
+        })
+          ; (rest as any).drawPositions = () => { }
+        tabNotes.push(rest)
+      }
 
-    system
-      .addStave({
-        voices: [voice],
-        options: { numLines: tuning.length },
-      })
-      .addClef('tab')
-      .addTimeSignature(timeSignature);
+      const voice = vf.Voice({ time: measure.timeSignature })
+        .setStrict(false)
+        .addTickables(tabNotes)
 
-    vf.draw();
-  }, [tuning, notes, timeSignature]);
+      system
+        .addStave({ voices: [voice], options: { numLines: tuning.length } })
+        .addClef('tab')
+        .addTimeSignature(measure.timeSignature)
+    })
+
+    vf.draw()
+  }, [measures, tuning])
 
   return (
-    <>
-      <select
-        onChange={(e) => setTimeSignature(e.target.value)}
-        value={timeSignature}
-        className="text-sm px-2 py-1 border rounded mb-2 print:hidden"
-      >
-        {timeSignatures.map((sig, i) => (
-          <option key={i}>{sig}</option>
-        ))}
-      </select>
-      <div
-        id="vex-tab"
-        ref={containerRef}
-        className="overflow-x-auto"
-        style={{ paddingBottom: '20px' }}
-      />
-    </>
-  );
-};
-
-export default TabRenderer;
+    <div>
+      <div id="vex-tab" ref={containerRef} className="overflow-x-auto" />
+      {measures.map(m => (
+        <Typography key={m.id} variant="caption" color="text.secondary">
+          {beatsRemaining(m)} beats remaining in this measure
+        </Typography>
+      ))}
+    </div>
+  )
+}

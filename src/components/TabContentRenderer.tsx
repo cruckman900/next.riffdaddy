@@ -11,6 +11,7 @@ import {
     Divider,
 } from '@mui/material'
 import Workbench from './Workbench'
+import { MusicProvider } from '@/context/MusicContext'
 
 export default function TabContentRenderer() {
     const tabs = useTabs()
@@ -23,7 +24,9 @@ export default function TabContentRenderer() {
             {/* Content area based on tab type */}
             {active.type === 'editor' && (
                 // <Typography color="text.secondary">Editor content placeholder</Typography>
-                <Workbench />
+                <MusicProvider>
+                    <Workbench />
+                </MusicProvider>
             )}
 
             {active.type === 'settings' && (

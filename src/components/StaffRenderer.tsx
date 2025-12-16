@@ -1,58 +1,52 @@
-'use client';
+'use client'
 
-import { useEffect, useRef } from 'react';
-import { Factory } from 'vexflow';
+import { useEffect, useRef } from 'react'
+import { Factory } from 'vexflow'
+import { Typography } from '@mui/material'
+import { useMusic } from '@/context/MusicContext'
+import { beatsRemaining } from '@/utils/musicUtils'
 
-interface StaffRendererProps {
-  notes: string[]; // e.g. ["C4", "E4", "G4"]
-  timeSignature: string; // e.g. "4/4"
-}
-
-const StaffRenderer = ({ notes, timeSignature = "4/4" }: StaffRendererProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+export default function StaffRenderer() {
+  const { measures } = useMusic()
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    containerRef.current.innerHTML = "";
+    if (!containerRef.current) return
+    containerRef.current.innerHTML = ''
 
     const vf = new Factory({
-      renderer: {
-        elementId: containerRef.current.id,
-        width: 800,
-        height: 150,
-      },
-    });
+      renderer: { elementId: containerRef.current.id, width: 900, height: 200 * measures.length },
+    })
 
-    const system = vf.System({ x: 10, y: 40, width: 300 });
+    measures.forEach((measure, idx) => {
+      const system = vf.System({ x: 10, y: 40 + idx * 180, width: 800 })
+      const score = vf.EasyScore()
 
-    const score = vf.EasyScore();
+      const staffSyntax: string[] = measure.notes.map(n => `${n.pitch}/${n.duration || 'q'}`)
 
-    // Calculate how many beats are needed
-    const beats = parseInt(timeSignature.split("/")[0]);
-    const paddedNotes = [...notes.map(n => `${n}/q`)];
+      // Pad with rests if not enough beats
+      const beats = parseInt(measure.timeSignature.split('/')[0])
+      while (staffSyntax.length < beats) {
+        staffSyntax.push('B4/r')
+      }
 
-    while (paddedNotes.length < beats) {
-      paddedNotes.push("B4/r"); // pad with rests
-    }
+      const voice = score.voice(score.notes(staffSyntax.join(', '), { stem: 'up' }))
+      voice.setStrict(false)
 
-    const voice = score.voice(score.notes(paddedNotes.join(", "), { stem: "up" }));
+      system.addStave({ voices: [voice] }).addClef('treble').addTimeSignature(measure.timeSignature)
+    })
 
-    system
-      .addStave({ voices: [voice] })
-      .addClef("treble")
-      .addTimeSignature(timeSignature);
-
-    vf.draw();
-  }, [notes, timeSignature]);
+    vf.draw()
+  }, [measures])
 
   return (
-    <div
-      id="vex-staff"
-      ref={containerRef}
-      className="overflow-x-auto"
-      style={{ paddingBottom: "20px" }}
-    />
-  );
-};
-
-export default StaffRenderer;
+    <div>
+      <div id="vex-staff" ref={containerRef} className="overflow-x-auto" />
+      {measures.map(m => (
+        <Typography key={m.id} variant="caption" color="text.secondary">
+          {beatsRemaining(m)} beats remaining in this measure
+        </Typography>
+      ))}
+    </div>
+  )
+}

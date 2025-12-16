@@ -6,11 +6,17 @@ export interface MusicNote {
     fret?: number
 }
 
-export interface MusicState {
+export interface Measure {
+    id: string
     notes: MusicNote[]
     timeSignature: string
+}
+
+export interface MusicState {
+    measures: Measure[]
     tuning: string[]
-    addNote: (note: Partial<MusicNote>) => void
-    removeNote: (id: string) => void
-    updateNote: (id: string, updates: Partial<MusicNote>) => void
+    addNote: (measureId: string, note: Partial<MusicNote>) => void
+    removeNote: (measureId: string, noteId: string) => void
+    updateNote: (measureId: string, noteId: string, updates: Partial<MusicNote>) => void
+    addMeasure: (timeSignature?: string) => void
 }
