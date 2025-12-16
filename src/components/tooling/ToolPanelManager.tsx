@@ -15,6 +15,7 @@ export function ToolPanelManager({ activeTool }: ToolPanelManagerProps) {
             style={{
                 flex: 1,
                 height: "100%",
+                minHeight: "100%",
                 overflowY: "auto",
                 padding: "20px",
                 background: "#0f1114",

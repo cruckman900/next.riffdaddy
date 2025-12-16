@@ -10,6 +10,7 @@ import {
     Switch,
     Divider,
 } from '@mui/material'
+import Workbench from './Workbench'
 
 export default function TabContentRenderer() {
     const tabs = useTabs()
@@ -18,10 +19,11 @@ export default function TabContentRenderer() {
     if (!active) return null
 
     return (
-        <Box sx={{ p: 2, height: '100%', bgcolor: 'background.default' }}>
+        <Box sx={{ height: { xs: 'auto', md: '100%' }, bgcolor: 'background.default' }}>
             {/* Content area based on tab type */}
             {active.type === 'editor' && (
-                <Typography color="text.secondary">Editor content placeholder</Typography>
+                // <Typography color="text.secondary">Editor content placeholder</Typography>
+                <Workbench />
             )}
 
             {active.type === 'settings' && (
@@ -34,7 +36,7 @@ export default function TabContentRenderer() {
                 >
                     <Box
                         sx={{
-                            width: 320,
+                            width: { xs: '100%', md: 320 },
                             bgcolor: 'background.paper',
                             borderRight: 1,
                             borderColor: 'divider',
@@ -43,7 +45,7 @@ export default function TabContentRenderer() {
                             flexDirection: 'column',
                         }}
                     >
-                        <Typography variant="h6" gutterBottom>
+                        <Typography variant="h6" gutterBottom color="text.primary">
                             Settings
                         </Typography>
 
@@ -71,7 +73,7 @@ export default function TabContentRenderer() {
 
             {active.type === 'history' && (
                 <Box>
-                    <Typography variant="h6" gutterBottom>
+                    <Typography variant="h6" gutterBottom color="text.primary">
                         Recently Closed Tabs
                     </Typography>
                     {tabs?.history.length === 0 ? (

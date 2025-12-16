@@ -33,7 +33,7 @@ export const metadata = {
 
 export default function HomePage() {
   return (
-    <div className="space-y-12">
+    <div className="w-full max-w-3xl mx-auto space-y-12">
       {mockTabs.map((tab, index) => (
         <TabPreview key={index} {...tab} />
       ))}

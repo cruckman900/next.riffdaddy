@@ -25,9 +25,7 @@ const Navbar = () => {
             { label: 'Register', path: '/register' },
         ] : []),
         ...(user ? [
-            { label: 'Upload', path: '/upload' },
-            { label: 'Tabs', path: '/tabs' },
-            { label: 'Themes', path: '/themes' },
+            { label: 'Workspace', path: '/workspace' },
         ] : [])
     ]
 
@@ -89,6 +87,15 @@ const Navbar = () => {
                                 <ListItemText primary={label} />
                             </ListItemButton>
                         ))}
+                        {user && (
+                            <Typography
+                                variant='button'
+                                sx={{ mx: 2.15, mt: 1.5, color: 'white', textDecoration: 'none', cursor: 'pointer', display: 'inline-block' }}
+                                onClick={handleLogout}
+                            >
+                                Log out
+                            </Typography>
+                        )}
                     </List>
                 </Box>
             </Drawer>

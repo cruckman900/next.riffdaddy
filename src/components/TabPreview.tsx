@@ -21,7 +21,8 @@ export default function TabPreview(props: TabData) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className={`rounded-xl p-6 shadow-xl ${genreColor[genre]}`}
+            className={`rounded-xl p-6 m-6 shadow-xl ${genreColor[genre]}`}
+            style={{ maxWidth: '800px' }}
         >
             <h2 className='text-2xl font-bold mb-2'>{`🎶 “${title}” — ${artist}`}</h2>
             <p className='text-sm mb-4 opacity-80'>

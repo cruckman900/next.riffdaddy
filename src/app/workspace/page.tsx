@@ -10,7 +10,6 @@ function WorkspaceContent() {
     const tabs = useTabs()
     const activeTab = tabs?.activeTab
 
-    // Empty state: no tabs open
     if (!activeTab) {
         return (
             <Box
@@ -47,7 +46,6 @@ function WorkspaceContent() {
         )
     }
 
-    // Active tab content
     return (
         <Box sx={{ flex: 1, overflow: 'auto' }}>
             <TabContentRenderer />
@@ -57,11 +55,12 @@ function WorkspaceContent() {
 
 export default function Workspace() {
     return (
-        <Box sx={{ display: 'flex' }}>
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <TabBar />
-                <WorkspaceContent />
-            </Box>
+        <Box width="100%" sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
+            {/* Toolbar: top on xs, left on md+ */}
+            <TabBar />
+
+            {/* Main content */}
+            <WorkspaceContent />
         </Box>
     )
 }
