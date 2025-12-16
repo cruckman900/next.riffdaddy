@@ -1,7 +1,7 @@
 // app/workspace/page.tsx
 'use client'
-import { TabsProvider, useTabs } from '@/context/TabsContext'
-// import Navbar from '@/components/Navbar'
+
+import { useTabs } from '@/context/TabsContext'
 import TabBar from '@/components/TabBar'
 import TabContentRenderer from '@/components/TabContentRenderer'
 import { Box, Typography, Button } from '@mui/material'
@@ -10,6 +10,7 @@ function WorkspaceContent() {
     const tabs = useTabs()
     const activeTab = tabs?.activeTab
 
+    // Empty state: no tabs open
     if (!activeTab) {
         return (
             <Box
@@ -32,7 +33,13 @@ function WorkspaceContent() {
                 <Button
                     variant="contained"
                     color="primary"
-                    onClick={() => tabs?.newTab({ title: 'Untitled', type: 'editor', payload: { content: '' } })}
+                    onClick={() =>
+                        tabs?.newTab({
+                            title: 'Untitled',
+                            type: 'editor',
+                            payload: { content: '' },
+                        })
+                    }
                 >
                     New Tab
                 </Button>
@@ -40,8 +47,9 @@ function WorkspaceContent() {
         )
     }
 
+    // Active tab content
     return (
-        <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
             <TabContentRenderer />
         </Box>
     )
@@ -49,14 +57,11 @@ function WorkspaceContent() {
 
 export default function Workspace() {
     return (
-        <TabsProvider>
-            {/* <Navbar /> */}
-            <Box sx={{ display: 'flex', height: '100vh', pt: '64px' }}>
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <TabBar />
-                    <WorkspaceContent />
-                </Box>
+        <Box sx={{ display: 'flex' }}>
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <TabBar />
+                <WorkspaceContent />
             </Box>
-        </TabsProvider>
+        </Box>
     )
 }

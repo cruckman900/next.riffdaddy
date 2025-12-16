@@ -9,7 +9,6 @@ export default function RadarDial({
     showArcs,
     genre,
     playedNotes = []
-
 }: {
     tuning: string[],
     showArcs: boolean,
@@ -76,7 +75,7 @@ export default function RadarDial({
 
                         return (
                             <motion.line
-                                key={`${pos.note}-${next.note}`}
+                                key={`${i}-${pos.note}-${next.note}`}
                                 x1={pos.x}
                                 y1={pos.y}
                                 x2={next.x}

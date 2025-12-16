@@ -26,13 +26,13 @@ export default function Landing() {
             <Button variant="contained" onClick={() => { tabs.newTab({ title: 'Untitled', type: 'editor' }); router.push('/workspace') }}>Create New Tab</Button>
 
             <Typography variant="h6" sx={{ mt: 3 }}>Recent</Typography>
-            <List>
+            {/* <List>
                 {tabs.history.map(h => (
                     <ListItemButton key={h.id} onClick={() => { tabs.reopenFromHistory(h.id); router.push('/workspace') }}>
                         {h.title}
                     </ListItemButton>
                 ))}
-            </List>
+            </List> */}
         </Box>
     )
 }

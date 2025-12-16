@@ -12,7 +12,8 @@ export default function Header() {
                     alt="NEXTRiff Logo"
                     width={40}
                     height={40}
-                    className="drop-shadow-[0_0_8px_#00ff80]"
+                    className="drop-shadow-[0_0_4px_#00ff80]"
+                    style={{ borderRadius: '8px' }}
                 />
             </Link>
             <span className="nextriff-title print:hidden">NEXTRiff</span>

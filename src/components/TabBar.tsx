@@ -1,7 +1,6 @@
-// src/components/TabBar.tsx
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Box, IconButton, Tab as MuiTab, Tabs, TextField } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import { useTabsStrict } from '@/context/TabsContext'
@@ -9,35 +8,17 @@ import { useTabsStrict } from '@/context/TabsContext'
 export default function TabBar() {
     const tabs = useTabsStrict()
     const activeId = tabs.activeTab?.id ?? false
-
-    const containerRef = useRef<HTMLDivElement | null>(null)
-    const [ready, setReady] = useState(false)
+    const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
-        let raf = 0
-        let cancelled = false
-        function check() {
-            if (cancelled) return
-            const el = containerRef.current
-            if (el && el.offsetHeight > 0 && el.offsetWidth > 0) {
-                setReady(true)
-                return
-            }
-            raf = requestAnimationFrame(check)
-        }
-        raf = requestAnimationFrame(check)
-        return () => {
-            cancelled = true
-            cancelAnimationFrame(raf)
-        }
+        const raf = requestAnimationFrame(() => setMounted(true))
+        return () => cancelAnimationFrame(raf)
     }, [])
 
-    if (tabs.tabs.length === 0 || !ready) {
-        return null
-    }
+    if (tabs.tabs.length === 0 || !mounted) return null
 
     return (
-        <Box ref={containerRef} sx={{ display: 'flex', alignItems: 'center', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', width: "100%" }}>
             <Tabs value={activeId} variant="scrollable" scrollButtons="auto" sx={{ flex: 1 }} aria-label="open tabs">
                 {tabs.tabs.map((t) => (
                     <MuiTab
@@ -50,12 +31,6 @@ export default function TabBar() {
                                     value={t.title}
                                     onChange={(e) => tabs.renameTab(t.id, e.target.value)}
                                     onClick={(e) => e.stopPropagation()}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault()
-                                            e.currentTarget.blur()
-                                        }
-                                    }}
                                     InputProps={{ disableUnderline: true }}
                                     sx={{ width: 100 }}
                                 />

@@ -85,7 +85,7 @@ const Navbar = () => {
                 <Box sx={{ width: 250 }} role="presentation" onClick={() => setRightOpen(false)}>
                     <List>
                         {navItems.map(({ label, path }) => (
-                            <ListItemButton key={label} component={NextLinkComposed} href={path}>
+                            <ListItemButton key={label} component={NextLinkComposed} to={path}>
                                 <ListItemText primary={label} />
                             </ListItemButton>
                         ))}

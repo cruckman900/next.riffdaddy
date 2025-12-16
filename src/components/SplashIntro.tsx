@@ -38,6 +38,7 @@ export default function SplashIntro() {
               src="/og-image.png"
               alt="NEXTRiff Splash"
               className="w-3/4 max-w-md drop-shadow-[0_0_12px_#b366ff]"
+              style={{ borderRadius: '24px' }}
             />
             <span
               role="button"

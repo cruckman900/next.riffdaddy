@@ -2,60 +2,82 @@
 'use client'
 
 import React from 'react'
-import { List, ListItemButton, ListItemIcon, ListItemText, Divider, Box } from '@mui/material'
+import {
+    List,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    Divider,
+} from '@mui/material'
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder'
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import SaveIcon from '@mui/icons-material/Save'
-import HistoryIcon from '@mui/icons-material/History'
 import SettingsIcon from '@mui/icons-material/Settings'
+import HistoryIcon from '@mui/icons-material/History'
 import { useTabs } from '@/context/TabsContext'
 
 export default function LeftMenu({ onClose }: { onClose?: () => void }) {
     const tabs = useTabs()
-
-    if (!tabs) {
-        return (
-            <Box sx={{ p: 2 }}>
-                <List>
-                    <ListItemButton onClick={onClose}><ListItemText primary="No workspace available" /></ListItemButton>
-                </List>
-            </Box>
-        )
-    }
+    if (!tabs) return null
 
     return (
-        <Box sx={{ p: 1 }}>
-            <List>
-                <ListItemButton onClick={() => {
+        <List>
+            {/* File New */}
+            <ListItemButton
+                onClick={() => {
                     tabs.newTab({ title: 'Untitled', type: 'editor', payload: { content: '' } })
                     onClose?.()
-                }}>
-                    <ListItemIcon><CreateNewFolderIcon /></ListItemIcon>
-                    <ListItemText primary="File New" />
-                </ListItemButton>
+                }}
+            >
+                <ListItemIcon><CreateNewFolderIcon /></ListItemIcon>
+                <ListItemText primary="File New" />
+            </ListItemButton>
 
-                <ListItemButton onClick={() => { tabs.newTab({ title: 'Open File', type: 'editor', payload: { content: '' } }); onClose?.() }}>
-                    <ListItemIcon><FolderOpenIcon /></ListItemIcon>
-                    <ListItemText primary="File Open" />
-                </ListItemButton>
+            {/* File Open */}
+            <ListItemButton
+                onClick={() => {
+                    tabs.newTab({ title: 'Open File', type: 'editor', payload: { content: '' } })
+                    onClose?.()
+                }}
+            >
+                <ListItemIcon><FolderOpenIcon /></ListItemIcon>
+                <ListItemText primary="File Open" />
+            </ListItemButton>
 
-                <ListItemButton onClick={() => { /* implement save logic */ onClose?.() }}>
-                    <ListItemIcon><SaveIcon /></ListItemIcon>
-                    <ListItemText primary="Save" />
-                </ListItemButton>
+            {/* Save */}
+            <ListItemButton
+                onClick={() => {
+                    // TODO: implement save logic
+                    onClose?.()
+                }}
+            >
+                <ListItemIcon><SaveIcon /></ListItemIcon>
+                <ListItemText primary="Save" />
+            </ListItemButton>
 
-                <Divider sx={{ my: 1 }} />
+            <Divider sx={{ my: 1 }} />
 
-                <ListItemButton onClick={() => { tabs.newTab({ title: 'Settings', type: 'settings' }); onClose?.() }}>
-                    <ListItemIcon><SettingsIcon /></ListItemIcon>
-                    <ListItemText primary="Settings" />
-                </ListItemButton>
+            {/* Settings */}
+            <ListItemButton
+                onClick={() => {
+                    tabs.newTab({ title: 'Settings', type: 'settings' })
+                    onClose?.()
+                }}
+            >
+                <ListItemIcon><SettingsIcon /></ListItemIcon>
+                <ListItemText primary="Settings" />
+            </ListItemButton>
 
-                <ListItemButton onClick={() => { tabs.newTab({ title: 'History', type: 'history' }); onClose?.() }}>
-                    <ListItemIcon><HistoryIcon /></ListItemIcon>
-                    <ListItemText primary="History" />
-                </ListItemButton>
-            </List>
-        </Box>
+            {/* History */}
+            <ListItemButton
+                onClick={() => {
+                    tabs.newTab({ title: 'History', type: 'history' })
+                    onClose?.()
+                }}
+            >
+                <ListItemIcon><HistoryIcon /></ListItemIcon>
+                <ListItemText primary="History" />
+            </ListItemButton>
+        </List>
     )
 }

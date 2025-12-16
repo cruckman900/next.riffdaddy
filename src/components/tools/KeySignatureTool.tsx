@@ -4,24 +4,42 @@ import { ToolTemplate } from "./ToolTemplate"
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
 
 export function KeySignatureTool() {
+    const keys = [
+        "C Major / A Minor",
+        "G Major / E Minor",
+        "D Major / B Minor",
+        "A Major / F# Minor",
+        "E Major / C# Minor",
+        "B Major / G# Minor",
+        "F# Major / D# Minor",
+        "F Major / D Minor",
+    ]
+
     return (
         <ToolTemplate title="Key Signature" shortcut="5">
-            <Typography variant="body1" mb={2}>
-                Select a key signature.
+            <Typography variant="body2" sx={{ mb: 2 }}>
+                Select a key signature:
             </Typography>
 
-            <Grid container spacing={2}>
-                <Grid item xs={12}><Button fullWidth variant="contained">C Major / A Minor</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">G Major / E Minor</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">D Major / B Minor</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">A Major / F# Minor</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">E Major / C# Minor</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">B Major / G# Minor</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">F# Major / D# Minor</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">F Major / D Minor</Button></Grid>
-            </Grid>
+            <Box>
+                <Grid container spacing={2}>
+                    {keys.map((label, i) => (
+                        <Grid item xs={12} key={i}>
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                size="small"
+                                sx={{ textTransform: 'none' }}
+                            >
+                                {label}
+                            </Button>
+                        </Grid>
+                    ))}
+                </Grid>
+            </Box>
         </ToolTemplate>
     )
 }

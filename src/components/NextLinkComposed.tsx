@@ -1,21 +1,34 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// src/components/NextLinkComposed.tsx
 'use client'
 
-import React from 'react'
+import * as React from 'react'
 import Link, { LinkProps } from 'next/link'
 
-type Props = LinkProps & { children?: React.ReactNode; className?: string; style?: React.CSSProperties }
+export type NextLinkComposedProps = Omit<
+    React.AnchorHTMLAttributes<HTMLAnchorElement>,
+    'href'
+> &
+    Omit<LinkProps, 'href' | 'as' | 'onClick' | 'onMouseEnter'> & {
+        to: LinkProps['href']
+    }
 
-const NextLinkComposed = React.forwardRef<HTMLAnchorElement, Props>(function NextLinkComposed(props, ref) {
-    const { href, children, ...rest } = props
-    return (
-        <Link href={href as string} legacyBehavior={false}>
-            <a ref={ref} {...(rest as any)}>
+const NextLinkComposed = React.forwardRef<HTMLAnchorElement, NextLinkComposedProps>(
+    function NextLinkComposed(props, ref) {
+        const { to, replace, scroll, shallow, prefetch, children, ...rest } = props
+
+        return (
+            <Link
+                href={to}
+                replace={replace}
+                scroll={scroll}
+                shallow={shallow}
+                prefetch={prefetch}
+                {...rest}
+                ref={ref}
+            >
                 {children}
-            </a>
-        </Link>
-    )
-})
+            </Link>
+        )
+    }
+)
 
 export default NextLinkComposed

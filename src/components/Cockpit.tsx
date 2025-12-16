@@ -1,16 +1,20 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Grid from '@mui/material/Grid'
 import Box from '@mui/material/Box'
 import Collapse from '@mui/material/Collapse'
 import Typography from '@mui/material/Typography'
 import InstrumentSelector from './InstrumentSelector'
-import RadarDial from './RadarDial'
 import { tuningPresets, alternateTunings, Tuning } from '@/utils/tunings'
 import { Button, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, TextField } from '@mui/material'
 
 export default function Cockpit() {
+    const RadarDial = dynamic(() => import('@/components/RadarDial'), {
+        ssr: false,
+    })
+
     // --- UI state
     const [instrument, setInstrument] = useState('guitar')
     const [showArcs, setShowArcs] = useState(true)
@@ -118,9 +122,9 @@ export default function Cockpit() {
     const selectedTuning = tuningOptions.find(t => t.name === selectedTuningName) || tuningOptions[0] || { name: 'Unknown', notes: [], description: 'No tuning available' }
 
     return (
-        <Grid spacing={4}>
-            <Grid item xs={12} md={4}>
-                <Box className="print:hidden" sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 3 }}>
+        <Grid spacing={4} height="100%">
+            <Grid item xs={12} md={4} height="100%">
+                <Box className="print:hidden" height="100%" sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 3 }}>
                     <Box sx={{ mb: 2 }}>
                         {/* pass value so InstrumentSelector can show current instrument */}
                         <InstrumentSelector value={instrument} onChange={(val) => {
@@ -187,7 +191,7 @@ export default function Cockpit() {
                         <Button variant="outlined" onClick={() => setShowCustomTuningForm(s => !s)} sx={{ mb: 1 }}>
                             {showCustomTuningForm ? 'Hide Custom Tuning Form' : 'Add Custom Tuning'}
                         </Button>
-                        <Button variant="text" onClick={resetToDefaults} sx={{ ml: 2 }}>Reset Defaults</Button>
+                        <Button variant="text" onClick={resetToDefaults} sx={{ ml: 2, mb: 1 }}>Reset Defaults</Button>
                     </Box>
 
                     <Collapse in={showCustomTuningForm}>

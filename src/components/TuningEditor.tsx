@@ -1,7 +1,7 @@
-// /components/TuningEditor.tsx
 'use client'
 
-import { useState } from "react";
+import { useState } from 'react'
+import { Box, TextField } from '@mui/material'
 
 export default function TuningEditor() {
     const [tuning, setTuning] = useState(["E4", "B3", "G3", "D3", "A2", "E2"])
@@ -13,15 +13,31 @@ export default function TuningEditor() {
     }
 
     return (
-        <div className="flex gap-1 flex-wrap text-sm print:hidden">
+        <Box
+            sx={{
+                display: 'flex',
+                gap: 1,
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                print: { display: 'none' },
+            }}
+        >
             {tuning.map((note, i) => (
-                <input
+                <TextField
                     key={i}
                     value={note}
                     onChange={(e) => updateTuning(i, e.target.value)}
-                    className="w-14 px-1 py-0.5 text-center border rounded"
+                    variant="outlined"
+                    size="small"
+                    inputProps={{
+                        sx: {
+                            textAlign: 'center',
+                            width: '3.5rem',
+                            py: 0.5,
+                        },
+                    }}
                 />
             ))}
-        </div>
+        </Box>
     )
 }
