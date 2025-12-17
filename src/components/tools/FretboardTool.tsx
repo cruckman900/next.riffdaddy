@@ -30,22 +30,44 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
 
     const [fretCount, setFretCount] = useState(12)
     const [showOctave, setShowOctave] = useState(false)
+    const [selectedNotes, setSelectedNotes] = useState<
+        { string: number; fret: number; pitch: string }[]
+    >([])
 
-    const handleClick = (string: number, fret: number, pitch: string) => {
-        console.log(`Adding note: Measure ${mid}, String ${string}, Fret ${fret}, Pitch ${pitch}, Duration ${dur}`)
-        if (!mid) return
-        addNote(mid, { string, fret, pitch, duration: dur })
+    const toggleSelect = (string: number, fret: number, pitch: string) => {
+        const exists = selectedNotes.find(n => n.string === string && n.fret === fret)
+        if (exists) {
+            setSelectedNotes(selectedNotes.filter(n => !(n.string === string && n.fret === fret)))
+        } else {
+            setSelectedNotes([...selectedNotes, { string, fret, pitch }])
+        }
     }
+
+    const commitChord = () => {
+        if (!mid || selectedNotes.length === 0) return
+        addNote(mid, {
+            string: selectedNotes.map(n => n.string),
+            fret: selectedNotes.map(n => n.fret),
+            pitch: selectedNotes.map(n => n.pitch),
+            duration: dur,
+        })
+        setSelectedNotes([])
+    }
+
+    const isSelected = (string: number, fret: number) =>
+        selectedNotes.some(n => n.string === string && n.fret === fret)
 
     return (
         <ToolTemplate title="Fretboard" shortcut="3">
             <Typography variant="body2" mb={2}>
-                Click a fret to insert a {dur} note.
+                Click frets to select notes. Commit them as a chord or single note.
             </Typography>
 
             {/* Toggles */}
             <Stack direction="row" spacing={2} mb={2}>
-                <Typography variant="caption" sx={{ opacity: 0.7 }}>Frets:</Typography>
+                <Typography variant="caption" sx={{ opacity: 0.7 }}>
+                    Frets:
+                </Typography>
                 {[12, 21, 24].map(count => (
                     <Typography
                         key={count}
@@ -74,7 +96,7 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
 
             {/* Top tuning labels */}
             <Box display="flex" justifyContent="center" gap={0.5} mb={1}>
-                <Typography variant="caption" sx={{ width: 32 }} /> {/* spacer for left fret numbers */}
+                <Typography variant="caption" sx={{ width: 32 }} /> {/* spacer */}
                 {tuning.map((openNote, sIdx) => (
                     <Typography
                         key={sIdx}
@@ -84,7 +106,7 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
                         {openNote}
                     </Typography>
                 ))}
-                <Typography variant="caption" sx={{ width: 32 }} /> {/* spacer for right fret numbers */}
+                <Typography variant="caption" sx={{ width: 32 }} /> {/* spacer */}
             </Box>
 
             {/* Fretboard grid */}
@@ -98,13 +120,22 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
                             {tuning.map((openNote, sIdx) => {
                                 const midi = noteToMidi(openNote) + fIdx
                                 const pitch = midiToNote(midi)
+                                const stringNum = tuning.length - sIdx
+                                const selected = isSelected(stringNum, fIdx)
                                 return (
                                     <Button
                                         key={sIdx}
                                         size="small"
-                                        variant="outlined"
-                                        sx={{ minWidth: 32, height: 28, padding: 0, fontSize: '0.7rem' }}
-                                        onClick={() => handleClick(tuning.length - sIdx, fIdx, pitch)}
+                                        variant={selected ? 'contained' : 'outlined'}
+                                        sx={{
+                                            minWidth: 32,
+                                            height: 28,
+                                            padding: 0,
+                                            fontSize: '0.7rem',
+                                            backgroundColor: selected ? '#1976d2' : undefined,
+                                            color: selected ? '#fff' : undefined,
+                                        }}
+                                        onClick={() => toggleSelect(stringNum, fIdx, pitch)}
                                     >
                                         {showOctave ? pitch : pitch.replace(/\d+$/, '')}
                                     </Button>
@@ -131,6 +162,17 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
                     </Typography>
                 ))}
                 <Typography variant="caption" sx={{ width: 32 }} /> {/* spacer */}
+            </Box>
+
+            {/* Commit chord button */}
+            <Box display="flex" justifyContent="center" mt={2}>
+                <Button
+                    variant="contained"
+                    disabled={selectedNotes.length === 0}
+                    onClick={commitChord}
+                >
+                    Commit {selectedNotes.length > 1 ? 'Chord' : 'Note'}
+                </Button>
             </Box>
         </ToolTemplate>
     )

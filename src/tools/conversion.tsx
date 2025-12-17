@@ -1,27 +1,26 @@
 export function computeTabFromPitch(pitch: string, tuning: string[]) {
-    // Example: pitch "E4" -> find closest string/fret
-    // You can refine this later with better heuristics
-
     const midi = pitchToMidi(pitch)
-
     let best = { string: 1, fret: 0, diff: Infinity }
 
-    tuning.forEach((openPitch, index) => {
+    for (let index = 0; index < tuning.length; index++) {
+        const openPitch = tuning[index]
         const openMidi = pitchToMidi(openPitch)
         const fret = midi - openMidi
-        const stringIndex = tuning.length - 1 - index // Reverse string numbering
-        if (fret >= 0 && fret < best.diff) {
+
+        if (fret < 0) {
+            continue // skip strings where pitch is below open note
+        }
+
+        const stringIndex = tuning.length - index // reverse numbering
+        if (fret < best.diff) {
             best = { string: stringIndex, fret, diff: fret }
         }
-        console.log(`String ${stringIndex + 1} (${openPitch}): Fret ${fret}, Diff ${Math.abs(fret)}`)
-    })
+    }
 
     return { string: best.string, fret: best.fret }
 }
 
 export function computePitchFromTab(string: number, fret: number, tuning: string[]): string {
-    // string=1 → high E (last element of tuning)
-    // string=6 → low E (first element of tuning)
     const openPitch = tuning[tuning.length - string]
     const midi = pitchToMidi(openPitch) + fret
     return midiToPitch(midi)
