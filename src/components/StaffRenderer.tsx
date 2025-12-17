@@ -96,7 +96,13 @@ export default function StaffRenderer() {
           voice.addTickables(tickables)
           new Formatter().joinVoices([voice]).format([voice], scaledWidth - 40)
           voice.draw(context, stave)
-          Beam.generateBeams(tickables).forEach(b => b.setContext(context).draw())
+
+          // ✅ Beam all 8th/16th groups so flags disappear
+          const beams = Beam.generateBeams(tickables, {
+            beamRests: false,   // don’t beam rests
+            maintainStemDirections: true,
+          })
+          beams.forEach(b => b.setContext(context).draw())
         }
 
         x += scaledWidth

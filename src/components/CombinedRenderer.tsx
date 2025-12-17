@@ -101,6 +101,9 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                 )
 
                 const tabStave = new TabStave(x, y, scaledWidth)
+                if (measure.clef && measure.clef !== lastClef) {
+                    tabStave.addClef('tab')
+                }
                 if (measure.timeSignature && measure.timeSignature !== lastTime) {
                     tabStave.addTimeSignature(measure.timeSignature)
                 }
@@ -124,7 +127,9 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                     voice.addTickables(tabTickables)
                     new Formatter().joinVoices([voice]).format([voice], scaledWidth - 50)
                     voice.draw(context, tabStave)
-                    Beam.generateBeams(tabTickables).forEach(b => b.setContext(context).draw())
+
+                    const beams = Beam.generateBeams(tabTickables)
+                    beams.forEach(b => b.setContext(context).draw())
                 }
 
                 // --- Staff stave ---
@@ -169,7 +174,10 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                     voice.addTickables(staffTickables)
                     new Formatter().joinVoices([voice]).format([voice], scaledWidth - 50)
                     voice.draw(context, staffStave)
-                    Beam.generateBeams(staffTickables).forEach(b => b.setContext(context).draw())
+
+                    // Beam all beamable notes automatically
+                    const beams = Beam.generateBeams(staffTickables)
+                    beams.forEach(b => b.setContext(context).draw())
                 }
 
                 x += scaledWidth

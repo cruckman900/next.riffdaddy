@@ -32,13 +32,13 @@ function getMeasureBeatCount(measure: Measure): number {
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
     const [measures, setMeasures] = useState<Measure[]>([
-        { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble' },
+        { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble', beamGroups: [] },
     ])
     const [tuning] = useState(['E2', 'A2', 'D3', 'G3', 'B3', 'E4'])
 
     // --- MEASURES ---
     const addMeasure = (timeSignature: string = '4/4', keySignature: string = 'C') => {
-        setMeasures(prev => [...prev, { id: uuid(), notes: [], rests: [], timeSignature, keySignature }])
+        setMeasures(prev => [...prev, { id: uuid(), notes: [], rests: [], timeSignature, keySignature, beamGroups: [] }])
     }
 
     const removeMeasure = (measureId: string) => {
@@ -93,7 +93,6 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             if ((!note.pitch || note.pitch.length === 0) && note.string && note.fret) {
                 const pitches: string[] = []
                 note.string.forEach((s, i) => {
-                    // ✅ ensure f is always a number
                     let f: number = 0
                     if (Array.isArray(note.fret)) {
                         f = note.fret[i] ?? 0
@@ -127,19 +126,45 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                             rests: [],
                             timeSignature: current.timeSignature,
                             keySignature: current.keySignature,
+                            beamGroups: [],
                         })
                     }
                     continue
                 }
 
-                const dur = remainingBeats >= space
-                    ? (space >= 1 ? 'q' : space >= 0.5 ? '8' : '16')
-                    : (remainingBeats >= 1 ? 'q' : remainingBeats >= 0.5 ? '8' : '16')
+                // ✅ preserve original duration if it fits
+                let dur = note.duration
+                const beats = durationToBeats(note.duration)
+                if (beats > space) {
+                    dur = space >= 4 ? 'w'
+                        : space >= 2 ? 'h'
+                            : space >= 1 ? 'q'
+                                : space >= 0.5 ? '8'
+                                    : '16'
+                }
 
                 const durBeats = durationToBeats(dur)
-                updatedMeasures[currentIdx].notes.push({ ...note, id: uuid(), duration: dur })
-                remainingBeats -= durBeats
+                const newNote: MusicNote = { ...note, id: uuid(), duration: dur }
+                updatedMeasures[currentIdx].notes.push(newNote)
 
+                // ✅ Beam grouping for 8ths/16ths
+                if (dur === '8' || dur === '16') {
+                    // Ensure beamGroups is always initialized
+                    if (!updatedMeasures[currentIdx].beamGroups) {
+                        updatedMeasures[currentIdx].beamGroups = []
+                    }
+
+                    const beamGroups = updatedMeasures[currentIdx].beamGroups
+                    const lastGroup = beamGroups.length > 0 ? beamGroups[beamGroups.length - 1] : undefined
+
+                    if (lastGroup && lastGroup.length < 4) {
+                        lastGroup.push(newNote.id)
+                    } else {
+                        beamGroups.push([newNote.id])
+                    }
+                }
+
+                remainingBeats -= durBeats
                 if (remainingBeats <= 0) break
             }
 
@@ -147,10 +172,54 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         })
     }
 
-    const removeNote = (measureId: string, noteId: string) => {
-        setMeasures(prev => prev.map(m =>
-            m.id === measureId ? { ...m, notes: m.notes.filter(n => n.id !== noteId) } : m
-        ))
+    const removeNote = (measureId: string, noteId: string, pitchToRemove?: string) => {
+        setMeasures(prev =>
+            prev.map(m => {
+                if (m.id !== measureId) return m
+
+                return {
+                    ...m,
+                    notes: m.notes.flatMap(n => {
+                        if (n.id !== noteId) return [n]
+
+                        // ✅ If no specific pitch requested, remove the whole note
+                        if (!pitchToRemove) return []
+
+                        // ✅ If chord, remove just that pitch
+                        if (Array.isArray(n.pitch)) {
+                            const pitchIdx = n.pitch.findIndex(p => p === pitchToRemove)
+                            if (pitchIdx === -1) return [n] // pitch not found, keep note
+
+                            const newPitch = [...n.pitch]
+                            newPitch.splice(pitchIdx, 1)
+
+                            const newString = Array.isArray(n.string) ? [...n.string] : n.string ? [n.string] : []
+                            const newFret = Array.isArray(n.fret) ? [...n.fret] : n.fret ? [n.fret] : []
+
+                            if (pitchIdx < newString.length) newString.splice(pitchIdx, 1)
+                            if (pitchIdx < newFret.length) newFret.splice(pitchIdx, 1)
+
+                            // If chord is now empty, drop the note entirely
+                            if (newPitch.length === 0) return []
+
+                            return [{
+                                ...n,
+                                pitch: newPitch,
+                                string: newString,
+                                fret: newFret,
+                            }]
+                        }
+
+                        // ✅ If single note, removing its pitch deletes the note
+                        if (typeof n.pitch === 'string' && n.pitch === pitchToRemove) {
+                            return []
+                        }
+
+                        return [n]
+                    }),
+                }
+            })
+        )
     }
 
     const updateNote = (measureId: string, noteId: string, updates: Partial<MusicNote>) => {
@@ -241,6 +310,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                             rests: [],
                             timeSignature: current.timeSignature,
                             keySignature: current.keySignature,
+                            beamGroups: [],
                         })
                     }
                     continue

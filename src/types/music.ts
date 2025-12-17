@@ -18,6 +18,7 @@ export interface Measure {
     timeSignature: string
     keySignature?: string       // NEW (optional, defaults to 'C')
     clef?: string               // NEW (optional, defaults to 'treble')
+    beamGroups: string[][]     // NEW (array of arrays of note IDs to be beamed together)
 }
 
 export interface MusicState {
