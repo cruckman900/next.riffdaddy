@@ -6,12 +6,13 @@ import { Button, Typography } from '@mui/material'
 import { ToolProps } from '@/types/tooling'
 
 export function RestEntryTool({ measureId, duration }: ToolProps) {
-    const { addNote } = useMusic()
+    const { addRest } = useMusic()
     const dur = duration ?? 'q'
     const mid = measureId ?? ''
 
     const handleAddRest = () => {
-        addNote(mid, { duration: dur })
+        console.log('RestEntryTool measureId:', mid, 'duration:', dur)
+        addRest(mid, { duration: dur })
     }
 
     return (

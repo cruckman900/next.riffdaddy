@@ -6,17 +6,39 @@ export interface MusicNote {
     fret?: number
 }
 
+export interface MusicRest {
+    id: string
+    duration: string
+}
+
 export interface Measure {
     id: string
     notes: MusicNote[]
+    rests: MusicRest[]          // NEW
     timeSignature: string
+    keySignature?: string       // NEW (optional, defaults to 'C')
+    clef?: string               // NEW (optional, defaults to 'treble')
 }
 
 export interface MusicState {
     measures: Measure[]
     tuning: string[]
+
+    // Notes
     addNote: (measureId: string, note: Partial<MusicNote>) => void
     removeNote: (measureId: string, noteId: string) => void
     updateNote: (measureId: string, noteId: string, updates: Partial<MusicNote>) => void
-    addMeasure: (timeSignature?: string) => void
+
+    // Rests
+    addRest: (measureId: string, rest: Partial<MusicRest>) => void
+    removeRest: (measureId: string, restId: string) => void
+    updateRest: (measureId: string, restId: string, updates: Partial<MusicRest>) => void
+
+    // Measures
+    addMeasure: (timeSignature?: string, keySignature?: string) => void
+    removeMeasure: (measureId: string) => void
+    updateMeasure: (measureId: string, updates: Partial<Measure>) => void
+
+    // ✅ new helper
+    getMeasureBeatCount: (measure: Measure) => number
 }

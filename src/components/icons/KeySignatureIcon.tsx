@@ -1,4 +1,4 @@
-import { IconBase, IconProps } from './IconBase';
+import { IconBase, IconProps } from './IconBase'
 
 export function KeySignatureIcon(props: IconProps) {
     return (

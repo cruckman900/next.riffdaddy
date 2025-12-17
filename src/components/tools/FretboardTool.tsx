@@ -17,10 +17,10 @@ function noteToMidi(note: string): number {
     return (octave + 1) * 12 + semitone
 }
 
-function midiToNote(midi: number, showOctave: boolean): string {
+function midiToNote(midi: number): string {
     const pitch = NOTES[midi % 12]
     const octave = Math.floor(midi / 12) - 1
-    return showOctave ? `${pitch}${octave}` : pitch
+    return `${pitch}${octave}`
 }
 
 export function FretboardTool({ measureId, duration }: ToolProps) {
@@ -32,6 +32,7 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
     const [showOctave, setShowOctave] = useState(false)
 
     const handleClick = (string: number, fret: number, pitch: string) => {
+        console.log(`Adding note: Measure ${mid}, String ${string}, Fret ${fret}, Pitch ${pitch}, Duration ${dur}`)
         if (!mid) return
         addNote(mid, { string, fret, pitch, duration: dur })
     }
@@ -96,16 +97,16 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
                             </Typography>
                             {tuning.map((openNote, sIdx) => {
                                 const midi = noteToMidi(openNote) + fIdx
-                                const pitch = midiToNote(midi, showOctave)
+                                const pitch = midiToNote(midi)
                                 return (
                                     <Button
                                         key={sIdx}
                                         size="small"
                                         variant="outlined"
                                         sx={{ minWidth: 32, height: 28, padding: 0, fontSize: '0.7rem' }}
-                                        onClick={() => handleClick(sIdx + 1, fIdx, pitch)}
+                                        onClick={() => handleClick(tuning.length - sIdx, fIdx, pitch)}
                                     >
-                                        {pitch}
+                                        {showOctave ? pitch : pitch.replace(/\d+$/, '')}
                                     </Button>
                                 )
                             })}

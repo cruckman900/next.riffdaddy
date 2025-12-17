@@ -18,6 +18,8 @@ import { RestEntryTool } from "@/components/tools/RestEntryTool"
 import { TimeSignatureTool } from "@/components/tools/TimeSignatureTool"
 import { KeySignatureTool } from "@/components/tools/KeySignatureTool"
 import { PlaybackTool } from "@/components/tools/PlaybackTool"
+import { ClefPalette } from "@/components/tools/ClefPalette"
+import { ClefIcon } from "@/components/icons/ClefIcon"
 
 export const TOOL_REGISTRY: Record<string, {
     id: string
@@ -39,6 +41,13 @@ export const TOOL_REGISTRY: Record<string, {
         icon: MeasureIcon,
         component: MeasureTool,
         shortcut: "2"
+    },
+    clef: {
+        id: "clef",
+        label: "Clef Palette",
+        icon: ClefIcon,
+        component: ClefPalette,
+        shortcut: "C"
     },
     fretboard: {
         id: "fretboard",
@@ -87,6 +96,7 @@ export const TOOL_REGISTRY: Record<string, {
 export const TOOL_ORDER: string[] = [
     "cockpit",
     "measure",
+    "clef",
     "fretboard",
     "keyboard",
     "rests",

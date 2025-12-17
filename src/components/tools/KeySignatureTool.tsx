@@ -1,47 +1,61 @@
 'use client'
 
 import { ToolTemplate } from "./ToolTemplate"
-import Typography from '@mui/material/Typography'
-import Stack from '@mui/material/Stack'
-import Link from '@mui/material/Link'
+import { useMusic } from '@/context/MusicContext'
+import { Typography, Grid } from '@mui/material'
+import { ToolProps } from '@/types/tooling'
 
-export function KeySignatureTool() {
-    const keys = [
-        "C Major / A Minor",
-        "G Major / E Minor",
-        "D Major / B Minor",
-        "A Major / F# Minor",
-        "E Major / C# Minor",
-        "B Major / G# Minor",
-        "F# Major / D# Minor",
-        "F Major / D Minor",
-    ]
+const KEYS = [
+    { sig: 'C', label: 'C Major / A Minor' },
+    { sig: 'G', label: 'G Major / E Minor' },
+    { sig: 'D', label: 'D Major / B Minor' },
+    { sig: 'A', label: 'A Major / F# Minor' },
+    { sig: 'E', label: 'E Major / C# Minor' },
+    { sig: 'B', label: 'B Major / G# Minor' },
+    { sig: 'F#', label: 'F# Major / D# Minor' },
+    { sig: 'C#', label: 'C# Major / A# Minor' },
+    { sig: 'F', label: 'F Major / D Minor' },
+    { sig: 'Bb', label: 'Bb Major / G Minor' },
+    { sig: 'Eb', label: 'Eb Major / C Minor' },
+    { sig: 'Ab', label: 'Ab Major / F Minor' },
+    { sig: 'Db', label: 'Db Major / Bb Minor' },
+    { sig: 'Gb', label: 'Gb Major / Eb Minor' },
+    { sig: 'Cb', label: 'Cb Major / Ab Minor' },
+]
 
-    const handleSelect = (label: string) => {
-        // TODO: integrate with MusicContext (e.g. setKeySignature(label))
-        console.log("Selected key signature:", label)
+export function KeySignatureTool({ measureId }: ToolProps) {
+    const { updateMeasure } = useMusic()
+
+    const handleClick = (keySignature: string) => {
+        if (!measureId) return
+        updateMeasure(measureId, { keySignature })
     }
 
     return (
-        <ToolTemplate title="Key Signature" shortcut="7">
-            <Typography variant="body2" sx={{ mb: 1, opacity: 0.7 }}>
-                Select a key signature:
+        <ToolTemplate title="Key Signature" shortcut="K">
+            <Typography variant="body2" mb={2}>
+                Select a key signature for this measure.
             </Typography>
 
-            <Stack spacing={1}>
-                {keys.map((label) => (
-                    <Link
-                        key={label}
-                        component="button"
-                        variant="body2"
-                        underline="hover"
-                        onClick={() => handleSelect(label)}
-                        sx={{ textAlign: 'left', cursor: 'pointer' }}
-                    >
-                        {label}
-                    </Link>
+            <Grid container spacing={2}>
+                {KEYS.map(key => (
+                    <Grid item xs={6} key={key.sig}>
+                        <Typography
+                            variant="caption"
+                            sx={{
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                textDecoration: 'underline',
+                                textAlign: 'center',
+                                display: 'block',
+                            }}
+                            onClick={() => handleClick(key.sig)}
+                        >
+                            {key.label}
+                        </Typography>
+                    </Grid>
                 ))}
-            </Stack>
+            </Grid>
         </ToolTemplate>
     )
 }

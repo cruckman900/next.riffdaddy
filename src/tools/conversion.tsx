@@ -9,16 +9,20 @@ export function computeTabFromPitch(pitch: string, tuning: string[]) {
     tuning.forEach((openPitch, index) => {
         const openMidi = pitchToMidi(openPitch)
         const fret = midi - openMidi
+        const stringIndex = tuning.length - 1 - index // Reverse string numbering
         if (fret >= 0 && fret < best.diff) {
-            best = { string: index + 1, fret, diff: fret }
+            best = { string: stringIndex, fret, diff: fret }
         }
+        console.log(`String ${stringIndex + 1} (${openPitch}): Fret ${fret}, Diff ${Math.abs(fret)}`)
     })
 
     return { string: best.string, fret: best.fret }
 }
 
 export function computePitchFromTab(string: number, fret: number, tuning: string[]): string {
-    const openPitch = tuning[string - 1]
+    // string=1 → high E (last element of tuning)
+    // string=6 → low E (first element of tuning)
+    const openPitch = tuning[tuning.length - string]
     const midi = pitchToMidi(openPitch) + fret
     return midiToPitch(midi)
 }

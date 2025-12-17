@@ -11,6 +11,7 @@ export function NoteEntryTool({ measureId, duration }: ToolProps) {
     const mid = measureId ?? ''
 
     const handleAddNote = (string: number, fret: number) => {
+        console.log('NoteEntryTool handleAddNote:', 'measureId:', mid, 'string:', string, 'fret:', fret, 'duration:', dur)
         if (!mid) return
         addNote(mid, { string, fret, duration: dur })
     }

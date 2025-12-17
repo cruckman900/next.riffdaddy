@@ -7,35 +7,34 @@ import { TOOL_REGISTRY } from "@/tools/registry"
 import ScorePreview from "./ScorePreview"
 import useMediaQuery from "@mui/material/useMediaQuery"
 import { useTheme } from "@mui/material/styles"
+import { useMusic } from '@/context/MusicContext'
 
 export default function Workbench() {
     const [activeTool, setActiveTool] = useState("cockpit")
+    const [activeMeasureId, setActiveMeasureId] = useState<string | null>(null)
+    const { measures } = useMusic()
 
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+
+    // Default to first measure
+    useEffect(() => {
+        if (!activeMeasureId && measures.length > 0) {
+            setActiveMeasureId(measures[0].id)
+        }
+    }, [measures, activeMeasureId])
 
     useEffect(() => {
         function handleKey(e: KeyboardEvent) {
             const entry = Object.values(TOOL_REGISTRY).find(t => t.shortcut === e.key)
             if (entry) setActiveTool(entry.id)
         }
-
         window.addEventListener("keydown", handleKey)
         return () => window.removeEventListener("keydown", handleKey)
     }, [])
 
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                height: "100%",
-                // minHeight: isMobile ? 0 : "100%",
-                width: "100%",
-            }}
-        >
-
-            {/* ✅ TOP ROW — ALWAYS SIDE BY SIDE */}
+        <div style={{ display: "flex", flexDirection: "column", height: "100%", width: "100%" }}>
             <div
                 style={{
                     display: "flex",
@@ -48,12 +47,7 @@ export default function Workbench() {
                 }}
             >
                 {/* ToolRail */}
-                <div
-                    style={{
-                        flexShrink: 0,
-                        borderRight: "1px solid #2a2f35",
-                    }}
-                >
+                <div style={{ flexShrink: 0, borderRight: "1px solid #2a2f35" }}>
                     <ToolRail activeToolId={activeTool} setActiveTool={setActiveTool} />
                 </div>
 
@@ -61,42 +55,36 @@ export default function Workbench() {
                 <div
                     style={{
                         flexShrink: 0,
-                        width: isMobile ? "calc(100vw - 60px)" : "30%",  // ✅ responsive width
-                        minWidth: isMobile ? 0 : 320,                    // ✅ mobile-safe minWidth
+                        width: isMobile ? "calc(100vw - 60px)" : "30%",
+                        minWidth: isMobile ? 0 : 320,
                         maxWidth: 480,
                         overflowY: "auto",
                         borderRight: "1px solid #2a2f35",
                     }}
                 >
-                    <ToolPanelManager activeTool={activeTool} />
+                    <ToolPanelManager activeTool={activeTool} measureId={activeMeasureId ?? undefined} />
                 </div>
 
-                {/* ✅ Desktop ScorePreview */}
+                {/* Desktop ScorePreview */}
                 {!isMobile && (
-                    <div
-                        style={{
-                            flex: 1,
-                            overflow: "auto",
-                            background: "#0f1114",
-                        }}
-                    >
-                        <ScorePreview />
+                    <div style={{ flex: 1, overflow: "auto", background: "#0f1114" }}>
+                        <ScorePreview setActiveMeasureId={setActiveMeasureId} activeMeasureId={activeMeasureId} />
                     </div>
                 )}
             </div>
 
-            {/* ✅ Mobile ScorePreview — NATURAL HEIGHT */}
+            {/* Mobile ScorePreview */}
             {isMobile && (
                 <div
                     style={{
                         width: "100%",
                         background: "#0f1114",
                         borderTop: "1px solid #2a2f35",
-                        overflow: "visible",   // ✅ allow natural height
-                        display: "block",       // ✅ NOT flex
+                        overflow: "visible",
+                        display: "block",
                     }}
                 >
-                    <ScorePreview />
+                    <ScorePreview setActiveMeasureId={setActiveMeasureId} activeMeasureId={activeMeasureId} />
                 </div>
             )}
         </div>

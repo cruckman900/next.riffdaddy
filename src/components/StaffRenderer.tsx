@@ -1,10 +1,19 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Factory } from 'vexflow'
-import { Typography } from '@mui/material'
 import { useMusic } from '@/context/MusicContext'
-import { beatsRemaining } from '@/utils/musicUtils'
+import { Renderer, Stave, StaveNote, Voice, Formatter, Beam } from 'vexflow'
+import { computeMeasureWidths } from '@/tools/computeMeasureWidths'
+
+function formatPitch(pitch: string): string {
+  const match = pitch?.match(/^([A-Ga-g])([#b]?)(\d)$/)
+  return match ? `${match[1].toLowerCase()}${match[2]}/${match[3]}` : 'b/4'
+}
+
+function parseTimeSignature(ts?: string) {
+  const [beats, value] = ts?.split('/')?.map(Number) ?? []
+  return { numBeats: beats || 4, beatValue: value || 4 }
+}
 
 export default function StaffRenderer() {
   const { measures } = useMusic()
@@ -14,39 +23,72 @@ export default function StaffRenderer() {
     if (!containerRef.current) return
     containerRef.current.innerHTML = ''
 
-    const vf = new Factory({
-      renderer: { elementId: containerRef.current.id, width: 900, height: 200 * measures.length },
-    })
+    const rendererWidth = 800
+    const marginLeft = 10
+    const marginTop = 20
+    const lineHeight = 150
+    const staffBaseHeight = 180 // ensure full staff shows even if empty
+
+    const widths = computeMeasureWidths(measures)
+    const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG)
+    renderer.resize(rendererWidth, Math.max(staffBaseHeight, lineHeight * measures.length))
+    const context = renderer.getContext()
+
+    let x = marginLeft
+    let y = marginTop
+    let lastClef: string | undefined
+    let lastTime: string | undefined
+    let lastKey: string | undefined
 
     measures.forEach((measure, idx) => {
-      const system = vf.System({ x: 10, y: 40 + idx * 180, width: 800 })
-      const score = vf.EasyScore()
+      console.log('Rendering measure:', measure)
+      const { numBeats, beatValue } = parseTimeSignature(measure.timeSignature)
+      const tickables = [
+        ...measure.notes.map(n =>
+          new StaveNote({ keys: [formatPitch(n.pitch)], duration: n.duration || 'q' })
+        ),
+        ...measure.rests.map(r =>
+          new StaveNote({ keys: ['b/4'], duration: (r.duration || 'q') + 'r' })
+        ),
+      ]
 
-      const staffSyntax: string[] = measure.notes.map(n => `${n.pitch}/${n.duration || 'q'}`)
-
-      // Pad with rests if not enough beats
-      const beats = parseInt(measure.timeSignature.split('/')[0])
-      while (staffSyntax.length < beats) {
-        staffSyntax.push('B4/r')
+      const staveWidth = widths[idx]
+      if (x + staveWidth > rendererWidth) {
+        x = marginLeft
+        y += lineHeight
       }
 
-      const voice = score.voice(score.notes(staffSyntax.join(', '), { stem: 'up' }))
-      voice.setStrict(false)
+      const stave = new Stave(x, y, staveWidth)
+      if (measure.clef && measure.clef !== lastClef) {
+        stave.addClef(measure.clef)
+        lastClef = measure.clef
+      }
+      if (measure.timeSignature && measure.timeSignature !== lastTime) {
+        stave.addTimeSignature(measure.timeSignature)
+        lastTime = measure.timeSignature
+      }
+      if (measure.keySignature && measure.keySignature !== lastKey) {
+        stave.addKeySignature(measure.keySignature)
+        lastKey = measure.keySignature
+      }
+      stave.setEndBarType(idx === measures.length - 1 ? 2 : 1)
+      stave.setContext(context).draw()
 
-      system.addStave({ voices: [voice] }).addClef('treble').addTimeSignature(measure.timeSignature)
+      if (tickables.length > 0) {
+        const voice = new Voice({ numBeats, beatValue }).setStrict(false)
+        voice.addTickables(tickables)
+
+        const formatter = new Formatter()
+        formatter.joinVoices([voice])
+        formatter.format([voice], staveWidth - 40)
+
+        voice.draw(context, stave)
+        Beam.generateBeams(tickables).forEach(b => b.setContext(context).draw())
+      }
+
+      x += staveWidth
     })
-
-    vf.draw()
   }, [measures])
 
-  return (
-    <div>
-      <div id="vex-staff" ref={containerRef} className="overflow-x-auto" />
-      {measures.map(m => (
-        <Typography key={m.id} variant="caption" color="text.secondary">
-          {beatsRemaining(m)} beats remaining in this measure
-        </Typography>
-      ))}
-    </div>
-  )
+  return <div ref={containerRef}></div>
 }
