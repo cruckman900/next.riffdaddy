@@ -23,7 +23,7 @@ export function KeySignatureTool() {
     }
 
     return (
-        <ToolTemplate title="Key Signature" shortcut="6">
+        <ToolTemplate title="Key Signature" shortcut="7">
             <Typography variant="body2" sx={{ mb: 1, opacity: 0.7 }}>
                 Select a key signature:
             </Typography>

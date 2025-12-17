@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Typography, Link, Stack } from '@mui/material'
+import { Typography, Link, Stack, Box } from '@mui/material'
 
-export function RhythmPalette({ onSelect }: { onSelect: (duration: string, mode: 'note' | 'rest') => void }) {
-    const [mode, setMode] = useState<'note' | 'rest'>('note')
+export function RhythmPalette({ onSelect }: { onSelect: (duration: string) => void }) {
+    const [dur, setDur] = useState<string>('')
 
     const durations = [
         { label: 'W', value: 'w' },
@@ -15,9 +15,9 @@ export function RhythmPalette({ onSelect }: { onSelect: (duration: string, mode:
     ]
 
     return (
-        <Stack spacing={1}>
+        <Box display="flex" flexDirection="column" sx={{ p: 2, mb: 1, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 3 }}>
             <Typography variant="subtitle2" sx={{ opacity: 0.7 }}>
-                Rhythm Palette ({mode} mode)
+                Rhythm Palette
             </Typography>
 
             {/* Duration links */}
@@ -28,35 +28,14 @@ export function RhythmPalette({ onSelect }: { onSelect: (duration: string, mode:
                         component="button"
                         variant="body2"
                         underline="hover"
-                        onClick={() => onSelect(d.value, mode)}
+                        onClick={() => { onSelect(d.value); setDur(d.value); }}
+                        fontWeight={dur == d.value ? 600 : 400}
                         sx={{ cursor: 'pointer' }}
                     >
                         {d.label}
                     </Link>
                 ))}
             </Stack>
-
-            {/* Mode toggle */}
-            <Stack direction="row" spacing={2}>
-                <Link
-                    component="button"
-                    variant="caption"
-                    underline="hover"
-                    onClick={() => setMode('note')}
-                    sx={{ fontWeight: mode === 'note' ? 600 : 400 }}
-                >
-                    Note
-                </Link>
-                <Link
-                    component="button"
-                    variant="caption"
-                    underline="hover"
-                    onClick={() => setMode('rest')}
-                    sx={{ fontWeight: mode === 'rest' ? 600 : 400 }}
-                >
-                    Rest
-                </Link>
-            </Stack>
-        </Stack>
+        </Box>
     )
 }

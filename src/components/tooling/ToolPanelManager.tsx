@@ -13,12 +13,11 @@ export function ToolPanelManager({ activeTool, measureId }: ToolPanelManagerProp
     const ActiveToolComponent = tool.component
 
     const [duration, setDuration] = useState<string>('q')
-    const [mode, setMode] = useState<'note' | 'rest'>('note')
 
     return (
         <div style={{ flex: 1, height: "100%", overflowY: "auto", padding: "10px", background: "#0f1114", color: "#e5e7eb" }}>
-            <RhythmPalette onSelect={(d, m) => { setDuration(d); setMode(m) }} />
-            <ActiveToolComponent measureId={measureId} duration={duration} mode={mode} />
+            <RhythmPalette onSelect={(d) => { setDuration(d) }} />
+            <ActiveToolComponent measureId={measureId} duration={duration} />
         </div>
     )
 }

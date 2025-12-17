@@ -9,7 +9,7 @@ import Box from '@mui/material/Box'
 
 export function PlaybackTool() {
     return (
-        <ToolTemplate title="Playback" shortcut="6">
+        <ToolTemplate title="Playback" shortcut="8">
             <Typography variant="body1" mb={2}>
                 Control playback of your composition.
             </Typography>

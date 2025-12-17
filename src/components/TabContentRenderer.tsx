@@ -23,7 +23,6 @@ export default function TabContentRenderer() {
         <Box sx={{ height: { xs: 'auto', md: '100%' }, bgcolor: 'background.default' }}>
             {/* Content area based on tab type */}
             {active.type === 'editor' && (
-                // <Typography color="text.secondary">Editor content placeholder</Typography>
                 <MusicProvider>
                     <Workbench />
                 </MusicProvider>

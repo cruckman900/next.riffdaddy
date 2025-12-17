@@ -1,20 +1,31 @@
 import { IconProps } from "@/components/icons/IconBase"
 import { CockpitIcon } from "@/components/icons/CockpitIcon"
-import { NoteIcon } from "@/components/icons/NoteIcon"
+import { MeasureIcon } from "@/components/icons/MeasureIcon"
+import { FretboardIcon } from "@/components/icons/FretboardIcon"
+import { KeyboardIcon } from "@/components/icons/KeyboardIcon"
 import { RestIcon } from "@/components/icons/RestIcon"
 import { TimeSignatureIcon } from "@/components/icons/TimeSignatureIcon"
 import { KeySignatureIcon } from "@/components/icons/KeySignatureIcon"
 import { PlaybackIcon } from "@/components/icons/PlaybackIcon"
+
 import { ToolProps } from "@/types/tooling"
 
 import { CockpitTool } from "@/components/tools/CockpitTool"
-import { NoteEntryTool } from "@/components/tools/NoteEntryTool"
+import { MeasureTool } from "@/components/tools/MeasureTool"
+import { FretboardTool } from "@/components/tools/FretboardTool"
+import { KeyboardTool } from "@/components/tools/KeyboardTool"
 import { RestEntryTool } from "@/components/tools/RestEntryTool"
 import { TimeSignatureTool } from "@/components/tools/TimeSignatureTool"
 import { KeySignatureTool } from "@/components/tools/KeySignatureTool"
 import { PlaybackTool } from "@/components/tools/PlaybackTool"
 
-export const TOOL_REGISTRY: Record<string, { id: string; label: string; icon: (props: IconProps) => JSX.Element; shortcut: string; component: React.ComponentType<ToolProps> }> = {
+export const TOOL_REGISTRY: Record<string, {
+    id: string
+    label: string
+    icon: (props: IconProps) => JSX.Element
+    shortcut: string
+    component: React.ComponentType<ToolProps>
+}> = {
     cockpit: {
         id: "cockpit",
         label: "Instrument & Tuning",
@@ -22,46 +33,62 @@ export const TOOL_REGISTRY: Record<string, { id: string; label: string; icon: (p
         component: CockpitTool,
         shortcut: "1"
     },
-    notes: {
-        id: "notes",
-        label: "Note Entry",
-        icon: NoteIcon,
-        component: NoteEntryTool,
+    measure: {
+        id: "Measure",
+        label: "Measure Entry",
+        icon: MeasureIcon,
+        component: MeasureTool,
         shortcut: "2"
+    },
+    fretboard: {
+        id: "fretboard",
+        label: "Fretboard",
+        icon: FretboardIcon,
+        component: FretboardTool,
+        shortcut: "3"
+    },
+    keyboard: {
+        id: "keyboard",
+        label: "Keyboard",
+        icon: KeyboardIcon,
+        component: KeyboardTool,
+        shortcut: "4"
     },
     rests: {
         id: "rests",
         label: "Rest Entry",
         icon: RestIcon,
         component: RestEntryTool,
-        shortcut: "3"
+        shortcut: "5"
     },
     time: {
         id: "time",
         label: "Time Signature",
         icon: TimeSignatureIcon,
         component: TimeSignatureTool,
-        shortcut: "4"
+        shortcut: "6"
     },
     key: {
         id: "key",
         label: "Key Signature",
         icon: KeySignatureIcon,
         component: KeySignatureTool,
-        shortcut: "5"
+        shortcut: "7"
     },
     playback: {
         id: "playback",
         label: "Playback Controls",
         icon: PlaybackIcon,
         component: PlaybackTool,
-        shortcut: "6"
+        shortcut: "8"
     },
 }
 
 export const TOOL_ORDER: string[] = [
     "cockpit",
-    "notes",
+    "measure",
+    "fretboard",
+    "keyboard",
     "rests",
     "time",
     "key",

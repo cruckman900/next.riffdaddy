@@ -63,7 +63,7 @@ export default function Workbench() {
                         flexShrink: 0,
                         width: isMobile ? "calc(100vw - 60px)" : "30%",  // ✅ responsive width
                         minWidth: isMobile ? 0 : 320,                    // ✅ mobile-safe minWidth
-                        maxWidth: 520,
+                        maxWidth: 480,
                         overflowY: "auto",
                         borderRight: "1px solid #2a2f35",
                     }}

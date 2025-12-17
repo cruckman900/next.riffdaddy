@@ -17,7 +17,7 @@ export function TimeSignatureTool({ measureId }: ToolProps) {
     }
 
     return (
-        <ToolTemplate title="Time Signature Tool" shortcut="5">
+        <ToolTemplate title="Time Signature Tool" shortcut="6">
             <Typography variant="body1" mb={2}>Change time signature for this measure.</Typography>
             <Button onClick={() => handleChangeTS('3/4')}>3/4</Button>
             <Button onClick={() => handleChangeTS('6/8')}>6/8</Button>

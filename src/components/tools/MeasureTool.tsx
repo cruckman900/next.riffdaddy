@@ -8,7 +8,7 @@ export function MeasureTool() {
     const { addMeasure } = useMusic()
 
     return (
-        <ToolTemplate title="Measure Tool" shortcut="4">
+        <ToolTemplate title="Measure Tool" shortcut="2">
             <Typography variant="body1" mb={2}>Manage measures in your score.</Typography>
             <Button fullWidth variant="contained" onClick={() => addMeasure('4/4')}>
                 Add Measure (4/4)

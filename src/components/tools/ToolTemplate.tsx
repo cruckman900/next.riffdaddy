@@ -8,12 +8,12 @@ export function ToolTemplate({
     shortcut,
     children,
 }: {
-    title: string
-    shortcut: string
+    title?: string
+    shortcut?: string
     children?: React.ReactNode
 }) {
     return (
-        <Box display="flex" flexDirection="column" height="89%" sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 3 }}>
+        <Box display="flex" flexDirection="column" height="88%" sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 3 }}>
             {/* Header */}
             <Box
                 px={2}
@@ -36,7 +36,7 @@ export function ToolTemplate({
             </Box>
 
             {/* Content */}
-            <Box flex={1} p={3} overflow="auto">
+            <Box flex={1} p={2} overflow="auto">
                 {children}
             </Box>
         </Box>

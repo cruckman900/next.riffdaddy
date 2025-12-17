@@ -15,7 +15,7 @@ export function RestEntryTool({ measureId, duration }: ToolProps) {
     }
 
     return (
-        <ToolTemplate title="Rest Entry" shortcut="3">
+        <ToolTemplate title="Rest Entry" shortcut="5">
             <Typography variant="body1" mb={2}>Insert a {dur} rest.</Typography>
             <Button fullWidth variant="contained" onClick={handleAddRest}>
                 Add Rest
