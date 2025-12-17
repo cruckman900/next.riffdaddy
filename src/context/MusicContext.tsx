@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 'use client'
 
 import { createContext, useContext, useState } from 'react'
@@ -50,11 +51,13 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     // --- NOTES ---
     const addNote = (measureId: string, incoming: Partial<MusicNote>) => {
+        console.log('Adding note to measure:', measureId, incoming)
         setMeasures(prev => {
             const idx = prev.findIndex(m => m.id === measureId)
             if (idx === -1) return prev
 
-            const note: MusicNote = {
+            // Build base note
+            let note: MusicNote = {
                 id: uuid(),
                 pitch: incoming.pitch ?? '',
                 duration: incoming.duration ?? 'q',
@@ -62,16 +65,47 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 fret: incoming.fret,
             }
 
-            // Normalize pitch/TAB
-            if (note.pitch && (note.string == null || note.fret == null)) {
-                const tab = computeTabFromPitch(note.pitch, tuning)
-                note.string = tab.string
-                note.fret = tab.fret
+            // ✅ Normalize to arrays
+            if (!Array.isArray(note.pitch)) {
+                note.pitch = note.pitch ? [note.pitch] : []
             }
-            if (!note.pitch && note.string != null && note.fret != null) {
-                note.pitch = computePitchFromTab(note.string, note.fret, tuning)
+            if (note.string != null && !Array.isArray(note.string)) {
+                note.string = [note.string]
+            }
+            if (note.fret != null && !Array.isArray(note.fret)) {
+                note.fret = [note.fret]
             }
 
+            // ✅ Compute missing tab from pitch
+            if (note.pitch.length > 0 && (!note.string || !note.fret)) {
+                const strings: number[] = []
+                const frets: number[] = []
+                note.pitch.forEach(p => {
+                    const tab = computeTabFromPitch(p, tuning)
+                    strings.push(tab.string)
+                    frets.push(tab.fret)
+                })
+                note.string = strings
+                note.fret = frets
+            }
+
+            // ✅ Compute missing pitch from tab
+            if ((!note.pitch || note.pitch.length === 0) && note.string && note.fret) {
+                const pitches: string[] = []
+                note.string.forEach((s, i) => {
+                    // ✅ ensure f is always a number
+                    let f: number = 0
+                    if (Array.isArray(note.fret)) {
+                        f = note.fret[i] ?? 0
+                    } else if (typeof note.fret === 'number') {
+                        f = note.fret
+                    }
+                    pitches.push(computePitchFromTab(s, f, tuning))
+                })
+                note.pitch = pitches
+            }
+
+            // --- Measure filling logic ---
             const { numBeats, beatValue } = parseTimeSignature(prev[idx].timeSignature)
             const maxBeats = numBeats * (4 / beatValue)
 
@@ -106,9 +140,9 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 updatedMeasures[currentIdx].notes.push({ ...note, id: uuid(), duration: dur })
                 remainingBeats -= durBeats
 
-                // ✅ break if consumed exactly
                 if (remainingBeats <= 0) break
             }
+
             return updatedMeasures
         })
     }
@@ -120,11 +154,62 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
 
     const updateNote = (measureId: string, noteId: string, updates: Partial<MusicNote>) => {
-        setMeasures(prev => prev.map(m =>
-            m.id === measureId
-                ? { ...m, notes: m.notes.map(n => n.id === noteId ? { ...n, ...updates } : n) }
-                : m
-        ))
+        setMeasures(prev =>
+            prev.map(m =>
+                m.id === measureId
+                    ? {
+                        ...m,
+                        notes: m.notes.map(n => {
+                            if (n.id !== noteId) return n
+
+                            // Merge updates
+                            let updated: MusicNote = { ...n, ...updates }
+
+                            // ✅ Normalize to arrays
+                            if (!Array.isArray(updated.pitch)) {
+                                updated.pitch = updated.pitch ? [updated.pitch] : []
+                            }
+                            if (updated.string != null && !Array.isArray(updated.string)) {
+                                updated.string = [updated.string]
+                            }
+                            if (updated.fret != null && !Array.isArray(updated.fret)) {
+                                updated.fret = [updated.fret]
+                            }
+
+                            // ✅ Compute missing tab from pitch
+                            if (updated.pitch.length > 0 && (!updated.string || !updated.fret)) {
+                                const strings: number[] = []
+                                const frets: number[] = []
+                                updated.pitch.forEach(p => {
+                                    const tab = computeTabFromPitch(p, tuning)
+                                    strings.push(tab.string)
+                                    frets.push(tab.fret)
+                                })
+                                updated.string = strings
+                                updated.fret = frets
+                            }
+
+                            // ✅ Compute missing pitch from tab
+                            if ((!updated.pitch || updated.pitch.length === 0) && updated.string && updated.fret) {
+                                const pitches: string[] = []
+                                updated.string.forEach((s, i) => {
+                                    let f: number = 0
+                                    if (Array.isArray(updated.fret)) {
+                                        f = updated.fret[i] ?? 0
+                                    } else if (typeof updated.fret === 'number') {
+                                        f = updated.fret
+                                    }
+                                    pitches.push(computePitchFromTab(s, f, tuning))
+                                })
+                                updated.pitch = pitches
+                            }
+
+                            return updated
+                        }),
+                    }
+                    : m
+            )
+        )
     }
 
     // --- RESTS ---

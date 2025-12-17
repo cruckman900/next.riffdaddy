@@ -3,9 +3,14 @@
 import { useState, useEffect } from "react"
 import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
-import { FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material'
+import Stack from '@mui/material/Stack'
+import Button from '@mui/material/Button'
+import Tooltip from '@mui/material/Tooltip'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import { FormControl, InputLabel, MenuItem, Select } from '@mui/material'
 import TabRenderer from './TabRenderer'
 import StaffRenderer from './StaffRenderer'
+import CombinedRenderer from "./CombinedRenderer"
 import { useMusic } from '@/context/MusicContext'
 
 interface ScorePreviewProps {
@@ -106,49 +111,52 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                     </Box>
 
                     {/* Measure selector with beat count + overflow indicator */}
-                    <Box mb={2}>
-                        {measures.map(m => {
-                            const { numBeats, beatValue } = (() => {
-                                const [beats, value] = m.timeSignature.split('/').map(Number)
-                                return { numBeats: beats || 4, beatValue: value || 4 }
-                            })()
+                    <Stack
+                        direction="row"
+                        flexWrap="wrap"
+                        gap={1}
+                        mb={2}
+                    >
+                        {measures.map((m, idx) => {
+                            const [beats, value] = m.timeSignature.split('/').map(Number)
+                            const numBeats = beats || 4
+                            const beatValue = value || 4
                             const maxBeats = numBeats * (4 / beatValue)
                             const currentBeats = getMeasureBeatCount(m)
                             const overfilled = currentBeats > maxBeats
+                            const isActive = activeMeasureId === m.id
+
+                            const tooltipText = `Measure ${idx + 1}
+Time: ${m.timeSignature}
+Key: ${m.keySignature || 'C'}
+Clef: ${m.clef || 'treble'}
+Beats: ${currentBeats}/${maxBeats}${overfilled ? ' (Overflow!)' : ''}`
 
                             return (
-                                <Box
-                                    key={m.id}
-                                    onClick={() => setActiveMeasureId(m.id)}
-                                    sx={{
-                                        cursor: 'pointer',
-                                        padding: '4px 8px',
-                                        marginBottom: '4px',
-                                        borderRadius: 1,
-                                        border: '1px solid #ccc',
-                                        backgroundColor: activeMeasureId === m.id ? '#dbeafe' : overfilled ? '#fee2e2' : 'transparent',
-                                        color: activeMeasureId === m.id ? '#1e3a8a' : overfilled ? '#b91c1c' : 'inherit',
-                                        transition: 'background-color 0.2s',
-                                    }}
-                                >
-                                    <Typography variant="caption">
-                                        Measure {m.id} ({m.timeSignature}{m.keySignature ? `, ${m.keySignature}` : ''}{m.clef ? `, ${m.clef}` : ''}) — {currentBeats}/{maxBeats} beats
-                                        {overfilled && ' ⚠️ Overflow'}
-                                    </Typography>
-                                </Box>
+                                <Tooltip key={m.id} title={tooltipText} arrow>
+                                    <Button
+                                        variant={isActive ? 'contained' : 'outlined'}
+                                        color={overfilled ? 'error' : isActive ? 'primary' : 'inherit'}
+                                        size="small"
+                                        onClick={() => setActiveMeasureId(m.id)}
+                                        sx={{
+                                            minWidth: 100,
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                        }}
+                                    >
+                                        {`Measure ${idx + 1}`}
+                                        {overfilled && <WarningAmberIcon fontSize="small" sx={{ ml: 0.5 }} />}
+                                    </Button>
+                                </Tooltip>
                             )
                         })}
-                    </Box>
+                    </Stack>
 
                     {/* Printable Renderers */}
                     {viewMode === 'tab' && <TabRenderer />}
                     {viewMode === 'staff' && <StaffRenderer />}
-                    {viewMode === 'both' && (
-                        <>
-                            <TabRenderer />
-                            <StaffRenderer />
-                        </>
-                    )}
+                    {viewMode === 'both' && <CombinedRenderer activeMeasureId={activeMeasureId} />}
                 </Box>
             </Grid>
         </Box>

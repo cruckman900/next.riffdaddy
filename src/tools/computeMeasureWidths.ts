@@ -3,6 +3,8 @@
 import { Measure } from '@/types/music'
 import { durationToBeats } from './durationUtils' // or inline this if needed
 
+export const MEASURE_PADDING = 10
+
 export function computeMeasureWidths(measures: Measure[], baseWidth = 150, beatScale = 40) {
     return measures.map(measure => {
         const totalBeats =

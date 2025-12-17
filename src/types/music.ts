@@ -1,9 +1,9 @@
 export interface MusicNote {
     id: string
-    pitch: string
+    pitch: string | string[]
+    string?: number | number[]
+    fret?: number | number[]   // but always resolved to single values when building TabNote
     duration: string
-    string?: number
-    fret?: number
 }
 
 export interface MusicRest {

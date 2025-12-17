@@ -39,7 +39,7 @@ export default function Workbench() {
                 style={{
                     display: "flex",
                     flexDirection: "row",
-                    width: "100%",
+                    minWidth: "100%",
                     height: isMobile ? "100%" : 'calc(100vh - 13.55rem)',
                     minHeight: isMobile ? 0 : "100%",
                     flexShrink: 0,
@@ -67,7 +67,7 @@ export default function Workbench() {
 
                 {/* Desktop ScorePreview */}
                 {!isMobile && (
-                    <div style={{ flex: 1, overflow: "auto", background: "#0f1114" }}>
+                    <div style={{ flex: 1, width: "100%", overflow: "auto", background: "#0f1114" }}>
                         <ScorePreview setActiveMeasureId={setActiveMeasureId} activeMeasureId={activeMeasureId} />
                     </div>
                 )}
