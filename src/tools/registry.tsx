@@ -1,10 +1,10 @@
 import { IconProps } from "@/components/icons/IconBase"
 import { CockpitIcon } from "@/components/icons/CockpitIcon"
-import { MeasureIcon } from "@/components/icons/MeasureIcon"
+// import { MeasureIcon } from "@/components/icons/MeasureIcon"
 import { FretboardIcon } from "@/components/icons/FretboardIcon"
 import { KeyboardIcon } from "@/components/icons/KeyboardIcon"
 import { RestIcon } from "@/components/icons/RestIcon"
-import { TimeSignatureIcon } from "@/components/icons/TimeSignatureIcon"
+// import { TimeSignatureIcon } from "@/components/icons/TimeSignatureIcon"
 import { KeySignatureIcon } from "@/components/icons/KeySignatureIcon"
 import { PlaybackIcon } from "@/components/icons/PlaybackIcon"
 import { ScoreLayoutSlidersIcon } from "@/components/icons/ScoreLayoutSlidersIcon"
@@ -12,11 +12,11 @@ import { ScoreLayoutSlidersIcon } from "@/components/icons/ScoreLayoutSlidersIco
 import { ToolProps } from "@/types/tooling"
 
 import { CockpitTool } from "@/components/tools/CockpitTool"
-import { MeasureTool } from "@/components/tools/MeasureTool"
+// import { MeasureTool } from "@/components/tools/MeasureTool"
 import { FretboardTool } from "@/components/tools/FretboardTool"
 import { KeyboardTool } from "@/components/tools/KeyboardTool"
 import { RestEntryTool } from "@/components/tools/RestEntryTool"
-import { TimeSignatureTool } from "@/components/tools/TimeSignatureTool"
+// import { TimeSignatureTool } from "@/components/tools/TimeSignatureTool"
 import { KeySignatureTool } from "@/components/tools/KeySignatureTool"
 import { PlaybackTool } from "@/components/tools/PlaybackTool"
 import { ClefPalette } from "@/components/tools/ClefPalette"
@@ -44,16 +44,16 @@ export const TOOL_REGISTRY: Record<string, {
         component: CockpitTool,
         shortcut: "1"
     },
-    measure: {
-        id: "Measure",
-        label: "Measure Entry",
-        icon: MeasureIcon,
-        component: MeasureTool,
-        shortcut: "2"
-    },
+    // measure: {
+    //     id: "Measure",
+    //     label: "Measure Entry",
+    //     icon: MeasureIcon,
+    //     component: MeasureTool,
+    //     shortcut: "2"
+    // },
     clef: {
         id: "clef",
-        label: "Clef Palette",
+        label: "Score and Measure",
         icon: ClefIcon,
         component: ClefPalette,
         shortcut: "C"
@@ -79,13 +79,13 @@ export const TOOL_REGISTRY: Record<string, {
         component: RestEntryTool,
         shortcut: "5"
     },
-    time: {
-        id: "time",
-        label: "Time Signature",
-        icon: TimeSignatureIcon,
-        component: TimeSignatureTool,
-        shortcut: "6"
-    },
+    // time: {
+    //     id: "time",
+    //     label: "Time Signature",
+    //     icon: TimeSignatureIcon,
+    //     component: TimeSignatureTool,
+    //     shortcut: "6"
+    // },
     key: {
         id: "key",
         label: "Key Signature",
@@ -105,12 +105,12 @@ export const TOOL_REGISTRY: Record<string, {
 export const TOOL_ORDER: string[] = [
     "ScoreLayoutSliders",
     "cockpit",
-    "measure",
+    // "measure",
     "clef",
     "fretboard",
     "keyboard",
     "rests",
-    "time",
+    // "time",
     "key",
     "playback",
 ]

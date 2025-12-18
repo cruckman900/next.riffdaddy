@@ -12,6 +12,7 @@ export function RhythmPalette({ onSelect }: { onSelect: (duration: string) => vo
         { label: 'Q', value: 'q' },
         { label: '8', value: '8' },
         { label: '16', value: '16' },
+        { label: '32', value: '32' },
     ]
 
     return (
