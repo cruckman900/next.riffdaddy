@@ -154,8 +154,8 @@ Beats: ${currentBeats}/${maxBeats}${overfilled ? ' (Overflow!)' : ''}`
                     </Stack>
 
                     {/* Printable Renderers */}
-                    {viewMode === 'tab' && <TabRenderer />}
-                    {viewMode === 'staff' && <StaffRenderer />}
+                    {viewMode === 'tab' && <TabRenderer activeMeasureId={activeMeasureId} />}
+                    {viewMode === 'staff' && <StaffRenderer activeMeasureId={activeMeasureId} />}
                     {viewMode === 'both' && <CombinedRenderer activeMeasureId={activeMeasureId} />}
                 </Box>
             </Grid>

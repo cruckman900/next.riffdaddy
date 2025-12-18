@@ -32,22 +32,31 @@ interface CombinedRendererProps {
 }
 
 export default function CombinedRenderer({ activeMeasureId }: CombinedRendererProps) {
-    const { measures } = useMusic()
+    const { measures, measuresPerRow, scoreFixedWidth } = useMusic()
     const containerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         if (!containerRef.current) return
         containerRef.current.innerHTML = ''
 
-        const rendererWidth = 800
+        const rendererWidth = scoreFixedWidth
+            ? 800
+            : (containerRef.current?.clientWidth || window.innerWidth)
+
         const marginLeft = 10
         const marginTop = 20
-        const lineHeight = 120
         const staffOffset = 150
+        const linePadding = 40
 
         const widths = computeMeasureWidths(measures)
+
+        // Estimate number of systems and height
+        const numSystems = Math.ceil(measures.length / (measuresPerRow || measures.length))
+        const estimatedSystemHeight = staffOffset * 2
+        const rendererHeight = marginTop + numSystems * (estimatedSystemHeight + linePadding)
+
         const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG)
-        renderer.resize(rendererWidth, 2000)
+        renderer.resize(rendererWidth, rendererHeight)
         const context = renderer.getContext()
 
         let y = marginTop
@@ -61,7 +70,10 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
         const flushRow = (isLastRow: boolean) => {
             if (!rowMeasures.length) return
             const rowTotal = rowWidths.reduce((a, b) => a + b, 0)
-            const scale = rendererWidth / rowTotal
+            // Only scale when row is complete or last row
+            const scale = (rowMeasures.length === measuresPerRow || isLastRow)
+                ? rendererWidth / rowTotal
+                : 1
             let x = marginLeft
 
             const tabStaves: TabStave[] = []
@@ -71,15 +83,58 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                 const scaledWidth = rowWidths[idx] * scale - MEASURE_PADDING
                 const { numBeats, beatValue } = parseTimeSignature(measure.timeSignature)
 
+                const tabStave = new TabStave(x, y, scaledWidth)
+                const staffStave = new Stave(x, y + staffOffset, scaledWidth)
+
                 // Highlight active measure
                 if (measure.id === activeMeasureId) {
+                    const tabBB = tabStave.getBoundingBox()
+                    const staffBB = staffStave.getBoundingBox()
+                    const highlightX = Math.min(tabBB.getX(), staffBB.getX()) - 2
+                    const highlightY = Math.min(tabBB.getY(), staffBB.getY()) - 2
+                    const highlightW = Math.max(tabBB.getW(), staffBB.getW()) + 4
+                    const highlightH =
+                        Math.max(tabBB.getY() + tabBB.getH(), staffBB.getY() + staffBB.getH()) -
+                        highlightY + 4
+
                     context.save()
                     context.setFillStyle('#e0f7fa')
-                    context.fillRect(x - 2, y - 10, scaledWidth + 4, staffOffset + 110)
+                    context.fillRect(highlightX, highlightY, highlightW, highlightH)
                     context.restore()
                 }
 
-                // --- Tab stave ---
+                // Clefs, time, key signatures
+                if (measure.clef && measure.clef !== lastClef) {
+                    tabStave.addClef('tab')
+                    staffStave.addClef(measure.clef)
+                }
+                if (measure.timeSignature && measure.timeSignature !== lastTime) {
+                    tabStave.addTimeSignature(measure.timeSignature)
+                    staffStave.addTimeSignature(measure.timeSignature)
+                }
+                if (measure.keySignature && measure.keySignature !== lastKey) {
+                    tabStave.addKeySignature(measure.keySignature)
+                    staffStave.addKeySignature(measure.keySignature)
+                }
+
+                // End barlines
+                if (isLastRow && idx === rowMeasures.length - 1) {
+                    tabStave.setEndBarType(Barline.type.DOUBLE)
+                    staffStave.setEndBarType(Barline.type.DOUBLE)
+                } else if (idx === rowMeasures.length - 1) {
+                    tabStave.setEndBarType(Barline.type.SINGLE)
+                    staffStave.setEndBarType(Barline.type.SINGLE)
+                } else {
+                    tabStave.setEndBarType(Barline.type.NONE)
+                    staffStave.setEndBarType(Barline.type.NONE)
+                }
+
+                tabStave.setContext(context).draw()
+                staffStave.setContext(context).draw()
+                tabStaves.push(tabStave)
+                staffStaves.push(staffStave)
+
+                // Tab notes
                 const tabTickables = measure.notes.map(n =>
                     new TabNote({
                         positions: Array.isArray(n.string)
@@ -92,102 +147,56 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                                 }
                                 return { str: s, fret: fretValue }
                             })
-                            : [{
-                                str: n.string ?? 1,
-                                fret: (typeof n.fret === 'number' || typeof n.fret === 'string') ? n.fret : 0
-                            }],
-                        duration: n.duration || 'q'
+                            : [
+                                {
+                                    str: n.string ?? 1,
+                                    fret:
+                                        typeof n.fret === 'number' || typeof n.fret === 'string'
+                                            ? n.fret
+                                            : 0,
+                                },
+                            ],
+                        duration: n.duration || 'q',
                     })
                 )
-
-                const tabStave = new TabStave(x, y, scaledWidth)
-                if (measure.clef && measure.clef !== lastClef) {
-                    tabStave.addClef('tab')
-                }
-                if (measure.timeSignature && measure.timeSignature !== lastTime) {
-                    tabStave.addTimeSignature(measure.timeSignature)
-                }
-                if (measure.keySignature && measure.keySignature !== lastKey) {
-                    tabStave.addKeySignature(measure.keySignature)
-                }
-
-                if (isLastRow && idx === rowMeasures.length - 1) {
-                    tabStave.setEndBarType(Barline.type.DOUBLE)
-                } else if (idx === rowMeasures.length - 1) {
-                    tabStave.setEndBarType(Barline.type.SINGLE)
-                } else {
-                    tabStave.setEndBarType(Barline.type.NONE)
-                }
-
-                tabStave.setContext(context).draw()
-                tabStaves.push(tabStave)
 
                 if (tabTickables.length > 0) {
                     const voice = new Voice({ numBeats, beatValue }).setStrict(false)
                     voice.addTickables(tabTickables)
                     new Formatter().joinVoices([voice]).format([voice], scaledWidth - 50)
                     voice.draw(context, tabStave)
-
-                    const beams = Beam.generateBeams(tabTickables)
-                    beams.forEach(b => b.setContext(context).draw())
+                    Beam.generateBeams(tabTickables).forEach(b => b.setContext(context).draw())
                 }
 
-                // --- Staff stave ---
+                // Staff notes
                 const staffTickables = [
                     ...measure.notes.map(n =>
                         new StaveNote({
                             keys: Array.isArray(n.pitch)
                                 ? n.pitch.map(formatPitch)
                                 : [formatPitch(n.pitch)],
-                            duration: n.duration || 'q'
+                            duration: n.duration || 'q',
                         })
                     ),
                     ...measure.rests.map(r =>
                         new StaveNote({ keys: ['b/4'], duration: (r.duration || 'q') + 'r' })
                     ),
                 ]
-
-                const staffStave = new Stave(x, y + staffOffset, scaledWidth)
-                if (measure.clef && measure.clef !== lastClef) {
-                    staffStave.addClef(measure.clef)
-                }
-                if (measure.timeSignature && measure.timeSignature !== lastTime) {
-                    staffStave.addTimeSignature(measure.timeSignature)
-                }
-                if (measure.keySignature && measure.keySignature !== lastKey) {
-                    staffStave.addKeySignature(measure.keySignature)
-                }
-
-                if (isLastRow && idx === rowMeasures.length - 1) {
-                    staffStave.setEndBarType(Barline.type.DOUBLE)
-                } else if (idx === rowMeasures.length - 1) {
-                    staffStave.setEndBarType(Barline.type.SINGLE)
-                } else {
-                    staffStave.setEndBarType(Barline.type.NONE)
-                }
-
-                staffStave.setContext(context).draw()
-                staffStaves.push(staffStave)
-
                 if (staffTickables.length > 0) {
                     const voice = new Voice({ numBeats, beatValue }).setStrict(false)
                     voice.addTickables(staffTickables)
                     new Formatter().joinVoices([voice]).format([voice], scaledWidth - 50)
                     voice.draw(context, staffStave)
-
-                    // Beam all beamable notes automatically
-                    const beams = Beam.generateBeams(staffTickables)
-                    beams.forEach(b => b.setContext(context).draw())
+                    Beam.generateBeams(staffTickables).forEach(b => b.setContext(context).draw())
                 }
 
                 x += scaledWidth
-
                 lastClef = measure.clef || lastClef
                 lastTime = measure.timeSignature || lastTime
                 lastKey = measure.keySignature || lastKey
             })
 
-            // System connectors
+            // Connectors
             if (tabStaves.length && staffStaves.length) {
                 new StaveConnector(tabStaves[0], staffStaves[0])
                     .setType(StaveConnector.type.SINGLE)
@@ -206,7 +215,12 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                     .draw()
             }
 
-            y += staffOffset + lineHeight
+            // Advance y by actual system height
+            const tabBB = tabStaves[0].getBoundingBox()
+            const staffBB = staffStaves[0].getBoundingBox()
+            const systemHeight = (staffBB.getY() + staffBB.getH()) - tabBB.getY()
+            y += systemHeight + linePadding
+
             rowMeasures = []
             rowWidths = []
         }
@@ -219,14 +233,18 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
             }
             rowMeasures.push(measure)
             rowWidths.push(width)
+
+            if (measuresPerRow && rowMeasures.length === measuresPerRow) {
+                flushRow(false)
+            }
         })
 
         flushRow(true)
-    }, [measures, activeMeasureId])
+    }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth])
 
     return (
         <Box sx={{ width: '100%', overflowX: 'auto', padding: 2 }}>
-            <div style={{ backgroundColor: '#ffffff', width: '800px' }} ref={containerRef}></div>
+            <div style={{ backgroundColor: '#ffffff' }} ref={containerRef}></div>
         </Box>
     )
 }

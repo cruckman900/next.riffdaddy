@@ -1,8 +1,9 @@
 /* eslint-disable prefer-const */
 'use client'
 
-import { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState } from 'react'
 import { MusicNote, MusicRest, MusicState, Measure } from "@/types/music"
+import { Tuning, tuningPresets } from '@/utils/tunings'
 import { computePitchFromTab, computeTabFromPitch } from '@/tools/conversion'
 import { v4 as uuid } from 'uuid'
 
@@ -31,10 +32,26 @@ function getMeasureBeatCount(measure: Measure): number {
 }
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
+    const [selectedInstrument, setSelectedInstrument] = useState("guitar")
+    const [selectedGenre, setSelectedGenre] = useState("All")
+    const [selectedTuning, setSelectedTuning] = useState<Tuning>({
+        name: "Standard",
+        notes: tuningPresets.guitar,
+    })
+    const [showArcs, setShowArcs] = useState(false)
+    const [useAlternate, setUseAlternate] = useState(false)
+    const [customTunings, setCustomTunings] = useState<Tuning[]>([])
+
+    const addCustomTuning = (t: Tuning) => setCustomTunings(prev => [...prev, t])
+
     const [measures, setMeasures] = useState<Measure[]>([
         { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble', beamGroups: [] },
     ])
-    const [tuning] = useState(['E2', 'A2', 'D3', 'G3', 'B3', 'E4'])
+    const [tuning, setTuning] = useState(['E2', 'A2', 'D3', 'G3', 'B3', 'E4'])
+
+    // Score Settings
+    const [measuresPerRow, setMeasuresPerRow] = useState(4)
+    const [scoreFixedWidth, setScoreFixedWidth] = useState(false)
 
     // --- MEASURES ---
     const addMeasure = (timeSignature: string = '4/4', keySignature: string = 'C') => {
@@ -348,8 +365,21 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     return (
         <MusicContext.Provider
             value={{
-                measures,
+                selectedInstrument,
+                setSelectedInstrument,
+                showArcs,
+                setShowArcs,
+                useAlternate,
+                setUseAlternate,
+                selectedGenre,
+                setSelectedGenre,
+                selectedTuning,
+                setSelectedTuning,
+                customTunings,
+                addCustomTuning,
                 tuning,
+                setTuning,
+                measures,
                 addMeasure,
                 removeMeasure,
                 updateMeasure,
@@ -360,6 +390,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 removeRest,
                 updateRest,
                 getMeasureBeatCount, // ✅ exposed helper
+                measuresPerRow,
+                setMeasuresPerRow,
+                scoreFixedWidth,
+                setScoreFixedWidth,
             }}
         >
             {children}
@@ -367,7 +401,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     )
 }
 
-export function useMusic() {
+export function useMusic(): MusicState {
     const ctx = useContext(MusicContext)
     if (!ctx) throw new Error('useMusic must be inside MusicProvider')
     return ctx

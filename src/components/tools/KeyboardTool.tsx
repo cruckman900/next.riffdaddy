@@ -9,16 +9,19 @@ import { useState, useRef } from 'react'
 type Natural = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B'
 type SharpKey = 'C' | 'D' | 'F' | 'G' | 'A'
 
-function toVexflowKey(pitch: string): string {
-    // "C4" -> "c/4"
-    const match = pitch.match(/^([A-Ga-g])(#?)(\d)$/)
-    if (!match) return 'c/4'
-    const [, letter, accidental, octave] = match
-    return `${letter}${accidental}${octave}`
+const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+function noteToMidi(note: string): number {
+    const match = note.match(/^([A-G]#?)(\d+)$/)
+    if (!match) return 0
+    const [, pitch, octaveStr] = match
+    const octave = parseInt(octaveStr, 10)
+    const semitone = NOTES.indexOf(pitch)
+    return (octave + 1) * 12 + semitone
 }
 
 export function KeyboardTool({ measureId, duration }: ToolProps) {
-    const { addNote } = useMusic()
+    const { addNote, tuning } = useMusic()
     const scrollRef = useRef<HTMLDivElement>(null)
 
     const dur = duration ?? 'q'
@@ -36,6 +39,9 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
         A: 'A#',
     }
 
+    // lowest guitar string (usually E2)
+    const lowestMidi = noteToMidi(tuning[0]) // tuning[0] = low E in standard tuning
+
     const toggleKey = (pitch: string) => {
         if (selectedKeys.includes(pitch)) {
             setSelectedKeys(selectedKeys.filter(p => p !== pitch))
@@ -46,8 +52,7 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
 
     const commitChord = () => {
         if (!mid || selectedKeys.length === 0) return
-        addNote(mid, { pitch: selectedKeys.map(toVexflowKey), duration: dur })
-        console.log('Committed keys:', selectedKeys.map(toVexflowKey))
+        addNote(mid, { pitch: selectedKeys, duration: dur })
         setSelectedKeys([])
     }
 
@@ -99,18 +104,30 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
                         <Box key={oIdx} display="flex" flexDirection="row" gap={0.5}>
                             {naturals.map(note => {
                                 const pitch = `${note}${2 + oIdx}`
+                                const midi = noteToMidi(pitch)
+                                const disabled = midi < lowestMidi
                                 const selected = isSelected(pitch)
+
                                 return (
                                     <Box key={pitch} position="relative" display="inline-block">
                                         {/* White key */}
                                         <Button
                                             size="small"
                                             variant={selected ? 'contained' : 'outlined'}
+                                            disabled={disabled}
                                             sx={{
                                                 minWidth: 40,
                                                 height: 100,
-                                                bgcolor: selected ? '#1976d2' : 'white',
-                                                color: selected ? '#fff' : 'black',
+                                                bgcolor: disabled
+                                                    ? '#444'
+                                                    : selected
+                                                        ? '#1976d2'
+                                                        : 'white',
+                                                color: disabled
+                                                    ? '#999'
+                                                    : selected
+                                                        ? '#fff'
+                                                        : 'black',
                                                 padding: 0,
                                                 display: 'flex',
                                                 alignItems: 'flex-end',
@@ -118,39 +135,46 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
                                                 fontSize: '0.7rem',
                                                 pb: 0.5,
                                             }}
-                                            onClick={() => toggleKey(pitch)}
+                                            onClick={() => !disabled && toggleKey(pitch)}
                                         >
                                             {pitch}
                                         </Button>
 
                                         {/* Black key overlay */}
-                                        {note in sharps && (
-                                            (() => {
-                                                const sharpPitch = `${sharps[note as SharpKey]}${2 + oIdx}`
-                                                const sharpSelected = isSelected(sharpPitch)
-                                                return (
-                                                    <Button
-                                                        size="small"
-                                                        variant={sharpSelected ? 'contained' : 'outlined'}
-                                                        sx={{
-                                                            position: 'absolute',
-                                                            top: 0,
-                                                            left: '105%',
-                                                            transform: 'translateX(-50%)',
-                                                            minWidth: 28,
-                                                            height: 60,
-                                                            bgcolor: sharpSelected ? '#1976d2' : 'black',
-                                                            color: 'white',
-                                                            padding: 0,
-                                                            zIndex: 1,
-                                                        }}
-                                                        onClick={() => toggleKey(sharpPitch)}
-                                                    >
-                                                        ♯
-                                                    </Button>
-                                                )
-                                            })()
-                                        )}
+                                        {note in sharps && (() => {
+                                            const sharpPitch = `${sharps[note as SharpKey]}${2 + oIdx}`
+                                            const sharpMidi = noteToMidi(sharpPitch)
+                                            const sharpDisabled = sharpMidi < lowestMidi
+                                            const sharpSelected = isSelected(sharpPitch)
+
+                                            return (
+                                                <Button
+                                                    size="small"
+                                                    variant={sharpSelected ? 'contained' : 'outlined'}
+                                                    disabled={sharpDisabled}
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        left: '105%',
+                                                        transform: 'translateX(-50%)',
+                                                        minWidth: 28,
+                                                        height: 60,
+                                                        bgcolor: sharpDisabled
+                                                            ? '#222'
+                                                            : sharpSelected
+                                                                ? '#1976d2'
+                                                                : 'black',
+                                                        color: 'white',
+                                                        opacity: sharpDisabled ? 0.4 : 1,
+                                                        padding: 0,
+                                                        zIndex: 1,
+                                                    }}
+                                                    onClick={() => !sharpDisabled && toggleKey(sharpPitch)}
+                                                >
+                                                    ♯
+                                                </Button>
+                                            )
+                                        })()}
                                     </Box>
                                 )
                             })}

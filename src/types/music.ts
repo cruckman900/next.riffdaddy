@@ -1,3 +1,5 @@
+import { Tuning } from '@/utils/tunings'
+
 export interface MusicNote {
     id: string
     pitch: string | string[]
@@ -22,8 +24,33 @@ export interface Measure {
 }
 
 export interface MusicState {
+    selectedInstrument: string
+    setSelectedInstrument: (instrument: string) => void
+
+    selectedGenre: string
+    setSelectedGenre: (genre: string) => void
+
+    selectedTuning: Tuning
+    setSelectedTuning: (t: Tuning) => void
+
+    showArcs: boolean
+    setShowArcs: (s: boolean) => void
+
+    useAlternate: boolean
+    setUseAlternate: (s: boolean) => void
+
+    customTunings: Tuning[]
+    addCustomTuning: (t: Tuning) => void
+
     measures: Measure[]
     tuning: string[]
+    setTuning: (notes: string[]) => void
+
+    // Score Settings
+    measuresPerRow: number
+    setMeasuresPerRow: (count: number) => void
+    scoreFixedWidth: boolean
+    setScoreFixedWidth: (fixed: boolean) => void
 
     // Notes
     addNote: (measureId: string, note: Partial<MusicNote>) => void

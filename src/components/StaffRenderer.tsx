@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useMusic } from '@/context/MusicContext'
 import { Renderer, Stave, StaveNote, Voice, Formatter, Beam, Barline } from 'vexflow'
 import { computeMeasureWidths, MEASURE_PADDING } from '@/tools/computeMeasureWidths'
+import Box from '@mui/material/Box'
 
 function formatPitch(pitch: string): string {
   const match = pitch?.match(/^([A-Ga-g])([#b]?)(\d)$/)
@@ -15,15 +16,19 @@ function parseTimeSignature(ts?: string) {
   return { numBeats: beats || 4, beatValue: value || 4 }
 }
 
-export default function StaffRenderer() {
-  const { measures } = useMusic()
+interface CombinedRendererProps {
+  activeMeasureId?: string | null
+}
+
+export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps) {
+  const { measures, measuresPerRow, scoreFixedWidth } = useMusic()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
     containerRef.current.innerHTML = ''
 
-    const rendererWidth = 800
+    const rendererWidth = scoreFixedWidth ? 800 : (containerRef.current?.clientWidth || window.innerWidth)
     const marginLeft = 10
     const marginTop = 20
     const lineHeight = 150
@@ -45,12 +50,25 @@ export default function StaffRenderer() {
     const flushRow = (isLastRow: boolean) => {
       if (!rowMeasures.length) return
       const rowTotal = rowWidths.reduce((a, b) => a + b, 0)
-      const scale = rendererWidth / rowTotal
+      const scale = (rowMeasures.length === measuresPerRow || isLastRow)
+        ? rendererWidth / rowTotal
+        : 1
       let x = marginLeft
 
       rowMeasures.forEach((measure, idx) => {
         const scaledWidth = rowWidths[idx] * scale - MEASURE_PADDING
         const { numBeats, beatValue } = parseTimeSignature(measure.timeSignature)
+
+        const stave = new Stave(x, y, scaledWidth)
+
+        // Highlight active measure
+        if (measure.id === activeMeasureId) {
+          const bb = stave.getBoundingBox()
+          context.save()
+          context.setFillStyle('#e0f7fa')
+          context.fillRect(bb.getX() - 2, bb.getY() - 2, bb.getW() + 4, bb.getH() + 4)
+          context.restore()
+        }
 
         // ✅ Build tickables with chord support
         const tickables = [
@@ -66,8 +84,6 @@ export default function StaffRenderer() {
             new StaveNote({ keys: ['b/4'], duration: (r.duration || 'q') + 'r' })
           ),
         ]
-
-        const stave = new Stave(x, y, scaledWidth)
 
         // ✅ Deduplication logic
         if (measure.clef && measure.clef !== lastClef) {
@@ -112,6 +128,7 @@ export default function StaffRenderer() {
         lastTime = measure.timeSignature || lastTime
         lastKey = measure.keySignature || lastKey
       })
+
       y += lineHeight
       rowMeasures = []
       rowWidths = []
@@ -125,10 +142,19 @@ export default function StaffRenderer() {
       }
       rowMeasures.push(measure)
       rowWidths.push(width)
+
+      // break row when we hit the slider count
+      // if (rowMeasures.length === measuresPerRow) {
+      //   flushRow(false)
+      // }
     })
 
     flushRow(true)
-  }, [measures])
+  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth])
 
-  return <div ref={containerRef}></div>
+  return (
+    <Box sx={{ width: '100%', overflowX: 'auto', padding: 2 }}>
+      <div style={{ backgroundColor: '#ffffff' }} ref={containerRef}></div>
+    </Box>
+  )
 }

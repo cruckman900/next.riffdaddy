@@ -7,6 +7,7 @@ import { RestIcon } from "@/components/icons/RestIcon"
 import { TimeSignatureIcon } from "@/components/icons/TimeSignatureIcon"
 import { KeySignatureIcon } from "@/components/icons/KeySignatureIcon"
 import { PlaybackIcon } from "@/components/icons/PlaybackIcon"
+import { ScoreLayoutSlidersIcon } from "@/components/icons/ScoreLayoutSlidersIcon"
 
 import { ToolProps } from "@/types/tooling"
 
@@ -20,6 +21,7 @@ import { KeySignatureTool } from "@/components/tools/KeySignatureTool"
 import { PlaybackTool } from "@/components/tools/PlaybackTool"
 import { ClefPalette } from "@/components/tools/ClefPalette"
 import { ClefIcon } from "@/components/icons/ClefIcon"
+import { ScoreLayoutSliders } from "@/components/ScoreLayoutSliders"
 
 export const TOOL_REGISTRY: Record<string, {
     id: string
@@ -28,6 +30,13 @@ export const TOOL_REGISTRY: Record<string, {
     shortcut: string
     component: React.ComponentType<ToolProps>
 }> = {
+    ScoreLayoutSliders: {
+        id: "scoreLayoutSliders",
+        label: "Score Layout Sliders",
+        icon: ScoreLayoutSlidersIcon,
+        component: ScoreLayoutSliders,
+        shortcut: ""
+    },
     cockpit: {
         id: "cockpit",
         label: "Instrument & Tuning",
@@ -94,6 +103,7 @@ export const TOOL_REGISTRY: Record<string, {
 }
 
 export const TOOL_ORDER: string[] = [
+    "ScoreLayoutSliders",
     "cockpit",
     "measure",
     "clef",
