@@ -141,7 +141,7 @@ export default function Cockpit() {
     return (
         <Grid spacing={4} height="88%">
             <Grid item xs={12} md={4} height="100%">
-                <Box className="print:hidden" height="100%" sx={{ bgcolor: 'background.paper', borderRadius: 2, overflowY: 'auto' }}>
+                <Box className="print:hidden" height="100%" sx={{ bgcolor: 'background.paper', borderRadius: 2 }}>
                     <Box sx={{ mb: 2 }}>
                         {/* pass value so InstrumentSelector can show current instrument */}
                         <InstrumentSelector value={selectedInstrument} onChange={(val) => {
