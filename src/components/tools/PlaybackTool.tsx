@@ -6,6 +6,9 @@ import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Slider from '@mui/material/Slider'
 import Box from '@mui/material/Box'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import StopIcon from '@mui/icons-material/Stop'
+import PauseIcon from '@mui/icons-material/Pause'
 
 export function PlaybackTool() {
     return (
@@ -15,9 +18,9 @@ export function PlaybackTool() {
             </Typography>
 
             <Grid container spacing={2} mb={3}>
-                <Grid item xs={12}><Button fullWidth variant="contained">Play</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">Pause</Button></Grid>
-                <Grid item xs={12}><Button fullWidth variant="contained">Stop</Button></Grid>
+                <Grid item xs={4}><Button fullWidth variant="contained"><StopIcon /></Button></Grid>
+                <Grid item xs={4}><Button fullWidth variant="contained"><PauseIcon /></Button></Grid>
+                <Grid item xs={4}><Button fullWidth variant="contained"><PlayArrowIcon /></Button></Grid>
             </Grid>
 
             <Box>

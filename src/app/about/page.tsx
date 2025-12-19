@@ -6,9 +6,9 @@ export default function AboutPage() {
     return (
         <Box
             sx={{
-                mx: 'auto',
                 p: 4,
                 display: 'flex',
+                flex: 1,
                 flexDirection: 'column',
                 gap: 3,
                 bgcolor: 'background.paper',
@@ -19,9 +19,9 @@ export default function AboutPage() {
             </Typography>
 
             <Typography variant="body1" color="text.secondary">
-                This workspace is designed for creators, developers, and contributors who want a clean,
-                expressive environment for building, editing, and experimenting. Every part of the interface
-                is crafted to be intuitive, ergonomic, and friendly to both newcomers and power users.
+                This workspace is designed for creators who want a clean, expressive environment for building,
+                editing, and experimenting with music. Every part of the interface is crafted to be intuitive,
+                ergonomic, and friendly to both newcomers and power users.
             </Typography>
 
             <Divider />

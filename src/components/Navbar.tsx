@@ -1,10 +1,11 @@
 // src/components/Navbar.tsx
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState } from 'react'
+import Link from 'next/link'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuthContext } from '@/context/AuthProvider'
-import { AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItemButton, ListItemText, Box, Stack, Button } from '@mui/material'
+import { AppBar, Toolbar, Typography, Drawer, List, Box, Stack, Button } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import InfoIcon from '@mui/icons-material/Info'
@@ -13,14 +14,16 @@ import DesignServicesIcon from '@mui/icons-material/DesignServices'
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp'
 import LeftMenu from '@/components/LeftMenu'
-import NextLinkComposed from '@/components/NextLinkComposed'
-import Link from 'next/link'
 
 const Navbar = () => {
     const { user, logout } = useAuthContext()
     const [rightOpen, setRightOpen] = useState(false)
     const [leftOpen, setLeftOpen] = useState(false)
+
     const router = useRouter()
+    const pathname = usePathname()
+
+    const isWorkspace = pathname === '/workspace';
 
     const navItems = [
         { label: 'Home', path: '/', icon: <HomeIcon sx={{ scale: 1.5 }} /> },
@@ -40,22 +43,29 @@ const Navbar = () => {
     }
 
     return (
-        <>
+        <React.Fragment>
             <AppBar position="static" color="primary" sx={{ '@media print': { display: 'none' } }}>
                 <Toolbar>
                     <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
                         <Box>
-                            <IconButton edge="start" color="inherit" aria-label="menu" onClick={() => setLeftOpen(true)} sx={{ mr: 1 }}>
-                                <MenuIcon sx={{ scale: 1.5 }} />
-                            </IconButton>
+                            {isWorkspace && <Link href="" color='inherit' aria-label="help" onClick={() => setLeftOpen(true)}>
+                                <Button>
+                                    <Typography variant="h6" sx={{ flexGrow: 1, color: '#ffffff' }}>
+                                        <MenuIcon sx={{ scale: 1.5 }} />
+                                    </Typography>
+                                </Button>
+                            </Link>}
 
-                            <IconButton href='/help' edge="start" color='inherit' aria-label="logo" sx={{ ml: 2 }}>
-                                <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                                    <Stack direction="row" gap={1} justifyContent="space-between" alignItems="center">
-                                        <MusicNoteIcon sx={{ scale: 1.5 }} /> Help
-                                    </Stack>
-                                </Typography>
-                            </IconButton>
+                            <Link href="/help" color='inherit' aria-label="help">
+                                <Button>
+                                    <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: '#ffffff' }}>
+                                        <Stack direction="row" gap={1} justifyContent="space-between" alignItems="center">
+                                            <MusicNoteIcon sx={{ scale: 1.5 }} /> Help
+                                        </Stack>
+                                    </Typography>
+                                </Button>
+                            </Link>
+
                         </Box>
 
                         <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
@@ -63,7 +73,7 @@ const Navbar = () => {
                                 {navItems.map(({ label, path, icon }) => (
                                     <Link key={label} href={path} color='inherit' aria-label={label}>
                                         <Button>
-                                            <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps' }}>
+                                            <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: '#ffffff' }}>
                                                 <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
                                                     {icon} {label}
                                                 </Stack>
@@ -74,7 +84,7 @@ const Navbar = () => {
                                 {user && (
                                     <Link href="" color='inherit' aria-label="logout" onClick={handleLogout}>
                                         <Button>
-                                            <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps' }}>
+                                            <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: '#ffffff' }}>
                                                 <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
                                                     <ExitToAppIcon sx={{ scale: 1.5 }} /> Log out
                                                 </Stack>
@@ -85,9 +95,15 @@ const Navbar = () => {
                             </Stack>
                         </Box>
 
-                        <IconButton edge="end" color="inherit" aria-label="open-nav" sx={{ display: { sm: 'none' } }} onClick={() => setRightOpen(true)}>
-                            <MenuIcon />
-                        </IconButton>
+                        <Box sx={{ display: { sm: 'none' } }}>
+                            <Link href="" aria-label="open-nav" onClick={() => setRightOpen(true)}>
+                                <Button>
+                                    <Typography sx={{ color: '#ffffff' }}>
+                                        <MenuIcon sx={{ scale: 1.5 }} />
+                                    </Typography>
+                                </Button>
+                            </Link>
+                        </Box>
                     </Stack>
                 </Toolbar>
             </AppBar>
@@ -101,24 +117,31 @@ const Navbar = () => {
             <Drawer anchor="right" open={rightOpen} onClose={() => setRightOpen(false)}>
                 <Box sx={{ width: 250 }} role="presentation" onClick={() => setRightOpen(false)}>
                     <List>
-                        {navItems.map(({ label, path }) => (
-                            <ListItemButton key={label} component={NextLinkComposed} to={path}>
-                                <ListItemText primary={label} />
-                            </ListItemButton>
-                        ))}
+                        <Stack direction="column">
+                            {navItems.map(({ label, path, icon }) => (
+                                <Link key={label} href={path} color='inherit' aria-label={label}>
+                                    <Button>
+                                        <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', color: '#ffffff' }}>
+                                            {label}
+                                        </Typography>
+                                    </Button>
+                                </Link>
+
+                            ))}
+                        </Stack>
                         {user && (
-                            <Typography
-                                variant='button'
-                                sx={{ mx: 2.15, mt: 1.5, color: 'white', textDecoration: 'none', cursor: 'pointer', display: 'inline-block' }}
-                                onClick={handleLogout}
-                            >
-                                Log out
-                            </Typography>
+                            <Link href="" color='inherit' aria-label="logout" onClick={handleLogout}>
+                                <Button>
+                                    <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', color: '#ffffff' }}>
+                                        Log out
+                                    </Typography>
+                                </Button>
+                            </Link>
                         )}
                     </List>
                 </Box>
             </Drawer>
-        </>
+        </React.Fragment>
     )
 }
 
