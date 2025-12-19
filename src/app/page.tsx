@@ -32,8 +32,6 @@ export const metadata = {
 }
 
 export default function HomePage() {
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 600
-
   const images = [
     {
       src: '/svg/piano.svg',
