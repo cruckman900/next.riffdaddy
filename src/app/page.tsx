@@ -36,19 +36,19 @@ export default function HomePage() {
 
   const images = [
     {
-      src: '/svg/309375-2196f3.svg',
+      src: '/svg/piano.svg',
       alt: 'Piano',
       width: 400,
       height: 250,
     },
     {
-      src: '/svg/2878679-4caf50.svg',
+      src: '/svg/guitar.svg',
       alt: 'Guitar',
       width: 400,
       height: 250,
     },
     {
-      src: '/svg/3109326-673ab7.svg',
+      src: '/svg/drums.svg',
       alt: 'Drums',
       width: 400,
       height: 350,

@@ -19,7 +19,9 @@ export default function Header() {
                     />
                 </Button>
             </Link>
-            <span className="nextriff-title print:hidden">NEXTRiff</span>
+            <Typography sx={{ fontSize: '2rem' }}>
+                <span className="nextriff-title print:hidden">NEXTRiff</span>
+            </Typography>
             <Link href="https://lineardescent.com/" target="_blank">
                 <Button sx={{ margin: 0, padding: 1 }}>
                     <Typography sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: '#ffffff' }}>
