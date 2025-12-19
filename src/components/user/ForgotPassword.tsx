@@ -1,6 +1,5 @@
 'use client';
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
 import { TextField, Button, Box, Typography, InputAdornment, Divider } from "@mui/material";
 import { z } from "zod";
@@ -17,8 +16,6 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function ForgotPasswordForm() {
-    const router = useRouter()
-
     // 2️⃣ React Hook Form setup
     const {
         register,

@@ -1,6 +1,6 @@
 'use client'
 
-import Cockpit from "@/components/Cockpit"
+import Cockpit from "@/components/tools/widgets/Cockpit"
 import { ToolTemplate } from "./ToolTemplate"
 
 export function CockpitTool() {

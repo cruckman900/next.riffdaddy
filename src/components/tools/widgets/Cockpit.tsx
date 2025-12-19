@@ -12,7 +12,7 @@ import { Button, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Sw
 import { useMusic } from '@/context/MusicContext'
 
 export default function Cockpit() {
-    const RadarDial = dynamic(() => import('@/components/RadarDial'), {
+    const RadarDial = dynamic(() => import('@/components/tools/widgets/RadarDial'), {
         ssr: false,
     })
 
@@ -155,14 +155,6 @@ export default function Cockpit() {
                         control={<Switch checked={showArcs} onChange={() => setShowArcs(!showArcs)} />}
                         label="Show Harmonic Arcs"
                     />
-                    {/* <FormControlLabel
-                        sx={{ color: 'text.primary' }}
-                        control={<Switch checked={useAlternate} onChange={() => {
-                            setUseAlternate(!useAlternate)
-                            setUserSelectedTuning(false) // re-evaluate default when toggling alternate
-                        }} />}
-                        label="Use Alternate Tuning"
-                    /> */}
 
                     <FormControl fullWidth sx={{ mt: 2 }}>
                         <InputLabel id="genre-label">Genre</InputLabel>

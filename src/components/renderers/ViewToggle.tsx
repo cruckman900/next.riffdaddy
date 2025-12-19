@@ -5,9 +5,9 @@ import { useState, useEffect } from "react";
 export default function ViewToggle({
     onChange,
 }: {
-    onChange: (mode: "tab" | "staff" | "both") => void
+    onChange: (mode: "tab" | "staff" | "combined") => void
 }) {
-    const [viewMode, setViewMode] = useState<"tab" | "staff" | "both">("tab")
+    const [viewMode, setViewMode] = useState<"tab" | "staff" | "combined">("tab")
 
     useEffect(() => {
         onChange(viewMode)
@@ -17,7 +17,7 @@ export default function ViewToggle({
         <div className="flex gap-2 print:hidden">
             <button onClick={() => setViewMode("tab")} className="px-2 py-1 border rounded">Tab</button>
             <button onClick={() => setViewMode("staff")} className="px-2 py-1 border rounded">Staff</button>
-            <button onClick={() => setViewMode("both")} className="px-2 py-1 border rounded">Both</button>
+            <button onClick={() => setViewMode("combined")} className="px-2 py-1 border rounded">Combined</button>
         </div>
     );
 }

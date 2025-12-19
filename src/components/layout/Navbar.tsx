@@ -13,7 +13,7 @@ import HomeIcon from '@mui/icons-material/Home'
 import DesignServicesIcon from '@mui/icons-material/DesignServices'
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp'
-import LeftMenu from '@/components/LeftMenu'
+import LeftMenu from '@/components/layout/LeftMenu'
 
 const Navbar = () => {
     const { user, logout } = useAuthContext()

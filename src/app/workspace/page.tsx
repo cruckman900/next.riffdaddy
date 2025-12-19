@@ -2,8 +2,8 @@
 'use client'
 
 import { useTabs } from '@/context/TabsContext'
-import TabBar from '@/components/TabBar'
-import TabContentRenderer from '@/components/TabContentRenderer'
+import TabBar from '@/components/file/TabBar'
+import TabContentRenderer from '@/components/file/TabContentRenderer'
 import { Box, Typography, Button } from '@mui/material'
 
 function WorkspaceContent() {

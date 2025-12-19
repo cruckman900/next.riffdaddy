@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { ToolRail } from "./tooling/ToolRail"
 import { ToolPanelManager } from "./tooling/ToolPanelManager"
 import { TOOL_REGISTRY } from "@/tools/registry"
-import ScorePreview from "./ScorePreview"
+import ScorePreview from "./renderers/ScorePreview"
 import useMediaQuery from "@mui/material/useMediaQuery"
 import { useTheme } from "@mui/material/styles"
 import { useMusic } from '@/context/MusicContext'

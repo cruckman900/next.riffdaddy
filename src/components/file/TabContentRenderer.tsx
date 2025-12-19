@@ -9,8 +9,8 @@ import {
     ListItemText,
     Divider,
 } from '@mui/material'
-import Workbench from './Workbench'
-import Settings from './Settings'
+import Workbench from '../Workbench'
+import Settings from '../Settings'
 
 export default function TabContentRenderer() {
     const tabs = useTabs()

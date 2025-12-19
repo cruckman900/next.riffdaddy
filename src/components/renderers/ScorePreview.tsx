@@ -19,7 +19,7 @@ interface ScorePreviewProps {
 }
 
 export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: ScorePreviewProps) {
-    const [viewMode, setViewMode] = useState<'tab' | 'staff' | 'both'>('tab')
+    const [viewMode, setViewMode] = useState<'tab' | 'staff' | 'combined'>('tab')
     const { measures, getMeasureBeatCount } = useMusic()
 
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 600
@@ -43,14 +43,14 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
             if (e.key === 'ArrowUp') {
                 setViewMode(prev => {
                     if (prev === 'tab') return 'staff'
-                    if (prev === 'staff') return 'both'
+                    if (prev === 'staff') return 'combined'
                     return 'tab'
                 })
             }
             if (e.key === 'ArrowDown') {
                 setViewMode(prev => {
-                    if (prev === 'tab') return 'both'
-                    if (prev === 'both') return 'staff'
+                    if (prev === 'tab') return 'combined'
+                    if (prev === 'combined') return 'staff'
                     return 'tab'
                 })
             }
@@ -65,12 +65,12 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
             <Grid item xs={12} md={8}>
                 <Box sx={{ p: 2, bgcolor: 'white', borderRadius: 2, boxShadow: 1 }}>
                     <FormControl fullWidth className="print:hidden">
-                        <InputLabel id="view-mode-label" sx={{ color: 'WindowText' }}>View Mode</InputLabel>
+                        <InputLabel id="view-mode-label" sx={{ color: 'WindowText' }}>Staff Renderer View Mode</InputLabel>
                         <Select
                             labelId="view-mode-label"
                             value={viewMode}
-                            label="View Mode"
-                            onChange={(e) => setViewMode(e.target.value as 'tab' | 'staff' | 'both')}
+                            label="Staff Renderer View Mode"
+                            onChange={(e) => setViewMode(e.target.value as 'tab' | 'staff' | 'combined')}
                             sx={{
                                 color: 'GrayText',
                                 '.MuiOutlinedInput-notchedOutline': { borderColor: 'GrayText' },
@@ -81,7 +81,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                         >
                             <MenuItem value="tab">Tab</MenuItem>
                             <MenuItem value="staff">Staff</MenuItem>
-                            <MenuItem value="both">Both</MenuItem>
+                            <MenuItem value="combined">Combined</MenuItem>
                         </Select>
                     </FormControl>
 
@@ -187,13 +187,14 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                                             size="small"
                                             onClick={() => setActiveMeasureId(m.id)}
                                             sx={{
-                                                minWidth: 100,
+                                                minWidth: 110,
                                                 display: 'flex',
-                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                gap: 1
                                             }}
                                         >
-                                            {`Measure ${idx + 1}`}
-                                            {overfilled && <WarningAmberIcon fontSize="small" sx={{ ml: 0.5 }} />}
+                                            <Box>{`Measure ${idx + 1}`}</Box>
+                                            {overfilled && <Box><WarningAmberIcon fontSize="small" sx={{ ml: 0.5 }} /></Box>}
                                         </Button>
 
                                         <Typography variant="body2">
@@ -208,7 +209,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                     {/* Printable Renderers */}
                     {viewMode === 'tab' && <TabRenderer activeMeasureId={activeMeasureId} />}
                     {viewMode === 'staff' && <StaffRenderer activeMeasureId={activeMeasureId} />}
-                    {viewMode === 'both' && <CombinedRenderer activeMeasureId={activeMeasureId} />}
+                    {viewMode === 'combined' && <CombinedRenderer activeMeasureId={activeMeasureId} />}
                 </Box>
             </Grid>
         </Box>

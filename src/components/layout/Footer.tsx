@@ -1,6 +1,6 @@
 'use client'
 
-import YearClient from "./YearClient"
+import YearClient from "../helpers/YearClient"
 
 export default function Footer() {
     return (
