@@ -118,7 +118,7 @@ const Navbar = () => {
                 <Box sx={{ width: 250 }} role="presentation" onClick={() => setRightOpen(false)}>
                     <List>
                         <Stack direction="column">
-                            {navItems.map(({ label, path, icon }) => (
+                            {navItems.map(({ label, path }) => (
                                 <Link key={label} href={path} color='inherit' aria-label={label}>
                                     <Button>
                                         <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', color: '#ffffff' }}>

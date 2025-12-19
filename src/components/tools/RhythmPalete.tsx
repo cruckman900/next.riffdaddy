@@ -18,7 +18,7 @@ export function RhythmPalette({ onSelect }: { onSelect: (duration: string) => vo
 
     return (
         <Box display="flex" flexDirection="column" sx={{ p: 2, mb: 1, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 3 }}>
-            <Typography variant="subtitle2" sx={{ opacity: 0.7 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Rhythm Palette
             </Typography>
 

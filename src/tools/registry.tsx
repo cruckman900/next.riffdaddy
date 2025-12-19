@@ -32,18 +32,18 @@ export const TOOL_REGISTRY: Record<string, {
         label: "Score and Measure",
         icon: ClefIcon,
         component: ClefPalette,
-        shortcut: "C"
+        shortcut: "2"
     },
     fretboard: {
         id: "fretboard",
-        label: "Fretboard",
+        label: "Fretboard Input",
         icon: FretboardIcon,
         component: FretboardTool,
         shortcut: "3"
     },
     keyboard: {
         id: "keyboard",
-        label: "Keyboard",
+        label: "Keyboard Input",
         icon: KeyboardIcon,
         component: KeyboardTool,
         shortcut: "4"
@@ -53,7 +53,7 @@ export const TOOL_REGISTRY: Record<string, {
         label: "Playback Controls",
         icon: PlaybackIcon,
         component: PlaybackTool,
-        shortcut: "8"
+        shortcut: "5"
     },
 }
 

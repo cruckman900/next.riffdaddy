@@ -24,6 +24,9 @@ export interface Measure {
 }
 
 export interface MusicState {
+    activeTool: string
+    setActiveTool: (tool: string) => void
+
     selectedInstrument: string
     setSelectedInstrument: (instrument: string) => void
 

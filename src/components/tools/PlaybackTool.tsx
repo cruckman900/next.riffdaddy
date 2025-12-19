@@ -12,7 +12,7 @@ import PauseIcon from '@mui/icons-material/Pause'
 
 export function PlaybackTool() {
     return (
-        <ToolTemplate title="Playback" shortcut="8">
+        <ToolTemplate title="Playback" shortcut="5">
             <Typography variant="body1" mb={2}>
                 Control playback of your composition.
             </Typography>

@@ -61,7 +61,7 @@ export function ClefPalette({ measureId }: ToolProps) {
     }
 
     return (
-        <ToolTemplate title="Score and Measure" shortcut="C">
+        <ToolTemplate title="Score and Measure" shortcut="2">
             <Typography variant="body1" mb={2}>
                 Select a clef for this measure.
             </Typography>

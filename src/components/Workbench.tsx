@@ -10,7 +10,8 @@ import { useTheme } from "@mui/material/styles"
 import { useMusic } from '@/context/MusicContext'
 
 export default function Workbench() {
-    const [activeTool, setActiveTool] = useState("cockpit")
+    // const [activeTool, setActiveTool] = useState("cockpit")
+    const { activeTool, setActiveTool } = useMusic()
     const [activeMeasureId, setActiveMeasureId] = useState<string | null>(null)
     const { measures } = useMusic()
 
@@ -31,7 +32,7 @@ export default function Workbench() {
         }
         window.addEventListener("keydown", handleKey)
         return () => window.removeEventListener("keydown", handleKey)
-    }, [])
+    }, [setActiveTool])
 
     return (
         <div style={{ display: "flex", flexDirection: "column", height: "100%", width: "100%" }}>

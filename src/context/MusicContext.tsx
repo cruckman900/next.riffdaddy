@@ -34,6 +34,7 @@ function getMeasureBeatCount(measure: Measure): number {
 }
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
+    const [activeTool, setActiveTool] = useState('cockpit')
     const [selectedInstrument, setSelectedInstrument] = useState("guitar")
     const [selectedGenre, setSelectedGenre] = useState("All")
     const [selectedTuning, setSelectedTuning] = useState<Tuning>({
@@ -368,6 +369,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     return (
         <MusicContext.Provider
             value={{
+                activeTool,
+                setActiveTool,
                 selectedInstrument,
                 setSelectedInstrument,
                 showArcs,
