@@ -2,8 +2,13 @@
 'use client'
 
 import { Box, Stack, Typography } from "@mui/material"
+import useMediaQuery from "@mui/material/useMediaQuery"
+import { useTheme } from "@mui/material/styles"
 
 export default function Help() {
+    const theme = useTheme()
+    const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+
     return (
         <Box
             sx={{
@@ -12,7 +17,7 @@ export default function Help() {
                 flex: 1,
                 flexDirection: 'column',
                 gap: 3,
-                bgcolor: 'background.paper',
+                bgcolor: '#111111',
             }}
         >
             <Typography variant="h3" fontWeight={700} color="text.primary">
@@ -23,13 +28,13 @@ export default function Help() {
                 I will be building this section soon.
             </Typography>
 
-            <Stack direction="row" gap={3} sx={{ height: '100%', p: 2 }}>
-                <Box sx={{ width: '30%', maxWidth: '320px' }}>
+            <Stack direction={isMobile ? 'column' : 'row'} gap={1} sx={{ height: '100%' }}>
+                <Box sx={{ width: !isMobile ? '30%' : 'auto', maxWidth: !isMobile ? '320px' : '100%', p: 2, bgcolor: 'background.paper', borderRadius: '1rem' }}>
                     <Typography variant="h4" color="text.secondary">
                         Table of Contents
                     </Typography>
                 </Box>
-                <Box>
+                <Box sx={{ width: !isMobile ? '100%' : 'auto', p: 2, bgcolor: 'background.paper', borderRadius: '1rem' }}>
                     <Typography variant="h4" color="text.secondary">
                         The contents
                     </Typography>
