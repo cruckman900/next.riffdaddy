@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useAuthContext } from '@/context/AuthProvider'
 import { AppBar, Toolbar, Typography, Drawer, List, Box, Stack, Button } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
@@ -21,10 +21,10 @@ const Navbar = () => {
     const [rightOpen, setRightOpen] = useState(false)
     const [leftOpen, setLeftOpen] = useState(false)
 
-    const router = useRouter()
     const pathname = usePathname()
 
-    const isWorkspace = pathname === '/workspace';
+    const isWorkspace = pathname === '/workspace'
+    const currentPathname = pathname
 
     const navItems = [
         { label: 'Home', path: '/', icon: <HomeIcon sx={{ scale: 1.5 }} /> },
@@ -40,7 +40,6 @@ const Navbar = () => {
 
     function handleLogout() {
         logout()
-        router.push('/')
     }
 
     return (
@@ -59,7 +58,7 @@ const Navbar = () => {
 
                             <Link href="/help" color='inherit' aria-label="help">
                                 <Button>
-                                    <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: '#ffffff' }}>
+                                    <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: currentPathname == '/help' ? '#00ff00' : '#ffffff' }}>
                                         <Stack direction="row" gap={1} justifyContent="space-between" alignItems="center">
                                             <MusicNoteIcon sx={{ scale: 1.5 }} /> Help
                                         </Stack>
@@ -74,7 +73,7 @@ const Navbar = () => {
                                 {navItems.map(({ label, path, icon }) => (
                                     <Link key={label} href={path} color='inherit' aria-label={label}>
                                         <Button>
-                                            <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: '#ffffff' }}>
+                                            <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: currentPathname == path ? '#00ff00' : '#ffffff' }}>
                                                 <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
                                                     {icon} {label}
                                                 </Stack>
@@ -122,7 +121,7 @@ const Navbar = () => {
                             {navItems.map(({ label, path }) => (
                                 <Link key={label} href={path} color='inherit' aria-label={label}>
                                     <Button>
-                                        <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', color: '#ffffff' }}>
+                                        <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', color: currentPathname == path ? '#00ff00' : '#ffffff' }}>
                                             {label}
                                         </Typography>
                                     </Button>

@@ -1,14 +1,28 @@
 // app/workspace/page.tsx
 'use client'
 
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuthContext } from '@/context/AuthProvider'
+
 import { useTabs } from '@/context/TabsContext'
 import TabBar from '@/components/file/TabBar'
 import TabContentRenderer from '@/components/file/TabContentRenderer'
 import { Box, Typography, Button } from '@mui/material'
 
 function WorkspaceContent() {
+    const router = useRouter()
+    const { user } = useAuthContext()
+
     const tabs = useTabs()
     const activeTab = tabs?.activeTab
+
+    useEffect(() => {
+        if (!user) {
+            router.push('/')
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user])
 
     if (!activeTab) {
         return (
