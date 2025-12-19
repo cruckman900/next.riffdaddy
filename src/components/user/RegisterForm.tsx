@@ -64,7 +64,7 @@ export default function RegisterForm() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="max-w-md w-full mx-auto bg-white shadow-md rounded-md p-6"
+            className="max-w-md w-full mx-auto bg-black shadow-md rounded-md p-6"
         >
             <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ p: 2 }}>
                 <Typography variant="h5" className="mb-4 text-center font-bold">
@@ -80,9 +80,8 @@ export default function RegisterForm() {
                 <TextField
                     label="Username"
                     variant="outlined"
-                    type="username"
+                    type="text"
                     {...register("username")}
-                    autoComplete="username"
                     error={!!errors.username}
                     helperText={errors.username?.message}
                     fullWidth
@@ -93,7 +92,6 @@ export default function RegisterForm() {
                     variant="outlined"
                     type="email"
                     {...register("email")}
-                    autoComplete="email"
                     error={!!errors.email}
                     helperText={errors.email?.message}
                     fullWidth
@@ -104,7 +102,6 @@ export default function RegisterForm() {
                     variant="outlined"
                     type={showPassword ? "text" : "password"}
                     {...register("password")}
-                    autoComplete="password"
                     error={!!errors.password}
                     helperText={errors.password?.message}
                     fullWidth

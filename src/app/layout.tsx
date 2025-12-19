@@ -17,7 +17,7 @@ import { MusicProvider } from '@/context/MusicContext'
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
-            <body className="min-h-screen flex flex-col dark:bg-purple-500 dark:text-black bg-gray-700 text-white">
+            <body className="min-h-screen flex flex-col text-white" style={{ backgroundColor: '#111111' }}>
                 <ThemeProvider>
                     <DocumentWrapper>
                         <EmotionCacheProvider>

@@ -61,8 +61,7 @@ export default function HomePage() {
           display: 'flex',
           flexDirection: 'column',
           gap: 3,
-          bgcolor: 'background.paper',
-          // minHeight: !isMobile ? 737 : 500,
+          bgcolor: '#111111',
           zIndex: 0,
         }}
       >

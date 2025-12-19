@@ -11,7 +11,7 @@ export default function AboutPage() {
                 flex: 1,
                 flexDirection: 'column',
                 gap: 3,
-                bgcolor: 'background.paper',
+                bgcolor: '#111111',
             }}
         >
             <Typography variant="h3" fontWeight={700} color="text.primary">

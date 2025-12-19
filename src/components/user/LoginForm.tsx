@@ -66,7 +66,7 @@ export default function LoginForm() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="max-w-md w-full mx-auto bg-white shadow-md rounded-md p-6"
+            className="max-w-md w-full mx-auto bg-black shadow-md rounded-md p-6"
         >
             <Box component="form" onSubmit={handleSubmit(onSubmit)}>
                 <Typography variant="h5" className="mb-4 text-center font-bold">
