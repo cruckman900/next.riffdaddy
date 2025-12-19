@@ -30,9 +30,14 @@ export function ToolTemplate({
                     {title}
                 </Typography>
 
-                <Typography variant="body2" sx={{ opacity: 0.6 }}>
-                    Shortcut: {shortcut}
-                </Typography>
+                <Box display="flex" gap={1} alignItems="center">
+                    <Typography variant="body2" sx={{ opacity: 0.6 }}>
+                        Shortcut:
+                    </Typography>
+                    <Typography variant="body1" sx={{ opacity: 0.8 }}>
+                        {shortcut}
+                    </Typography>
+                </Box>
             </Box>
 
             {/* Content */}

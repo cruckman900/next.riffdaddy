@@ -2,11 +2,13 @@
 
 import { ToolTemplate } from "./ToolTemplate"
 import { useMusic } from '@/context/MusicContext'
-import { Typography, Box, Button, Grid, Stack } from '@mui/material'
+import { Typography, Box, Button, Grid, Stack, Divider } from '@mui/material'
 import { ToolProps } from '@/types/tooling'
 import { useState } from 'react'
+import React from "react"
 
 const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+const DIVISIONS = [0, 3, 5, 7, 9, 12, 15, 17, 19, 21, 24]
 
 function noteToMidi(note: string): number {
     const match = note.match(/^([A-G]#?)(\d+)$/)
@@ -57,10 +59,26 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
     const isSelected = (string: number, fret: number) =>
         selectedNotes.some(n => n.string === string && n.fret === fret)
 
+    const { addRest } = useMusic()
+    const handleAddRest = () => {
+        console.log('RestEntryTool measureId:', mid, 'duration:', dur)
+        addRest(mid, { duration: dur })
+    }
+
     return (
         <ToolTemplate title="Fretboard" shortcut="3">
+            <Button fullWidth variant="contained" onClick={handleAddRest}>
+                Insert a {dur} rest.
+            </Button>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Typography variant="body1">
+                Click frets to select notes.
+            </Typography>
+
             <Typography variant="body2" mb={2}>
-                Click frets to select notes. Commit them as a chord or single note.
+                Commit them as a chord or single note.
             </Typography>
 
             {/* Toggles */}
@@ -75,6 +93,8 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
                         sx={{
                             cursor: 'pointer',
                             fontWeight: fretCount === count ? 600 : 400,
+                            fontSize: fretCount === count ? '1rem' : '0.8rem',
+                            ":hover": { color: 'primary.main' },
                         }}
                         onClick={() => setFretCount(count)}
                     >
@@ -87,6 +107,7 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
                         px: 3,
                         cursor: 'pointer',
                         fontWeight: showOctave ? 600 : 400,
+                        ":hover": { color: 'primary.main' },
                     }}
                     onClick={() => setShowOctave(!showOctave)}
                 >
@@ -112,40 +133,48 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
             {/* Fretboard grid */}
             <Grid container spacing={0.5}>
                 {Array.from({ length: fretCount + 1 }).map((_, fIdx) => (
-                    <Grid item xs={12} key={fIdx}>
-                        <Box display="flex" gap={0.5} justifyContent="center" alignItems="center">
-                            <Typography variant="caption" sx={{ width: 32, textAlign: 'right' }}>
-                                {fIdx}
-                            </Typography>
-                            {tuning.map((openNote, sIdx) => {
-                                const midi = noteToMidi(openNote) + fIdx
-                                const pitch = midiToNote(midi)
-                                const stringNum = tuning.length - sIdx
-                                const selected = isSelected(stringNum, fIdx)
-                                return (
-                                    <Button
-                                        key={sIdx}
-                                        size="small"
-                                        variant={selected ? 'contained' : 'outlined'}
-                                        sx={{
-                                            minWidth: 32,
-                                            height: 28,
-                                            padding: 0,
-                                            fontSize: '0.7rem',
-                                            backgroundColor: selected ? '#1976d2' : undefined,
-                                            color: selected ? '#fff' : undefined,
-                                        }}
-                                        onClick={() => toggleSelect(stringNum, fIdx, pitch)}
-                                    >
-                                        {showOctave ? pitch : pitch.replace(/\d+$/, '')}
-                                    </Button>
-                                )
-                            })}
-                            <Typography variant="caption" sx={{ width: 32, textAlign: 'left' }}>
-                                {fIdx}
-                            </Typography>
-                        </Box>
-                    </Grid>
+                    <React.Fragment key={fIdx}>
+                        {DIVISIONS.includes(fIdx) && (
+                            <Divider sx={{ width: '100%', my: 0.2, opacity: 0 }} />
+                        )}
+                        <Grid item xs={12} key={fIdx}>
+                            <Box display="flex" gap={0.5} justifyContent="center" alignItems="center">
+                                <Typography variant={DIVISIONS.includes(fIdx) ? 'subtitle2' : 'caption'} sx={{ width: 32, textAlign: 'right' }}>
+                                    {fIdx}
+                                </Typography>
+                                {tuning.map((openNote, sIdx) => {
+                                    const midi = noteToMidi(openNote) + fIdx
+                                    const pitch = midiToNote(midi)
+                                    const stringNum = tuning.length - sIdx
+                                    const selected = isSelected(stringNum, fIdx)
+                                    return (
+                                        <Button
+                                            key={sIdx}
+                                            size="small"
+                                            variant={selected ? 'contained' : 'outlined'}
+                                            sx={{
+                                                minWidth: 32,
+                                                height: DIVISIONS.includes(fIdx) ? 26 : 24,
+                                                padding: 0,
+                                                fontSize: '0.7rem',
+                                                backgroundColor: selected ? '#1976d2' : undefined,
+                                                color: selected ? '#fff' : undefined,
+                                            }}
+                                            onClick={() => toggleSelect(stringNum, fIdx, pitch)}
+                                        >
+                                            {showOctave ? pitch : pitch.replace(/\d+$/, '')}
+                                        </Button>
+                                    )
+                                })}
+                                <Typography variant={DIVISIONS.includes(fIdx) ? 'subtitle2' : 'caption'} sx={{ width: 32, textAlign: 'left' }}>
+                                    {fIdx}
+                                </Typography>
+                            </Box>
+                        </Grid>
+                        {DIVISIONS.includes(fIdx) && (
+                            <Divider sx={{ width: '100%', my: 0.2, opacity: 0 }} />
+                        )}
+                    </React.Fragment>
                 ))}
             </Grid>
 

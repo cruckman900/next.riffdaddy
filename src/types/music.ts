@@ -17,9 +17,9 @@ export interface Measure {
     id: string
     notes: MusicNote[]
     rests: MusicRest[]          // NEW
+    clef?: string               // NEW (optional, defaults to 'treble')
     timeSignature: string
     keySignature?: string       // NEW (optional, defaults to 'C')
-    clef?: string               // NEW (optional, defaults to 'treble')
     beamGroups: string[][]     // NEW (array of arrays of note IDs to be beamed together)
 }
 
@@ -63,7 +63,7 @@ export interface MusicState {
     updateRest: (measureId: string, restId: string, updates: Partial<MusicRest>) => void
 
     // Measures
-    addMeasure: (timeSignature?: string, keySignature?: string) => void
+    addMeasure: (clef?: string, timeSignature?: string, keySignature?: string) => void
     removeMeasure: (measureId: string) => void
     updateMeasure: (measureId: string, updates: Partial<Measure>) => void
 

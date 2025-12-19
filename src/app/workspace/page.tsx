@@ -27,7 +27,7 @@ function WorkspaceContent() {
                     No tabs open
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Use the left menu or press Ctrl/Cmd+T to create a new tab.
+                    Use the left menu to create a new tab.
                 </Typography>
                 <Button
                     variant="contained"

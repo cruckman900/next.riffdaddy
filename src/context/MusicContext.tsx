@@ -21,6 +21,8 @@ function durationToBeats(duration: string): number {
         case 'q': return 1
         case '8': return 0.5
         case '16': return 0.25
+        case '32': return 0.125
+        case '64': return 0.0625
         default: return 1
     }
 }
@@ -54,8 +56,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const [scoreFixedWidth, setScoreFixedWidth] = useState(false)
 
     // --- MEASURES ---
-    const addMeasure = (timeSignature: string = '4/4', keySignature: string = 'C') => {
-        setMeasures(prev => [...prev, { id: uuid(), notes: [], rests: [], timeSignature, keySignature, beamGroups: [] }])
+    const addMeasure = (clef: string = 'treble', timeSignature: string = '4/4', keySignature: string = 'C') => {
+        setMeasures(prev => [...prev, { id: uuid(), notes: [], rests: [], clef, timeSignature, keySignature, beamGroups: [] }])
     }
 
     const removeMeasure = (measureId: string) => {
@@ -68,7 +70,6 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     // --- NOTES ---
     const addNote = (measureId: string, incoming: Partial<MusicNote>) => {
-        console.log('Adding note to measure:', measureId, incoming)
         setMeasures(prev => {
             const idx = prev.findIndex(m => m.id === measureId)
             if (idx === -1) return prev
@@ -157,7 +158,9 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                         : space >= 2 ? 'h'
                             : space >= 1 ? 'q'
                                 : space >= 0.5 ? '8'
-                                    : '16'
+                                    : space >= 0.25 ? '16'
+                                        : space >= 0.125 ? '32'
+                                            : '64'
                 }
 
                 const durBeats = durationToBeats(dur)
@@ -334,8 +337,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 const dur = remainingBeats >= space
-                    ? (space >= 1 ? 'q' : space >= 0.5 ? '8' : '16')
-                    : (remainingBeats >= 1 ? 'q' : remainingBeats >= 0.5 ? '8' : '16')
+                    ? (space >= 4 ? 'w' : space >= 2 ? 'h' : space >= 1 ? 'q' : space >= 0.5 ? '8' : space >= 0.25 ? '16' : space >= 0.125 ? '32' : '64')
+                    : (remainingBeats >= 4 ? 'w' : remainingBeats >= 2 ? 'h' : remainingBeats >= 1 ? 'q' : remainingBeats >= 0.5 ? '8' : remainingBeats >= 0.25 ? '16' : remainingBeats >= 0.125 ? '32' : '64')
 
                 const durBeats = durationToBeats(dur)
                 updatedMeasures[currentIdx].rests.push({ id: uuid(), duration: dur })

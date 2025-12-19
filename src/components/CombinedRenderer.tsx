@@ -69,6 +69,16 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
 
         const flushRow = (isLastRow: boolean) => {
             if (!rowMeasures.length) return
+
+            // Determine row defaults from the first measure
+            const rowClef = rowMeasures[0]?.clef
+            const rowTime = rowMeasures[0]?.timeSignature
+            const rowKey = rowMeasures[0]?.keySignature
+
+            lastClef = rowClef
+            lastTime = rowTime
+            lastKey = rowKey
+
             const rowTotal = rowWidths.reduce((a, b) => a + b, 0)
             // Only scale when row is complete or last row
             const scale = (rowMeasures.length === measuresPerRow || isLastRow)
@@ -101,6 +111,43 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                     context.setFillStyle('#e0f7fa')
                     context.fillRect(highlightX, highlightY, highlightW, highlightH)
                     context.restore()
+                }
+
+                // ✅ Deduplication logic
+                if (idx === 0) {
+                    // Always add clef/time/key at the start of the row
+                    if (measure.clef) {
+                        tabStave.addClef('tab')
+                        staffStave.addClef(measure.clef)
+                        lastClef = measure.clef
+                    }
+                    if (measure.timeSignature) {
+                        tabStave.addTimeSignature(measure.timeSignature)
+                        staffStave.addTimeSignature(measure.timeSignature)
+                        lastTime = measure.timeSignature
+                    }
+                    if (measure.keySignature) {
+                        tabStave.addKeySignature(measure.keySignature)
+                        staffStave.addKeySignature(measure.keySignature)
+                        lastKey = measure.keySignature
+                    }
+                } else {
+                    // Only add if changed mid‑row
+                    if (measure.clef && measure.clef !== lastClef) {
+                        tabStave.addClef('tab')
+                        staffStave.addClef(measure.clef)
+                        lastClef = measure.clef
+                    }
+                    if (measure.timeSignature && measure.timeSignature !== lastTime) {
+                        tabStave.addTimeSignature(measure.timeSignature)
+                        staffStave.addTimeSignature(measure.timeSignature)
+                        lastTime = measure.timeSignature
+                    }
+                    if (measure.keySignature && measure.keySignature !== lastKey) {
+                        tabStave.addKeySignature(measure.keySignature)
+                        staffStave.addKeySignature(measure.keySignature)
+                        lastKey = measure.keySignature
+                    }
                 }
 
                 // Clefs, time, key signatures

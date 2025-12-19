@@ -20,6 +20,8 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    console.log('measures', measures)
+
     if (!containerRef.current) return
     containerRef.current.innerHTML = ''
 
@@ -47,6 +49,16 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
 
     const flushRow = (isLastRow: boolean) => {
       if (!rowMeasures.length) return
+
+      // Determine row defaults from the first measure
+      const rowClef = rowMeasures[0]?.clef
+      const rowTime = rowMeasures[0]?.timeSignature
+      const rowKey = rowMeasures[0]?.keySignature
+
+      lastClef = rowClef
+      lastTime = rowTime
+      lastKey = rowKey
+
       const rowTotal = rowWidths.reduce((a, b) => a + b, 0)
       const scale = (rowMeasures.length === measuresPerRow || isLastRow)
         ? rendererWidth / rowTotal
@@ -69,14 +81,34 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
         }
 
         // Deduplication logic
-        if (measure.clef && measure.clef !== lastClef) {
-          stave.addClef('tab')
-        }
-        if (measure.timeSignature && measure.timeSignature !== lastTime) {
-          stave.addTimeSignature(measure.timeSignature)
-        }
-        if (measure.keySignature && measure.keySignature !== lastKey) {
-          stave.addKeySignature(measure.keySignature)
+        if (idx === 0) {
+          // Always add clef/time/key at the start of the row
+          if (measure.clef) {
+            stave.addClef('tab')   // or use measure.clef if you want non-tab clefs
+            lastClef = measure.clef
+          }
+          if (measure.timeSignature) {
+            stave.addTimeSignature(measure.timeSignature)
+            lastTime = measure.timeSignature
+          }
+          if (measure.keySignature) {
+            stave.addKeySignature(measure.keySignature)
+            lastKey = measure.keySignature
+          }
+        } else {
+          // Only add if changed mid‑row
+          if (measure.clef && measure.clef !== lastClef) {
+            stave.addClef('tab')
+            lastClef = measure.clef
+          }
+          if (measure.timeSignature && measure.timeSignature !== lastTime) {
+            stave.addTimeSignature(measure.timeSignature)
+            lastTime = measure.timeSignature
+          }
+          if (measure.keySignature && measure.keySignature !== lastKey) {
+            stave.addKeySignature(measure.keySignature)
+            lastKey = measure.keySignature
+          }
         }
 
         // End barline logic
@@ -125,11 +157,6 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
         }
 
         x += scaledWidth
-
-        // Update trackers
-        lastClef = measure.clef || lastClef
-        lastTime = measure.timeSignature || lastTime
-        lastKey = measure.keySignature || lastKey
       })
 
       y += lineHeight

@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
 import Stack from '@mui/material/Stack'
 import Button from '@mui/material/Button'
-import Tooltip from '@mui/material/Tooltip'
+import HtmlTooltip from '@mui/material/Tooltip'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
-import { FormControl, InputLabel, MenuItem, Select } from '@mui/material'
+import { FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material'
 import TabRenderer from './TabRenderer'
 import StaffRenderer from './StaffRenderer'
 import CombinedRenderer from "./CombinedRenderer"
@@ -21,6 +21,9 @@ interface ScorePreviewProps {
 export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: ScorePreviewProps) {
     const [viewMode, setViewMode] = useState<'tab' | 'staff' | 'both'>('tab')
     const { measures, getMeasureBeatCount } = useMusic()
+
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 600
+
 
     // Keyboard navigation
     useEffect(() => {
@@ -82,7 +85,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                         </Select>
                     </FormControl>
 
-                    <Box
+                    {!isMobile && <Box
                         className="print:hidden"
                         sx={{
                             backgroundColor: '#fef3c7',
@@ -90,31 +93,32 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                             padding: '8px 16px',
                             borderRadius: 1,
                             fontSize: '0.875rem',
-                            marginBottom: 2,
+                            marginTop: 0.25,
+                            marginBottom: 0.25,
                         }}
                     >
                         🖨️ Heads up: For best results when printing, set margins to “none” and scale to “100%”.
-                    </Box>
+                    </Box>}
 
                     {/* Keyboard hints */}
-                    <Box
+                    {!isMobile && <Box
                         sx={{
                             backgroundColor: '#e0f2fe',
                             color: '#0369a1',
                             padding: '6px 12px',
                             borderRadius: 1,
                             fontSize: '0.75rem',
-                            marginBottom: 2,
                         }}
                     >
                         ⌨️ Tip: Use ← and → to cycle measures, ↑ and ↓ to switch view modes.
-                    </Box>
+                    </Box>}
 
                     {/* Measure selector with beat count + overflow indicator */}
                     <Stack
                         direction="row"
                         flexWrap="wrap"
                         gap={1}
+                        mt={2}
                         mb={2}
                     >
                         {measures.map((m, idx) => {
@@ -126,29 +130,77 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                             const overfilled = currentBeats > maxBeats
                             const isActive = activeMeasureId === m.id
 
-                            const tooltipText = `Measure ${idx + 1}
-Time: ${m.timeSignature}
-Key: ${m.keySignature || 'C'}
-Clef: ${m.clef || 'treble'}
-Beats: ${currentBeats}/${maxBeats}${overfilled ? ' (Overflow!)' : ''}`
-
                             return (
-                                <Tooltip key={m.id} title={tooltipText} arrow>
-                                    <Button
-                                        variant={isActive ? 'contained' : 'outlined'}
-                                        color={overfilled ? 'error' : isActive ? 'primary' : 'inherit'}
-                                        size="small"
-                                        onClick={() => setActiveMeasureId(m.id)}
-                                        sx={{
-                                            minWidth: 100,
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                        }}
+                                <HtmlTooltip key={m.id} title={
+                                    <Stack direction="column" spacing={1} padding={0.5} width={125}>
+                                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2" sx={{ textAlign: 'left', opacity: 0.8 }}>
+                                                Measure
+                                            </Typography>
+                                            <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                                                {idx + 1}
+                                            </Typography>
+                                        </Stack>
+                                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2" sx={{ textAlign: 'left', opacity: 0.8 }}>
+                                                Clef
+                                            </Typography>
+                                            <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                                                {m.clef || 'treble'}
+                                            </Typography>
+                                        </Stack>
+                                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2" sx={{ textAlign: 'left', opacity: 0.8 }}>
+                                                Time
+                                            </Typography>
+                                            <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                                                {m.timeSignature}
+                                            </Typography>
+                                        </Stack>
+                                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2" sx={{ textAlign: 'left', opacity: 0.8 }}>
+                                                Key
+                                            </Typography>
+                                            <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                                                {m.keySignature || 'C'}
+                                            </Typography>
+                                        </Stack>
+                                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2" sx={{ textAlign: 'left', opacity: 0.8 }}>
+                                                Beats
+                                            </Typography>
+                                            <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                                                {currentBeats}/{maxBeats}{overfilled ? ' (Overflow!)' : ''}
+                                            </Typography>
+                                        </Stack>
+                                    </Stack>
+                                } arrow>
+                                    <Stack
+                                        direction="column"
+                                        alignItems="center"
+                                        gap={1}
+                                        sx={{ mb: 0.5 }}
                                     >
-                                        {`Measure ${idx + 1}`}
-                                        {overfilled && <WarningAmberIcon fontSize="small" sx={{ ml: 0.5 }} />}
-                                    </Button>
-                                </Tooltip>
+                                        <Button
+                                            variant={isActive ? 'contained' : 'outlined'}
+                                            color={overfilled ? 'error' : isActive ? 'primary' : 'inherit'}
+                                            size="small"
+                                            onClick={() => setActiveMeasureId(m.id)}
+                                            sx={{
+                                                minWidth: 100,
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                            }}
+                                        >
+                                            {`Measure ${idx + 1}`}
+                                            {overfilled && <WarningAmberIcon fontSize="small" sx={{ ml: 0.5 }} />}
+                                        </Button>
+
+                                        <Typography variant="body2">
+                                            {`Beats: ${currentBeats}/${maxBeats}`}
+                                        </Typography>
+                                    </Stack>
+                                </HtmlTooltip>
                             )
                         })}
                     </Stack>

@@ -2,7 +2,7 @@
 
 import { ToolTemplate } from "./ToolTemplate"
 import { useMusic } from '@/context/MusicContext'
-import { Typography, Box, Button, Stack } from '@mui/material'
+import { Typography, Box, Button, Stack, Divider } from '@mui/material'
 import { ToolProps } from '@/types/tooling'
 import { useState, useRef } from 'react'
 
@@ -58,14 +58,33 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
 
     const isSelected = (pitch: string) => selectedKeys.includes(pitch)
 
+    const { addRest } = useMusic()
+    const handleAddRest = () => {
+        console.log('RestEntryTool measureId:', mid, 'duration:', dur)
+        addRest(mid, { duration: dur })
+    }
+
     return (
         <ToolTemplate title="Keyboard" shortcut="4">
+            <Button fullWidth variant="contained" onClick={handleAddRest}>
+                Insert a {dur} rest.
+            </Button>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Typography variant="body1">
+                Click keys to select notes.
+            </Typography>
+
             <Typography variant="body2" mb={2}>
-                Click keys to select notes. Commit them as a chord or single note.
+                Commit them as a chord or single note.
             </Typography>
 
             {/* Octave selector */}
             <Stack direction="row" spacing={2} mb={2}>
+                <Typography variant="caption" sx={{ opacity: 0.7 }}>
+                    Octaves:
+                </Typography>
                 {[1, 2, 3, 4, 5].map(count => (
                     <Typography
                         key={count}
@@ -73,10 +92,12 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
                         sx={{
                             cursor: 'pointer',
                             fontWeight: octaves === count ? 600 : 400,
+                            fontSize: octaves === count ? '1rem' : '0.8rem',
+                            ":hover": { color: 'primary.main' },
                         }}
                         onClick={() => setOctaves(count)}
                     >
-                        {count} octave{count > 1 ? 's' : ''}
+                        {count}
                     </Typography>
                 ))}
             </Stack>

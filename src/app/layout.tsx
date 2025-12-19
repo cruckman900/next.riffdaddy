@@ -12,6 +12,7 @@ import DocumentWrapper from '@/components/DocumentWrapper'
 import './styles/globals.css'
 import { AuthProvider } from '@/context/AuthProvider'
 import { TabsProvider } from '@/context/TabsContext'
+import { MusicProvider } from '@/context/MusicContext'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -24,12 +25,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                             <ThemeRegistry>
                                 <AuthProvider>
                                     <Header />
-                                    <TabsProvider>
-                                        <Navbar />
-                                        <main className="flex-1 overflow-y-auto flex min-h-0">
-                                            {children}
-                                        </main>
-                                    </TabsProvider>
+                                    <MusicProvider>
+                                        <TabsProvider>
+                                            <Navbar />
+                                            <main className="flex-1 overflow-y-auto flex min-h-0">
+                                                {children}
+                                            </main>
+                                        </TabsProvider>
+                                    </MusicProvider>
                                     <Footer />
                                     <ToastMount />
                                 </AuthProvider>

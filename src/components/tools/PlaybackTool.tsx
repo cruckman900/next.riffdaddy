@@ -24,13 +24,15 @@ export function PlaybackTool() {
                 <Typography variant="body2" gutterBottom>
                     Tempo
                 </Typography>
-                <Slider
-                    defaultValue={120}
-                    min={40}
-                    max={240}
-                    step={1}
-                    valueLabelDisplay="auto"
-                />
+                <Box sx={{ px: 1 }}>
+                    <Slider
+                        defaultValue={120}
+                        min={40}
+                        max={240}
+                        step={1}
+                        valueLabelDisplay="auto"
+                    />
+                </Box>
             </Box>
         </ToolTemplate>
     )
