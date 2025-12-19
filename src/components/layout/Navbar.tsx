@@ -11,6 +11,7 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import InfoIcon from '@mui/icons-material/Info'
 import HomeIcon from '@mui/icons-material/Home'
 import DesignServicesIcon from '@mui/icons-material/DesignServices'
+import AppRegistrationIcon from '@mui/icons-material/AppRegistration'
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp'
 import LeftMenu from '@/components/layout/LeftMenu'
@@ -30,7 +31,7 @@ const Navbar = () => {
         { label: 'About', path: '/about', icon: <InfoIcon sx={{ scale: 1.5 }} /> },
         ...(!user ? [
             { label: 'Login', path: '/login', icon: <LockOpenIcon sx={{ scale: 1.5 }} /> },
-            { label: 'Register', path: '/register', icon: <LockOpenIcon sx={{ scale: 1.5 }} /> },
+            { label: 'Register', path: '/register', icon: <AppRegistrationIcon sx={{ scale: 1.5 }} /> },
         ] : []),
         ...(user ? [
             { label: 'Workspace', path: '/workspace', icon: <DesignServicesIcon sx={{ scale: 1.5 }} /> },
