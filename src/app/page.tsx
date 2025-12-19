@@ -122,6 +122,7 @@ export default function HomePage() {
             opacity: 0.75,
             fontWeight: 'bold',
             fontSize: isMobile ? '75rem' : '2rem',
+            lineHeight: isMobile ? '100%' : 1.2,
             textShadow: '2px 2px 4px rgba(0,0,0,0.6)',
           }}
         >
