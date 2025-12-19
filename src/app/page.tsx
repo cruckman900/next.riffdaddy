@@ -116,7 +116,7 @@ export default function HomePage() {
           variant="h2"
           sx={{
             position: 'absolute',
-            top: !isMobile ? '30%' : 0,
+            top: '20%',
             paddingX: '10%',
             color: 'white',
             opacity: 0.75,
@@ -125,8 +125,8 @@ export default function HomePage() {
             lineHeight: 1.5,
             textShadow: '2px 2px 4px rgba(0,0,0,0.6)',
           }}
-        >5
-          Welcome to NEXTRiff. Create, preview, parse, and riff on guitar tabs.<br />I&apos;ll be adding other instruments and features soon, but for now,<br />let&apos;s get started with the basics.
+        >
+          Welcome to NEXTRiff. Create, preview, parse, and riff on guitar tabs.<br />I&apos;ll be adding other instruments and features soon, but for now...<br />Let&apos;s get started with the basics.
         </Typography>
 
         <Typography
