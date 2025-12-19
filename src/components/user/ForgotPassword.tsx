@@ -1,12 +1,11 @@
 'use client';
 import { useState } from "react";
 import axios from "axios";
-import { TextField, Button, Box, Typography, InputAdornment, Divider } from "@mui/material";
+import { TextField, Button, Box, Typography, Divider } from "@mui/material";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
-import { EnvelopeIcon } from "@heroicons/react/24/outline";
 
 // 1️⃣ Zod schema
 const loginSchema = z.object({
@@ -73,13 +72,6 @@ export default function ForgotPasswordForm() {
                     error={!!errors.email}
                     helperText={errors.email?.message}
                     fullWidth
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <EnvelopeIcon className="h-5 w-5 text-gray-500" />
-                            </InputAdornment>
-                        ),
-                    }}
                 />
 
                 <motion.div whileHover={{ scale: 1.02 }} className="mt-4">

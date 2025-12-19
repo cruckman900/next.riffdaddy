@@ -5,13 +5,13 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import axios from "axios"
 import { useAuthContext } from "@/context/AuthProvider"
-import { TextField, Button, Box, Typography, InputAdornment, Divider } from "@mui/material"
+import { TextField, Button, Box, Typography, InputAdornment, Divider, IconButton } from "@mui/material"
 import { UserRead } from "@/types/user"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { motion } from "framer-motion"
-import { EnvelopeIcon, LockClosedIcon, UserIcon } from "@heroicons/react/24/outline"
+import { LockClosedIcon, LockOpenIcon } from "@heroicons/react/24/outline"
 
 // 1️⃣ Zod schema
 const registerSchema = z.object({
@@ -34,6 +34,9 @@ export default function RegisterForm() {
     } = useForm<RegisterFormValues>({
         resolver: zodResolver(registerSchema),
     });
+
+    const [showPassword, setShowPassword] = useState(false)
+    const handleTogglePassword = () => setShowPassword(!showPassword)
 
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -77,18 +80,12 @@ export default function RegisterForm() {
                 <TextField
                     label="Username"
                     variant="outlined"
+                    type="username"
                     {...register("username")}
                     autoComplete="username"
                     error={!!errors.username}
                     helperText={errors.username?.message}
                     fullWidth
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <UserIcon className="h-5 w-5 text-gray-500" />
-                            </InputAdornment>
-                        )
-                    }}
                 />
 
                 <TextField
@@ -100,30 +97,28 @@ export default function RegisterForm() {
                     error={!!errors.email}
                     helperText={errors.email?.message}
                     fullWidth
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <EnvelopeIcon className="h-5 w-5 text-gray-500" />
-                            </InputAdornment>
-                        )
-                    }}
                 />
 
                 <TextField
                     label="Password"
                     variant="outlined"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     {...register("password")}
                     autoComplete="password"
                     error={!!errors.password}
                     helperText={errors.password?.message}
                     fullWidth
                     InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <LockClosedIcon className="h-5 w-5 text-gray-500" />
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <IconButton
+                                    onClick={handleTogglePassword}
+                                    aria-label="toggle password visibility"
+                                >
+                                    {showPassword ? <LockOpenIcon className="h-5 w-5 text-gray-500" /> : <LockClosedIcon className="h-5 w-5 text-gray-500" />}
+                                </IconButton>
                             </InputAdornment>
-                        )
+                        ),
                     }}
                 />
 

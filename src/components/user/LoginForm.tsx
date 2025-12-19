@@ -4,12 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useAuthContext } from "@/context/AuthProvider";
-import { TextField, Button, Box, Typography, InputAdornment, Divider } from "@mui/material";
+import { TextField, Button, Box, Typography, InputAdornment, Divider, IconButton } from "@mui/material";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
-import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
+import { LockClosedIcon, LockOpenIcon } from "@heroicons/react/24/outline";
 
 // 1️⃣ Zod schema
 const loginSchema = z.object({
@@ -44,16 +44,18 @@ export default function LoginForm() {
             const res = await axios.post<{ user_id: string }>(`${process.env.NEXT_PUBLIC_API_URL}/users/login`, data);
             const user_id = res.data.user_id
             const userData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}`)
-            console.log("User Data", userData);
+
             login(userData.data)
             router.push("/workspace")
         } catch (err) {
-            console.error("Login failed", err);
-            setErrorMsg("Invalid credentials. Please try again.");
+            setErrorMsg(`Invalid credentials. Please try again. ${err}`);
         } finally {
             setLoading(false);
         }
     };
+
+    const [showPassword, setShowPassword] = useState(false)
+    const handleTogglePassword = () => setShowPassword(!showPassword)
 
     const handleClick = () => {
         router.push("/forgot-password")
@@ -66,7 +68,7 @@ export default function LoginForm() {
             transition={{ duration: 0.4 }}
             className="max-w-md w-full mx-auto bg-white shadow-md rounded-md p-6"
         >
-            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ p: 2 }}>
+            <Box component="form" onSubmit={handleSubmit(onSubmit)}>
                 <Typography variant="h5" className="mb-4 text-center font-bold">
                     Welcome Back
                 </Typography>
@@ -86,28 +88,26 @@ export default function LoginForm() {
                     error={!!errors.email}
                     helperText={errors.email?.message}
                     fullWidth
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <EnvelopeIcon className="h-5 w-5 text-gray-500" />
-                            </InputAdornment>
-                        ),
-                    }}
                 />
 
                 <TextField
                     label="Password"
                     variant="outlined"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     {...register("password")}
                     autoComplete="password"
                     error={!!errors.password}
                     helperText={errors.password?.message}
                     fullWidth
                     InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <LockClosedIcon className="h-5 w-5 text-gray-500" />
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <IconButton
+                                    onClick={handleTogglePassword}
+                                    aria-label="toggle password visibility"
+                                >
+                                    {showPassword ? <LockOpenIcon className="h-5 w-5 text-gray-500" /> : <LockClosedIcon className="h-5 w-5 text-gray-500" />}
+                                </IconButton>
                             </InputAdornment>
                         ),
                     }}

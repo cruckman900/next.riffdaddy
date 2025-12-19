@@ -117,7 +117,7 @@ export default function HomePage() {
             top: '20%',
             left: '10%',
             paddingRight: '1rem',
-            color: 'white',
+            color: '#b366ff',
             opacity: 0.75,
             fontWeight: 'bold',
             fontSize: '175%',
@@ -134,7 +134,8 @@ export default function HomePage() {
             position: 'absolute',
             bottom: '12%',
             right: '10%',
-            color: '#00ff00',
+            color: '#00e5ff',
+            opacity: 0.75,
             fontWeight: 'bold',
             textShadow: '1px 1px 3px rgba(0,0,0,0.6)',
           }}
