@@ -116,6 +116,7 @@ export default function HomePage() {
             position: 'absolute',
             top: '20%',
             left: '10%',
+            paddingRight: '1rem',
             color: 'white',
             opacity: 0.75,
             fontWeight: 'bold',
