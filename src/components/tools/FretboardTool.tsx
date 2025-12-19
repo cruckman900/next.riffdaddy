@@ -66,7 +66,7 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
     }
 
     return (
-        <ToolTemplate title="Fretboard" shortcut="3">
+        <ToolTemplate title="Fretboard Input" shortcut="3">
             <Button fullWidth variant="contained" onClick={handleAddRest}>
                 Insert a {dur} rest.
             </Button>

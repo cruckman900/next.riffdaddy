@@ -12,7 +12,7 @@ export function ToolRail({ activeToolId, setActiveTool }: ToolRailProps) {
             style={{
                 width: "60px",
                 height: "100%",
-                background: "#1a1d21",
+                background: "#111111",
                 borderRight: "1px solid #2a2f35",
                 display: "flex",
                 flexDirection: "column",

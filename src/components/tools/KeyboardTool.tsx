@@ -65,7 +65,7 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
     }
 
     return (
-        <ToolTemplate title="Keyboard" shortcut="4">
+        <ToolTemplate title="Keyboard Input" shortcut="4">
             <Button fullWidth variant="contained" onClick={handleAddRest}>
                 Insert a {dur} rest.
             </Button>

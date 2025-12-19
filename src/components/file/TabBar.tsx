@@ -39,6 +39,7 @@ export default function TabBar() {
         event.preventDefault()
         setMenuAnchor(event.currentTarget as HTMLElement)
         setMenuTabId(tabId)
+        console.log("tabId", tabId)
     }
 
     const handleCloseMenu = () => {
@@ -47,6 +48,7 @@ export default function TabBar() {
     }
 
     const handleRename = () => {
+        console.log("menuTabId", menuTabId)
         if (menuTabId) setEditingId(menuTabId)
         handleCloseMenu()
     }
@@ -57,7 +59,7 @@ export default function TabBar() {
                 display: 'flex',
                 flexDirection: isSmall ? 'row' : 'column',
                 alignItems: 'stretch',
-                bgcolor: 'background.default',
+                bgcolor: '#000000',
                 borderBottom: isSmall ? 1 : 0,
                 borderRight: isSmall ? 0 : 1,
                 borderColor: 'divider',
@@ -85,6 +87,7 @@ export default function TabBar() {
                                 <Box
                                     sx={{
                                         display: 'flex',
+                                        justifyContent: 'space-between',
                                         alignItems: 'center',
                                         gap: 1,
                                         cursor: 'pointer',
