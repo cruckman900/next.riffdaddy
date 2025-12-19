@@ -72,8 +72,8 @@ export default function InstrumentSelector({ value, onChange }: Props) {
                 display="flex"
                 gap={1}
                 sx={{
+                    pt: 1,
                     maxWidth: 320,
-                    p: 1,
                     flexWrap: 'wrap',
                 }}
             >

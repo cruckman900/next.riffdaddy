@@ -141,7 +141,7 @@ export default function Cockpit() {
     return (
         <Grid spacing={4} height="88%">
             <Grid item xs={12} md={4} height="100%">
-                <Box className="print:hidden" height="100%" sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 3, overflowY: 'auto' }}>
+                <Box className="print:hidden" height="100%" sx={{ bgcolor: 'background.paper', borderRadius: 2, overflowY: 'auto' }}>
                     <Box sx={{ mb: 2 }}>
                         {/* pass value so InstrumentSelector can show current instrument */}
                         <InstrumentSelector value={selectedInstrument} onChange={(val) => {
@@ -213,7 +213,7 @@ export default function Cockpit() {
                         </Box>
                     </Collapse>
 
-                    <Box sx={{ p: 1, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+                    <Box sx={{ p: 1, bgcolor: 'background.paper', borderRadius: 2 }}>
                         <Typography variant="subtitle1">{selectedTuning.name}</Typography>
                         <Typography variant='body2' color="text.secondary">
                             {selectedTuning.description}
@@ -223,12 +223,14 @@ export default function Cockpit() {
                         </Typography>
                     </Box>
 
-                    <RadarDial
-                        tuning={selectedTuning?.notes ?? []}
-                        showArcs={showArcs}
-                        genre={selectedTuning.genre || ''}
-                        playedNotes={playedNotes}
-                    />
+                    <Box sx={{ mt: 2 }}>
+                        <RadarDial
+                            tuning={selectedTuning?.notes ?? []}
+                            showArcs={showArcs}
+                            genre={selectedTuning.genre || ''}
+                            playedNotes={playedNotes}
+                        />
+                    </Box>
                 </Box>
             </Grid>
         </Grid>
