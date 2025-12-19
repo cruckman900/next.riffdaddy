@@ -121,11 +121,11 @@ export default function HomePage() {
             color: 'white',
             opacity: 0.75,
             fontWeight: 'bold',
-            fontSize: isMobile ? '75rem' : '2rem',
-            lineHeight: isMobile ? '100%' : 1.2,
+            fontSize: '175%',
+            lineHeight: 1.5,
             textShadow: '2px 2px 4px rgba(0,0,0,0.6)',
           }}
-        >
+        >5
           Welcome to NEXTRiff. Create, preview, parse, and riff on guitar tabs.<br />I&apos;ll be adding other instruments and features soon, but for now,<br />let&apos;s get started with the basics.
         </Typography>
 
@@ -133,14 +133,14 @@ export default function HomePage() {
           variant="h5"
           sx={{
             position: 'absolute',
-            bottom: '55px',
-            right: '10px',
+            bottom: '15%',
+            right: '5%',
             color: '#00ff00',
             fontWeight: 'bold',
             textShadow: '1px 1px 3px rgba(0,0,0,0.6)',
           }}
         >
-          Built like a rockstar.
+          Built with a backstage pass.
         </Typography>
       </Box>
     </React.Fragment>
