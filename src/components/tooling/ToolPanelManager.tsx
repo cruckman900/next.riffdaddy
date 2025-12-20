@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { TOOL_REGISTRY } from "@/tools/registry"
 import { RhythmPalette } from '../tools/RhythmPalete'
+import { useTheme } from "@mui/material"
 
 interface ToolPanelManagerProps {
     activeTool: string
@@ -11,6 +12,8 @@ interface ToolPanelManagerProps {
 
 export function ToolPanelManager({ activeTool, measureId }: ToolPanelManagerProps) {
     const tool = TOOL_REGISTRY[activeTool]
+
+    const theme = useTheme()
 
     const [duration, setDuration] = useState<string>('q')
 
@@ -21,7 +24,7 @@ export function ToolPanelManager({ activeTool, measureId }: ToolPanelManagerProp
     const ActiveToolComponent = tool.component
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: "auto", padding: "10px", background: "#0f1114", color: "#e5e7eb" }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: "auto", padding: "10px", background: theme.palette.background.paper, color: theme.palette.text.primary }}>
             {(activeTool == 'fretboard' || activeTool == 'keyboard') && <RhythmPalette onSelect={(d) => { setDuration(d) }} />}
             <ActiveToolComponent measureId={measureId} duration={duration} />
         </div>

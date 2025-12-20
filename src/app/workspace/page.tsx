@@ -8,11 +8,12 @@ import { useAuthContext } from '@/context/AuthProvider'
 import { useTabs } from '@/context/TabsContext'
 import TabBar from '@/components/file/TabBar'
 import TabContentRenderer from '@/components/file/TabContentRenderer'
-import { Box, Typography, Button } from '@mui/material'
+import { useTheme, Box, Typography, Button } from '@mui/material'
 
 function WorkspaceContent() {
     const router = useRouter()
     const { user } = useAuthContext()
+    const theme = useTheme()
 
     const tabs = useTabs()
     const activeTab = tabs?.activeTab
@@ -34,7 +35,7 @@ function WorkspaceContent() {
                     justifyContent: 'center',
                     flexDirection: 'column',
                     p: 4,
-                    bgcolor: 'background.paper',
+                    bgcolor: theme.palette.background.paper,
                 }}
             >
                 <Typography variant="h6" color="text.secondary" gutterBottom>

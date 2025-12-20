@@ -17,11 +17,10 @@ export default function GenreFilter({ activeGenre, setGenre }: GenreFilterProps)
           key={genre}
           onClick={() => setGenre(genre as Genre)}
           whileHover={{ scale: 1.1 }}
-          className={`px-4 py-2 rounded-full font-semibold transition ${
-            activeGenre === genre
+          className={`px-4 py-2 rounded-full font-semibold transition ${activeGenre === genre
               ? 'bg-riff text-black shadow-[0_0_12px_#00ff80]'
               : 'bg-gray-800 text-white'
-          }`}
+            }`}
         >
           {genre.toUpperCase()}
         </motion.button>

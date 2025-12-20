@@ -2,10 +2,13 @@
 import { Slider, Box, Typography, FormControlLabel, Switch, Divider } from '@mui/material'
 import { useMusic } from '@/context/MusicContext'
 import { useEffect, useState } from 'react'
+import { useTheme } from '@mui/material'
 
 export function ScoreSettings() {
     const { measuresPerRow, setMeasuresPerRow, scoreFixedWidth, setScoreFixedWidth } = useMusic()
     const [tempMeasuresPerRow, setTempMeasuresPerRow] = useState(measuresPerRow)
+
+    const theme = useTheme()
 
     // debounce scale
     useEffect(() => {
@@ -15,7 +18,7 @@ export function ScoreSettings() {
 
     return (
         <>
-            <Typography variant="h6" gutterBottom color="text.primary">
+            <Typography variant="h6" gutterBottom color={theme.palette.text.primary}>
                 Score
             </Typography>
 
@@ -35,7 +38,7 @@ export function ScoreSettings() {
             </Box>
 
             <FormControlLabel
-                sx={{ color: 'text.primary', mt: 2, px: 1 }}
+                sx={{ color: theme.palette.text.primary, mt: 2, px: 1 }}
                 control={<Switch checked={scoreFixedWidth} onChange={() => setScoreFixedWidth(!scoreFixedWidth)} />}
                 label={`Score Width: ${scoreFixedWidth ? 'Fixed' : 'Auto'}`}
             />

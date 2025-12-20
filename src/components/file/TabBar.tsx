@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import {
+    useTheme,
     Box,
     IconButton,
     Tab as MuiTab,
@@ -10,7 +11,6 @@ import {
     useMediaQuery,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
-import { useTheme } from '@mui/material/styles'
 import { useTabsStrict } from '@/context/TabsContext'
 
 export default function TabBar() {
@@ -59,7 +59,7 @@ export default function TabBar() {
                 display: 'flex',
                 flexDirection: isSmall ? 'row' : 'column',
                 alignItems: 'stretch',
-                bgcolor: '#000000',
+                bgcolor: theme.palette.background.default,
                 borderBottom: isSmall ? 1 : 0,
                 borderRight: isSmall ? 0 : 1,
                 borderColor: 'divider',

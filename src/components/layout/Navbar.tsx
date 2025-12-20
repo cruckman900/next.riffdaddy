@@ -5,7 +5,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuthContext } from '@/context/AuthProvider'
-import { AppBar, Toolbar, Typography, Drawer, List, Box, Stack, Button } from '@mui/material'
+import { useTheme, AppBar, Toolbar, Typography, Drawer, List, Box, Stack, Button } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import InfoIcon from '@mui/icons-material/Info'
@@ -42,6 +42,8 @@ const Navbar = () => {
         logout()
     }
 
+    const theme = useTheme()
+
     return (
         <React.Fragment>
             <AppBar position="static" color="primary" sx={{ '@media print': { display: 'none' } }}>
@@ -50,7 +52,7 @@ const Navbar = () => {
                         <Box>
                             {isWorkspace && <Link href="" color='inherit' aria-label="help" onClick={() => setLeftOpen(true)}>
                                 <Button>
-                                    <Typography variant="h6" sx={{ flexGrow: 1, color: '#ffffff' }}>
+                                    <Typography variant="h6" sx={{ flexGrow: 1, color: theme.palette.text.primary }}>
                                         <MenuIcon sx={{ scale: 1.5 }} />
                                     </Typography>
                                 </Button>
@@ -58,7 +60,7 @@ const Navbar = () => {
 
                             <Link href="/help" color='inherit' aria-label="help">
                                 <Button>
-                                    <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: currentPathname == '/help' ? '#00ff00' : '#ffffff' }}>
+                                    <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: currentPathname == '/help' ? '#00ff00' : theme.palette.text.primary }}>
                                         <Stack direction="row" gap={1} justifyContent="space-between" alignItems="center">
                                             <MusicNoteIcon sx={{ scale: 1.5 }} /> Help
                                         </Stack>
@@ -73,7 +75,7 @@ const Navbar = () => {
                                 {navItems.map(({ label, path, icon }) => (
                                     <Link key={label} href={path} color='inherit' aria-label={label}>
                                         <Button>
-                                            <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: currentPathname == path ? '#00ff00' : '#ffffff' }}>
+                                            <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: currentPathname == path ? '#00ff00' : theme.palette.text.primary }}>
                                                 <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
                                                     {icon} {label}
                                                 </Stack>
@@ -84,7 +86,7 @@ const Navbar = () => {
                                 {user && (
                                     <Link href="" color='inherit' aria-label="logout" onClick={handleLogout}>
                                         <Button>
-                                            <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: '#ffffff' }}>
+                                            <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', fontSize: '1.15rem', color: theme.palette.text.primary }}>
                                                 <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
                                                     <ExitToAppIcon sx={{ scale: 1.5 }} /> Log out
                                                 </Stack>
@@ -98,7 +100,7 @@ const Navbar = () => {
                         <Box sx={{ display: { sm: 'none' } }}>
                             <Link href="" aria-label="open-nav" onClick={() => setRightOpen(true)}>
                                 <Button>
-                                    <Typography sx={{ color: '#ffffff' }}>
+                                    <Typography sx={{ color: theme.palette.text.primary }}>
                                         <MenuIcon sx={{ scale: 1.5 }} />
                                     </Typography>
                                 </Button>
@@ -121,7 +123,7 @@ const Navbar = () => {
                             {navItems.map(({ label, path }) => (
                                 <Link key={label} href={path} color='inherit' aria-label={label}>
                                     <Button>
-                                        <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', color: currentPathname == path ? '#00ff00' : '#ffffff' }}>
+                                        <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', color: currentPathname == path ? '#00ff00' : theme.palette.text.primary }}>
                                             {label}
                                         </Typography>
                                     </Button>
@@ -132,7 +134,7 @@ const Navbar = () => {
                         {user && (
                             <Link href="" color='inherit' aria-label="logout" onClick={handleLogout}>
                                 <Button>
-                                    <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', color: '#ffffff' }}>
+                                    <Typography variant="h6" sx={{ flexGrow: 1, fontVariant: 'small-caps', color: theme.palette.text.primary }}>
                                         Log out
                                     </Typography>
                                 </Button>

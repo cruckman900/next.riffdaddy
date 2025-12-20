@@ -1,27 +1,37 @@
 // app/layout.tsx
+'use client'
 
 import EmotionCacheProvider from '@/context/EmotionCacheProvider'
-import ThemeRegistry from '@/components/themes/ThemeRegistry'
 import ToastMount from '@/components/helpers/ToastMount'
 import Header from '@/components/layout/Header'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import SplashMount from '@/components/splash/SplashMount'
-import { ThemeProvider } from '@/context/ThemeContext'
 import DocumentWrapper from '@/components/helpers/DocumentWrapper'
 import './styles/globals.css'
 import { AuthProvider } from '@/context/AuthProvider'
 import { TabsProvider } from '@/context/TabsContext'
 import { MusicProvider } from '@/context/MusicContext'
+import { ThemeProviderContext } from '@/context/ThemeContext'
+import ThemeRegistry from '@/components/themes/ThemeRegistry'
+import { useTheme } from '@mui/material'
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+    const muiTheme = useTheme()
+
     return (
         <html lang="en">
-            <body className="min-h-screen flex flex-col text-white" style={{ backgroundColor: '#111111' }}>
-                <ThemeProvider>
-                    <DocumentWrapper>
-                        <EmotionCacheProvider>
-                            <SplashMount />
+            <body
+                className="min-h-screen flex flex-col"
+                style={{
+                    backgroundColor: muiTheme.palette.background.default,
+                    color: muiTheme.palette.text.primary,
+                }}
+            >
+                <DocumentWrapper>
+                    <EmotionCacheProvider>
+                        <SplashMount />
+                        <ThemeProviderContext>
                             <ThemeRegistry>
                                 <AuthProvider>
                                     <Header />
@@ -37,9 +47,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                                     <ToastMount />
                                 </AuthProvider>
                             </ThemeRegistry>
-                        </EmotionCacheProvider>
-                    </DocumentWrapper>
-                </ThemeProvider>
+                        </ThemeProviderContext>
+                    </EmotionCacheProvider>
+                </DocumentWrapper>
             </body>
         </html>
     )

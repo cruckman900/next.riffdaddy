@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { IconProps } from '@/components/icons/IconBase';
 import { Tooltip } from './Tooltip';
+import { useTheme } from '@mui/material';
 
 interface ToolButtonProps {
     label: string;
@@ -12,6 +13,8 @@ interface ToolButtonProps {
 }
 
 export function ToolButton({ label, active, onClick, children }: ToolButtonProps) {
+    const theme = useTheme()
+
     const [hovered, setHovered] = useState(false);
 
     const Icon = children;
@@ -29,7 +32,7 @@ export function ToolButton({ label, active, onClick, children }: ToolButtonProps
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    background: active ? "rgba(0, 212, 255, 0.1)" : "transparent",
+                    background: active ? theme.palette.action.active : "transparent",
                     border: "none",
                     cursor: "pointer",
                     padding: 0,

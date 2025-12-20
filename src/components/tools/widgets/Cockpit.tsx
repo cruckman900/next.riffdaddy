@@ -10,8 +10,11 @@ import InstrumentSelector from './InstrumentSelector'
 import { tuningPresets, alternateTunings, Tuning } from '@/utils/tunings'
 import { Button, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, TextField } from '@mui/material'
 import { useMusic } from '@/context/MusicContext'
+import { useTheme } from "@mui/material"
 
 export default function Cockpit() {
+    const theme = useTheme()
+
     const RadarDial = dynamic(() => import('@/components/tools/widgets/RadarDial'), {
         ssr: false,
     })
@@ -141,7 +144,7 @@ export default function Cockpit() {
     return (
         <Grid spacing={4} height="88%">
             <Grid item xs={12} md={4} height="100%">
-                <Box className="print:hidden" height="100%" sx={{ bgcolor: 'background.paper', borderRadius: 2 }}>
+                <Box className="print:hidden" height="100%" sx={{ bgcolor: theme.palette.background.paper, borderRadius: 2 }}>
                     <Box sx={{ mb: 2 }}>
                         {/* pass value so InstrumentSelector can show current instrument */}
                         <InstrumentSelector value={selectedInstrument} onChange={(val) => {
@@ -151,7 +154,7 @@ export default function Cockpit() {
                     </Box>
 
                     <FormControlLabel
-                        sx={{ color: 'text.primary' }}
+                        sx={{ color: theme.palette.text.primary }}
                         control={<Switch checked={showArcs} onChange={() => setShowArcs(!showArcs)} />}
                         label="Show Harmonic Arcs"
                     />
@@ -213,12 +216,12 @@ export default function Cockpit() {
                         </Box>
                     </Collapse>
 
-                    <Box sx={{ p: 1, bgcolor: 'background.paper', borderRadius: 2 }}>
+                    <Box sx={{ p: 1, bgcolor: theme.palette.background.paper, borderRadius: 2 }}>
                         <Typography variant="subtitle1">{selectedTuning.name}</Typography>
-                        <Typography variant='body2' color="text.secondary">
+                        <Typography variant='body2' color={theme.palette.text.secondary}>
                             {selectedTuning.description}
                         </Typography>
-                        <Typography variant='body2' sx={{ mt: 1, color: 'GrayText' }}>
+                        <Typography variant='body2' sx={{ mt: 1, color: theme.palette.text.secondary }}>
                             Notes: {selectedTuning.notes.join(' - ')}
                         </Typography>
                     </Box>

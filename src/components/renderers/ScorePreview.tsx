@@ -12,6 +12,7 @@ import TabRenderer from './TabRenderer'
 import StaffRenderer from './StaffRenderer'
 import CombinedRenderer from "./CombinedRenderer"
 import { useMusic } from '@/context/MusicContext'
+import { useTheme } from "@mui/material"
 
 interface ScorePreviewProps {
     setActiveMeasureId: (id: string) => void
@@ -19,6 +20,8 @@ interface ScorePreviewProps {
 }
 
 export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: ScorePreviewProps) {
+    const theme = useTheme()
+
     const [viewMode, setViewMode] = useState<'tab' | 'staff' | 'combined'>('tab')
     const { measures, getMeasureBeatCount } = useMusic()
 
@@ -65,14 +68,14 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
             <Grid item xs={12} md={8}>
                 <Box sx={{ p: 2, bgcolor: 'white', borderRadius: 2, boxShadow: 1 }}>
                     <FormControl fullWidth className="print:hidden">
-                        <InputLabel id="view-mode-label" sx={{ color: 'WindowText' }}>Staff Renderer View Mode</InputLabel>
+                        <InputLabel id="view-mode-label" sx={{ color: theme.palette.divider }}>Staff Renderer View Mode</InputLabel>
                         <Select
                             labelId="view-mode-label"
                             value={viewMode}
                             label="Staff Renderer View Mode"
                             onChange={(e) => setViewMode(e.target.value as 'tab' | 'staff' | 'combined')}
                             sx={{
-                                color: 'GrayText',
+                                color: theme.palette.text.secondary,
                                 '.MuiOutlinedInput-notchedOutline': { borderColor: 'GrayText' },
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' },
                                 '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.light' },
@@ -129,6 +132,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                             const currentBeats = getMeasureBeatCount(m)
                             const overfilled = currentBeats > maxBeats
                             const isActive = activeMeasureId === m.id
+                            console.log("m:", m)
 
                             return (
                                 <HtmlTooltip key={m.id} title={
@@ -197,7 +201,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                                             {overfilled && <Box><WarningAmberIcon fontSize="small" sx={{ ml: 0.5 }} /></Box>}
                                         </Button>
 
-                                        <Typography variant="body2">
+                                        <Typography variant="body2" sx={{ color: theme.palette.divider }}>
                                             {`Beats: ${currentBeats}/${maxBeats}`}
                                         </Typography>
                                     </Stack>

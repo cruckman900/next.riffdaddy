@@ -1,5 +1,6 @@
 import { TOOL_REGISTRY, TOOL_ORDER } from "@/tools/registry";
 import { ToolButton } from "./ToolButton";
+import { useTheme } from "@mui/material"
 
 interface ToolRailProps {
     activeToolId: string;
@@ -7,13 +8,15 @@ interface ToolRailProps {
 }
 
 export function ToolRail({ activeToolId, setActiveTool }: ToolRailProps) {
+    const theme = useTheme()
+
     return (
         <div
             style={{
                 width: "60px",
                 height: "100%",
-                background: "#111111",
-                borderRight: "1px solid #2a2f35",
+                background: theme.palette.background.default,
+                borderRight: theme.palette.divider,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",

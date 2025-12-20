@@ -1,9 +1,12 @@
 'use client'
 
 import { useState } from "react"
+import { useTheme } from "@mui/material"
 
 export function Tooltip({ label, children }: { label: string, children: React.ReactNode }) {
     const [hovered, setHovered] = useState(false)
+
+    const theme = useTheme()
 
     return (
         <div
@@ -20,8 +23,8 @@ export function Tooltip({ label, children }: { label: string, children: React.Re
                         left: "110%",
                         top: "50%",
                         transform: "translateY(-50%)",
-                        background: "#111",
-                        color: "#fff",
+                        background: theme.palette.background.default,
+                        color: theme.palette.text.primary,
                         padding: "4px 8px",
                         borderRadius: "4px",
                         fontSize: "12px",
