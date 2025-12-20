@@ -17,7 +17,7 @@ export default function Help() {
                 flex: 1,
                 flexDirection: 'column',
                 gap: 3,
-                bgcolor: '#111111',
+                bgcolor: theme.palette.background.default,
             }}
         >
             <Typography variant="h3" fontWeight={700} color="text.primary">

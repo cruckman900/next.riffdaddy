@@ -3,6 +3,13 @@ import { createTheme } from '@mui/material'
 
 // Extend Theme typing for custom fields
 declare module '@mui/material/styles' {
+  interface Palette {
+    accent: Palette['primary']
+  }
+  interface PaletteOptions {
+    accent?: PaletteOptions['primary']
+  }
+
   interface Theme {
     custom?: {
       icon?: string
@@ -21,8 +28,9 @@ declare module '@mui/material/styles' {
 export const getTheme = (
   mode: 'light' | 'dark',
   options: {
-    primary: string
-    secondary?: string
+    primary: { light: string; main: string; dark: string; contrastText: string }
+    secondary?: { light: string; main: string; dark: string; contrastText: string }
+    accent?: { light: string; main: string; dark: string; contrastText: string }
     background: string
     surface: string
     text: string
@@ -35,8 +43,9 @@ export const getTheme = (
   createTheme({
     palette: {
       mode,
-      primary: { main: options.primary },
-      secondary: { main: options.secondary || options.primary },
+      primary: options.primary,
+      secondary: options.secondary || options.primary,
+      accent: options.accent || options.primary,
       background: {
         default: options.background,
         paper: options.surface,
@@ -49,12 +58,6 @@ export const getTheme = (
     },
     typography: {
       fontFamily: `'Orbitron', 'Roboto', sans-serif`,
-      h1: { fontWeight: 700, fontSize: '3rem' },
-      h2: { fontWeight: 700, fontSize: '2.5rem' },
-      h3: { fontWeight: 700, fontSize: '2rem' },
-      h4: { fontWeight: 700, fontSize: '1.5rem' },
-      h5: { fontWeight: 700, fontSize: '1.25rem' },
-      h6: { fontWeight: 700, fontSize: '1rem', letterSpacing: '0.05em' },
       button: { textTransform: 'none', fontWeight: 600 },
     },
     components: {
@@ -74,7 +77,12 @@ export const getTheme = (
 export const themes = {
   light: (mode: 'light' | 'dark') =>
     getTheme(mode, {
-      primary: '#0077cc',
+      primary: {
+        light: '#66aaff',
+        main: '#0077cc',
+        dark: '#004c99',
+        contrastText: '#ffffff',
+      },
       background: mode === 'dark' ? '#121212' : '#ffffff',
       surface: mode === 'dark' ? '#1e1e1e' : '#f4f4f4',
       text: mode === 'dark' ? '#e0e0e0' : '#1a1a1a',
@@ -85,7 +93,12 @@ export const themes = {
     }),
   dark: (mode: 'light' | 'dark') =>
     getTheme(mode, {
-      primary: '#00cc88',
+      primary: {
+        light: '#66ffcc',
+        main: '#00cc88',
+        dark: '#009966',
+        contrastText: '#000000',
+      },
       background: mode === 'dark' ? '#121212' : '#f5f5f5',
       surface: mode === 'dark' ? '#1e1e1e' : '#ffffff',
       text: mode === 'dark' ? '#e0e0e0' : '#000000',
@@ -96,10 +109,15 @@ export const themes = {
     }),
   hazard: (mode: 'light' | 'dark') =>
     getTheme(mode, {
-      primary: '#ffcc00',
+      primary: {
+        light: '#ffe066',
+        main: '#ffcc00',
+        dark: '#cc9900',
+        contrastText: '#000000',
+      },
       background: mode === 'dark' ? '#1a1a1a' : '#fffbe6',
       surface: '#2a1f00',
-      text: '#f5f5f5',
+      text: mode === 'dark' ? '#f5f5f5' : '#1a1a1a',
       muted: '#d4c28a',
       border: '#4a3a00',
       icon: '⚠️',
@@ -107,7 +125,12 @@ export const themes = {
     }),
   brownstone: (mode: 'light' | 'dark') =>
     getTheme(mode, {
-      primary: '#8b5e3c',
+      primary: {
+        light: '#b07a56',
+        main: '#8b5e3c',
+        dark: '#5f3f28',
+        contrastText: '#ffffff',
+      },
       background: mode === 'dark' ? '#3e2c1c' : '#fdfaf6',
       surface: '#f2ede7',
       text: '#3e2c1c',
@@ -118,7 +141,12 @@ export const themes = {
     }),
   midnight: (mode: 'light' | 'dark') =>
     getTheme(mode, {
-      primary: '#3a6ea5',
+      primary: {
+        light: '#5a8cc2',
+        main: '#3a6ea5',
+        dark: '#274b73',
+        contrastText: '#ffffff',
+      },
       background: mode === 'dark' ? '#0b1c2c' : '#e0e6ed',
       surface: '#132a3d',
       text: '#e0e6ed',
@@ -129,7 +157,12 @@ export const themes = {
     }),
   slate: (mode: 'light' | 'dark') =>
     getTheme(mode, {
-      primary: '#5c6770',
+      primary: {
+        light: '#7a868f',
+        main: '#5c6770',
+        dark: '#3d454b',
+        contrastText: '#ffffff',
+      },
       background: mode === 'dark' ? '#2e343b' : '#f8f9fa',
       surface: '#e2e6ea',
       text: '#2e343b',
@@ -140,7 +173,12 @@ export const themes = {
     }),
   purple: (mode: 'light' | 'dark') =>
     getTheme(mode, {
-      primary: '#a678d6',
+      primary: {
+        light: '#c29de6',
+        main: '#a678d6',
+        dark: '#754fa3',
+        contrastText: '#ffffff',
+      },
       background: mode === 'dark' ? '#1e1126' : '#f0eafc',
       surface: '#2c1a3a',
       text: '#f0eafc',
@@ -151,7 +189,12 @@ export const themes = {
     }),
   pink: (mode: 'light' | 'dark') =>
     getTheme(mode, {
-      primary: '#e91e63',
+      primary: {
+        light: '#f48fb1',
+        main: '#e91e63',
+        dark: '#b0003a',
+        contrastText: '#ffffff',
+      },
       background: mode === 'dark' ? '#3a2a33' : '#fff5f9',
       surface: '#fce4ec',
       text: '#3a2a33',
@@ -162,7 +205,12 @@ export const themes = {
     }),
   green: (mode: 'light' | 'dark') =>
     getTheme(mode, {
-      primary: '#4caf50',
+      primary: {
+        light: '#81c784',
+        main: '#4caf50',
+        dark: '#2e7d32',
+        contrastText: '#ffffff',
+      },
       background: mode === 'dark' ? '#1e2f23' : '#f4fff7',
       surface: '#e0f2e9',
       text: '#1e2f23',
@@ -173,7 +221,12 @@ export const themes = {
     }),
   red: (mode: 'light' | 'dark') =>
     getTheme(mode, {
-      primary: '#c62828',
+      primary: {
+        light: '#ef5350',
+        main: '#c62828',
+        dark: '#8e0000',
+        contrastText: '#ffffff',
+      },
       background: mode === 'dark' ? '#2c1a1a' : '#fff4f4',
       surface: '#fbeaea',
       text: '#2c1a1a',
