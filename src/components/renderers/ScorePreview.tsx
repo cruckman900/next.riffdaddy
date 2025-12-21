@@ -76,7 +76,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                             onChange={(e) => setViewMode(e.target.value as 'tab' | 'staff' | 'combined')}
                             sx={{
                                 color: theme.palette.text.secondary,
-                                '.MuiOutlinedInput-notchedOutline': { borderColor: 'text.secondary' },
+                                '.MuiOutlinedInput-notchedOutline': { borderColor: 'text.disabled' },
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'border.light' },
                                 '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.light' },
                                 '.MuiSvgIcon-root': { color: 'primary.main' },
