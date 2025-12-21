@@ -132,7 +132,7 @@ export default function RadarDial({
                 })}
             </Box>
 
-            {showArcs && <Stack sx={{ float: 'right', justifyContent: 'space-around', backgroundColor: theme.palette.background.paper, borderColor: theme.palette.border.main, borderWidth: '1px', borderRadius: '4px', padding: 1 }}>
+            {showArcs && <Stack sx={{ float: 'right', justifyContent: 'space-around', backgroundColor: theme.palette.background.paper, borderColor: theme.palette.border.main, borderWidth: '1px', borderRadius: 2, padding: 1 }}>
                 <Box sx={{ backgroundColor: harmonicColors[0], color: '#111111', opacity: 0.4, width: '4rem', px: '0.5rem', py: '0.25rem' }}>unison</Box>
                 <Box sx={{ backgroundColor: harmonicColors[5], color: '#111111', opacity: 0.4, width: '4rem', px: '0.5rem', py: '0.25rem' }}>p 4th</Box>
                 <Box sx={{ backgroundColor: harmonicColors[7], color: '#111111', opacity: 0.4, width: '4rem', px: '0.5rem', py: '0.25rem' }}>p 5th</Box>

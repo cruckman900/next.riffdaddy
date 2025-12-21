@@ -216,7 +216,7 @@ export default function Cockpit() {
                         </Box>
                     </Collapse>
 
-                    <Box sx={{ p: 1, bgcolor: theme.palette.background.paper, borderRadius: 2 }}>
+                    <Box sx={{ p: 1, bgcolor: theme.palette.background.paper, borderColor: theme.palette.border.main, borderWidth: '1px', borderRadius: 2 }}>
                         <Typography variant="subtitle1">{selectedTuning.name}</Typography>
                         <Typography variant='body2' color={theme.palette.text.secondary}>
                             {selectedTuning.description}
@@ -236,6 +236,6 @@ export default function Cockpit() {
                     </Box>
                 </Box>
             </Grid>
-        </Grid>
+        </Grid >
     )
 }
