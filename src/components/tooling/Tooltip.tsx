@@ -23,7 +23,7 @@ export function Tooltip({ label, children }: { label: string, children: React.Re
                         left: "110%",
                         top: "50%",
                         transform: "translateY(-50%)",
-                        background: theme.palette.background.default,
+                        background: theme.palette.accent.main,
                         color: theme.palette.text.primary,
                         padding: "4px 8px",
                         borderRadius: "4px",

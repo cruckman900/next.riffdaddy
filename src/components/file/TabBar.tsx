@@ -60,7 +60,7 @@ export default function TabBar() {
                 bgcolor: theme.palette.background.paper,
                 borderBottom: isSmall ? 1 : 0,
                 borderRight: isSmall ? 0 : 1,
-                borderColor: theme.palette.border.main,
+                borderColor: theme.palette.divider,
                 width: isSmall ? '100%' : 160,
                 height: isSmall ? 'auto' : '100%',
             }}
@@ -135,8 +135,8 @@ export default function TabBar() {
                                 textTransform: 'none',
                                 minWidth: 120,
                                 '&.Mui-selected': {
-                                    bgcolor: 'accent.main',
-                                    color: 'accent.contrastText',
+                                    bgcolor: 'surface.main',
+                                    color: theme.palette.text.primary,
                                     fontWeight: 'bold',
                                 },
                             }}

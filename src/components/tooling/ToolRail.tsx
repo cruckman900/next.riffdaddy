@@ -15,7 +15,7 @@ export function ToolRail({ activeToolId, setActiveTool }: ToolRailProps) {
             style={{
                 width: "60px",
                 height: "100%",
-                background: theme.palette.background.default,
+                background: theme.palette.muted.main,
                 borderRight: theme.palette.divider,
                 display: "flex",
                 flexDirection: "column",

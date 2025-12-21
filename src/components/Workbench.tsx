@@ -60,6 +60,7 @@ export default function Workbench() {
                         minWidth: isMobile ? 0 : 320,
                         maxWidth: 380,
                         overflowY: "auto",
+                        backgroundColor: theme.palette.muted.main,
                         borderRight: "1px solid #2a2f35",
                     }}
                 >
@@ -68,7 +69,7 @@ export default function Workbench() {
 
                 {/* Desktop ScorePreview */}
                 {!isMobile && (
-                    <div style={{ flex: 1, width: "100%", overflow: "auto", backgroundColor: theme.palette.background.paper }}>
+                    <div style={{ flex: 1, width: "100%", overflow: "auto", backgroundColor: theme.palette.background.default }}>
                         <ScorePreview setActiveMeasureId={setActiveMeasureId} activeMeasureId={activeMeasureId} />
                     </div>
                 )}

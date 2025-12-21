@@ -10,7 +10,7 @@ export const ThemeChooser = () => {
 
     return (
         <Stack spacing={2}>
-            <Typography variant="h6">Choose Theme</Typography>
+            <Typography variant="h6" color='text.secondary'>Choose Theme</Typography>
 
             {/* Theme buttons */}
             <Stack direction="row" spacing={2} flexWrap="wrap">

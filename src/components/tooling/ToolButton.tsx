@@ -32,7 +32,7 @@ export function ToolButton({ label, active, onClick, children }: ToolButtonProps
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    background: active ? theme.palette.accent.main : "transparent",
+                    background: active ? theme.palette.surface.main : "transparent",
                     border: "none",
                     cursor: "pointer",
                     padding: 0,

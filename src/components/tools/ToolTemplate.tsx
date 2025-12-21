@@ -13,7 +13,7 @@ export function ToolTemplate({
     children?: React.ReactNode
 }) {
     return (
-        <Box display="flex" flexDirection="column" height="88%" sx={{ bgcolor: 'muted.main', borderRadius: 2, boxShadow: 3 }}>
+        <Box display="flex" flexDirection="column" height="88%" sx={{ bgcolor: 'background.default', borderRadius: 2, boxShadow: 3 }}>
             {/* Header */}
             <Box
                 px={2}

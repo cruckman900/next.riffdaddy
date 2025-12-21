@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import React from 'react'
+import { useTheme } from '@mui/material/styles'
 
 export interface IconProps {
     active?: boolean
@@ -19,10 +20,12 @@ export function IconBase({
     color,
     children,
 }: IconBaseProps) {
+    const theme = useTheme()
+
     // Color palette
-    const defaultColor = "#7f8a99"
-    const hoverColor = "#cfd8e3"
-    const activeColor = "#00d4ff"
+    const defaultColor = theme.palette.muted.contrastText //"#7f8a99"
+    const hoverColor = theme.palette.text.primary //"#cfd8e3"
+    const activeColor = theme.palette.accent.main // "#00d4ff"
 
     // Final stroke color
     const finalColor = color || (active ? activeColor : hovered ? hoverColor : defaultColor)

@@ -24,7 +24,7 @@ export function ToolPanelManager({ activeTool, measureId }: ToolPanelManagerProp
     const ActiveToolComponent = tool.component
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: "auto", padding: "10px", background: theme.palette.background.default, color: theme.palette.text.primary }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: "auto", padding: "10px", background: theme.palette.muted.main, color: theme.palette.text.primary }}>
             {(activeTool == 'fretboard' || activeTool == 'keyboard') && <RhythmPalette onSelect={(d) => { setDuration(d) }} />}
             <ActiveToolComponent measureId={measureId} duration={duration} />
         </div>

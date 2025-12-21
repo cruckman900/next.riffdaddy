@@ -25,7 +25,7 @@ export function ScoreSettings() {
             <Divider sx={{ my: 2 }} />
 
             <Box sx={{ mt: 2, px: 1 }}>
-                <Typography variant="subtitle1">Measures Per Row ({measuresPerRow})</Typography>
+                <Typography variant="subtitle1" color="text.secondary">Measures Per Row ({measuresPerRow})</Typography>
                 <Box sx={{ px: 1 }}>
                     <Slider
                         value={tempMeasuresPerRow}
