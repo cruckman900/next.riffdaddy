@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import {
-    useTheme,
     Box,
     IconButton,
     Tab as MuiTab,
@@ -12,6 +11,7 @@ import {
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import { useTabsStrict } from '@/context/TabsContext'
+import { useTheme } from '@mui/material/styles'
 
 export default function TabBar() {
     const tabs = useTabsStrict()
@@ -39,7 +39,6 @@ export default function TabBar() {
         event.preventDefault()
         setMenuAnchor(event.currentTarget as HTMLElement)
         setMenuTabId(tabId)
-        console.log("tabId", tabId)
     }
 
     const handleCloseMenu = () => {
@@ -48,7 +47,6 @@ export default function TabBar() {
     }
 
     const handleRename = () => {
-        console.log("menuTabId", menuTabId)
         if (menuTabId) setEditingId(menuTabId)
         handleCloseMenu()
     }
@@ -59,10 +57,10 @@ export default function TabBar() {
                 display: 'flex',
                 flexDirection: isSmall ? 'row' : 'column',
                 alignItems: 'stretch',
-                bgcolor: theme.palette.background.default,
+                bgcolor: theme.palette.background.paper,
                 borderBottom: isSmall ? 1 : 0,
                 borderRight: isSmall ? 0 : 1,
-                borderColor: 'divider',
+                borderColor: theme.palette.border.main,
                 width: isSmall ? '100%' : 160,
                 height: isSmall ? 'auto' : '100%',
             }}
@@ -137,7 +135,8 @@ export default function TabBar() {
                                 textTransform: 'none',
                                 minWidth: 120,
                                 '&.Mui-selected': {
-                                    bgcolor: 'action.selected',
+                                    bgcolor: 'accent.main',
+                                    color: 'accent.contrastText',
                                     fontWeight: 'bold',
                                 },
                             }}

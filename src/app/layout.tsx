@@ -14,18 +14,15 @@ import { TabsProvider } from '@/context/TabsContext'
 import { MusicProvider } from '@/context/MusicContext'
 import { ThemeProviderContext } from '@/context/ThemeContext'
 import ThemeRegistry from '@/components/themes/ThemeRegistry'
-import { useTheme } from '@mui/material'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-    const muiTheme = useTheme()
-
     return (
         <html lang="en">
             <body
                 className="min-h-screen flex flex-col"
                 style={{
-                    backgroundColor: muiTheme.palette.background.default,
-                    color: muiTheme.palette.text.primary,
+                    backgroundColor: 'background.default',
+                    color: 'text.primary',
                 }}
             >
                 <DocumentWrapper>

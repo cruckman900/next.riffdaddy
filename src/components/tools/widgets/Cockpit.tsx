@@ -10,7 +10,7 @@ import InstrumentSelector from './InstrumentSelector'
 import { tuningPresets, alternateTunings, Tuning } from '@/utils/tunings'
 import { Button, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, TextField } from '@mui/material'
 import { useMusic } from '@/context/MusicContext'
-import { useTheme } from "@mui/material"
+import { useTheme } from "@mui/material/styles"
 
 export default function Cockpit() {
     const theme = useTheme()
@@ -144,7 +144,7 @@ export default function Cockpit() {
     return (
         <Grid spacing={4} height="88%">
             <Grid item xs={12} md={4} height="100%">
-                <Box className="print:hidden" height="100%" sx={{ bgcolor: theme.palette.background.paper, borderRadius: 2 }}>
+                <Box className="print:hidden" height="100%" sx={{ bgcolor: theme.palette.muted.main, borderRadius: 2 }}>
                     <Box sx={{ mb: 2 }}>
                         {/* pass value so InstrumentSelector can show current instrument */}
                         <InstrumentSelector value={selectedInstrument} onChange={(val) => {

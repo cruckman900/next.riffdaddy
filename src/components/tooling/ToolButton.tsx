@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { IconProps } from '@/components/icons/IconBase';
 import { Tooltip } from './Tooltip';
-import { useTheme } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 interface ToolButtonProps {
     label: string;
@@ -32,7 +32,7 @@ export function ToolButton({ label, active, onClick, children }: ToolButtonProps
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    background: active ? theme.palette.action.active : "transparent",
+                    background: active ? theme.palette.accent.main : "transparent",
                     border: "none",
                     cursor: "pointer",
                     padding: 0,

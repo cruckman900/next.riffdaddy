@@ -1,6 +1,6 @@
 import { TOOL_REGISTRY, TOOL_ORDER } from "@/tools/registry";
 import { ToolButton } from "./ToolButton";
-import { useTheme } from "@mui/material"
+import { useTheme } from "@mui/material/styles"
 
 interface ToolRailProps {
     activeToolId: string;

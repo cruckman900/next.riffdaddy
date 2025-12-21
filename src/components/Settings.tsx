@@ -8,7 +8,7 @@ export default function Settings() {
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
     return (
-        <Box sx={{ p: 2, height: "100%", overflowY: "auto" }}>
+        <Box sx={{ p: 2, height: "100%", overflowY: "auto", backgroundColor: theme.palette.background.default }}>
             <Typography variant="h4" gutterBottom color="text.primary">
                 Settings
             </Typography>

@@ -1,13 +1,13 @@
 'use client'
 
-import { useTheme } from "@mui/material"
+import { useTheme } from '@mui/material/styles'
 import YearClient from "../helpers/YearClient"
 
 export default function Footer() {
     const theme = useTheme()
 
     return (
-        <footer className="sticky bottom-0 z-40 w-full text-center py-4 mt-auto print:hidden" style={{ backgroundColor: theme.palette.background.default }}>
+        <footer className="sticky bottom-0 z-40 w-full text-center py-4 mt-auto print:hidden" style={{ backgroundColor: theme.palette.background.paper }}>
             {/* <div className="absolute left-4 bottom-4 text-xs font-mono text-white opacity-80">
                 <span className="powered-by">Powered By <span className="linear-descent">LinearDescent</span></span>
             </div> */}

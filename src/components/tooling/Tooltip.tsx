@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from "react"
-import { useTheme } from "@mui/material"
+import { useTheme } from "@mui/material/styles"
 
 export function Tooltip({ label, children }: { label: string, children: React.ReactNode }) {
     const [hovered, setHovered] = useState(false)

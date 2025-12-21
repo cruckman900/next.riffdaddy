@@ -9,11 +9,11 @@ import {
     ListItemText,
     Divider,
 } from '@mui/material'
-import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder'
-import FolderOpenIcon from '@mui/icons-material/FolderOpen'
-import SaveIcon from '@mui/icons-material/Save'
-import SettingsIcon from '@mui/icons-material/Settings'
-import HistoryIcon from '@mui/icons-material/History'
+import CreateNewFolderTwoToneIcon from '@mui/icons-material/CreateNewFolderTwoTone';
+import FolderOpenTwoToneIcon from '@mui/icons-material/FolderOpenTwoTone';
+import SaveTwoToneIcon from '@mui/icons-material/SaveTwoTone'
+import SettingsTwoToneIcon from '@mui/icons-material/SettingsTwoTone'
+import HistoryTwoToneIcon from '@mui/icons-material/HistoryTwoTone'
 import { useTabs } from '@/context/TabsContext'
 
 export default function LeftMenu({ onClose }: { onClose?: () => void }) {
@@ -29,7 +29,7 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
                     onClose?.()
                 }}
             >
-                <ListItemIcon><CreateNewFolderIcon /></ListItemIcon>
+                <ListItemIcon><CreateNewFolderTwoToneIcon /></ListItemIcon>
                 <ListItemText primary="File New" />
             </ListItemButton>
 
@@ -40,7 +40,7 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
                     onClose?.()
                 }}
             >
-                <ListItemIcon><FolderOpenIcon /></ListItemIcon>
+                <ListItemIcon><FolderOpenTwoToneIcon /></ListItemIcon>
                 <ListItemText primary="File Open" />
             </ListItemButton>
 
@@ -51,7 +51,7 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
                     onClose?.()
                 }}
             >
-                <ListItemIcon><SaveIcon /></ListItemIcon>
+                <ListItemIcon><SaveTwoToneIcon /></ListItemIcon>
                 <ListItemText primary="Save" />
             </ListItemButton>
 
@@ -64,7 +64,7 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
                     onClose?.()
                 }}
             >
-                <ListItemIcon><SettingsIcon /></ListItemIcon>
+                <ListItemIcon><SettingsTwoToneIcon /></ListItemIcon>
                 <ListItemText primary="Settings" />
             </ListItemButton>
 
@@ -75,7 +75,7 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
                     onClose?.()
                 }}
             >
-                <ListItemIcon><HistoryIcon /></ListItemIcon>
+                <ListItemIcon><HistoryTwoToneIcon /></ListItemIcon>
                 <ListItemText primary="History" />
             </ListItemButton>
         </List>

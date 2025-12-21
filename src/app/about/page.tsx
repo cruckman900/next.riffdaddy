@@ -1,8 +1,11 @@
 'use client'
 
 import { Box, Typography, Divider } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 
 export default function AboutPage() {
+    const theme = useTheme()
+
     return (
         <Box
             sx={{
@@ -11,7 +14,7 @@ export default function AboutPage() {
                 flex: 1,
                 flexDirection: 'column',
                 gap: 3,
-                bgcolor: '#111111',
+                bgcolor: theme.palette.background.paper,
             }}
         >
             <Typography variant="h3" fontWeight={700} color="text.primary">

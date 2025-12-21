@@ -3,12 +3,13 @@
 import { Box, Button, Typography } from '@mui/material'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useTheme } from "@mui/material"
+import { useTheme } from '@mui/material/styles'
 
 export default function Header() {
     const theme = useTheme()
+
     return (
-        <header className="sticky top-0 z-50 px-1 py-3 flex items-center justify-between shadow-md print:hidden" style={{ backgroundColor: theme.palette.background.default }}>
+        <header className="sticky top-0 z-50 px-1 py-3 flex items-center justify-between shadow-md print:hidden" style={{ backgroundColor: theme.palette.background.paper }}>
             <Link href="/">
                 <Button sx={{ margin: 0, padding: 1 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>

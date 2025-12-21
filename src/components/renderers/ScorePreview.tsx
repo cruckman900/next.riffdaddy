@@ -12,7 +12,7 @@ import TabRenderer from './TabRenderer'
 import StaffRenderer from './StaffRenderer'
 import CombinedRenderer from "./CombinedRenderer"
 import { useMusic } from '@/context/MusicContext'
-import { useTheme } from "@mui/material"
+import { useTheme } from "@mui/material/styles"
 
 interface ScorePreviewProps {
     setActiveMeasureId: (id: string) => void
@@ -68,18 +68,18 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
             <Grid item xs={12} md={8}>
                 <Box sx={{ p: 2, bgcolor: 'white', borderRadius: 2, boxShadow: 1 }}>
                     <FormControl fullWidth className="print:hidden">
-                        <InputLabel id="view-mode-label" sx={{ color: theme.palette.divider }}>Staff Renderer View Mode</InputLabel>
+                        <InputLabel id="view-mode-label" sx={{ color: theme.palette.text.primary }}>Staff Renderer View Mode</InputLabel>
                         <Select
                             labelId="view-mode-label"
                             value={viewMode}
                             label="Staff Renderer View Mode"
                             onChange={(e) => setViewMode(e.target.value as 'tab' | 'staff' | 'combined')}
                             sx={{
-                                color: theme.palette.text.secondary,
-                                '.MuiOutlinedInput-notchedOutline': { borderColor: 'GrayText' },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' },
+                                color: theme.palette.accent.main,
+                                '.MuiOutlinedInput-notchedOutline': { borderColor: 'border.main' },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'border.light' },
                                 '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.light' },
-                                '.MuiSvgIcon-root': { color: 'GrayText' },
+                                '.MuiSvgIcon-root': { color: 'primary.main' },
                             }}
                         >
                             <MenuItem value="tab">Tab</MenuItem>
