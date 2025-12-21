@@ -20,7 +20,7 @@ export function RhythmPalette({ onSelect }: { onSelect: (duration: string) => vo
     ]
 
     return (
-        <Box display="flex" flexDirection="column" sx={{ p: 2, mb: 1, bgcolor: theme.palette.muted.main, borderRadius: 2, boxShadow: 3 }}>
+        <Box display="flex" flexDirection="column" sx={{ p: 2, mb: 1, bgcolor: theme.palette.background.default, borderRadius: 2, boxShadow: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Rhythm Palette
             </Typography>
