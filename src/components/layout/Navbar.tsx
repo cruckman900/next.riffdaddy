@@ -24,8 +24,6 @@ const Navbar = () => {
     const [leftOpen, setLeftOpen] = useState(false)
 
     const pathname = usePathname()
-
-    const isWorkspace = pathname === '/workspace'
     const currentPathname = pathname
 
     const navItems = [
@@ -50,13 +48,13 @@ const Navbar = () => {
                 <Toolbar>
                     <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
                         <Box>
-                            {isWorkspace && <Link href="" color='inherit' aria-label="help" onClick={() => setLeftOpen(true)}>
+                            <Link href="" color='inherit' aria-label="help" onClick={() => setLeftOpen(true)}>
                                 <Button>
                                     <Typography variant="h6" color="text.primary">
                                         <MenuTwoToneIcon sx={{ scale: 1.5 }} />
                                     </Typography>
                                 </Button>
-                            </Link>}
+                            </Link>
 
                             <Link href="/help" color='inherit' aria-label="help">
                                 <Button>

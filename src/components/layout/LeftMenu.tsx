@@ -14,16 +14,20 @@ import FolderOpenTwoToneIcon from '@mui/icons-material/FolderOpenTwoTone';
 import SaveTwoToneIcon from '@mui/icons-material/SaveTwoTone'
 import SettingsTwoToneIcon from '@mui/icons-material/SettingsTwoTone'
 import HistoryTwoToneIcon from '@mui/icons-material/HistoryTwoTone'
+import { usePathname } from 'next/navigation'
 import { useTabs } from '@/context/TabsContext'
 
 export default function LeftMenu({ onClose }: { onClose?: () => void }) {
+    const pathname = usePathname()
+    const isWorkspace = pathname === '/workspace'
+
     const tabs = useTabs()
     if (!tabs) return null
 
     return (
         <List>
             {/* File New */}
-            <ListItemButton
+            {isWorkspace && <ListItemButton
                 onClick={() => {
                     tabs.newTab({ title: 'Untitled', type: 'editor', payload: { content: '' } })
                     onClose?.()
@@ -31,10 +35,10 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
             >
                 <ListItemIcon><CreateNewFolderTwoToneIcon /></ListItemIcon>
                 <ListItemText primary="File New" />
-            </ListItemButton>
+            </ListItemButton>}
 
             {/* File Open */}
-            <ListItemButton
+            {isWorkspace && <ListItemButton
                 onClick={() => {
                     tabs.newTab({ title: 'Open File', type: 'editor', payload: { content: '' } })
                     onClose?.()
@@ -42,10 +46,10 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
             >
                 <ListItemIcon><FolderOpenTwoToneIcon /></ListItemIcon>
                 <ListItemText primary="File Open" />
-            </ListItemButton>
+            </ListItemButton>}
 
             {/* Save */}
-            <ListItemButton
+            {isWorkspace && <ListItemButton
                 onClick={() => {
                     // TODO: implement save logic
                     onClose?.()
@@ -53,9 +57,9 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
             >
                 <ListItemIcon><SaveTwoToneIcon /></ListItemIcon>
                 <ListItemText primary="Save" />
-            </ListItemButton>
+            </ListItemButton>}
 
-            <Divider sx={{ my: 1 }} />
+            {isWorkspace && <Divider sx={{ my: 1 }} />}
 
             {/* Settings */}
             <ListItemButton
@@ -69,7 +73,7 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
             </ListItemButton>
 
             {/* History */}
-            <ListItemButton
+            {isWorkspace && <ListItemButton
                 onClick={() => {
                     tabs.newTab({ title: 'History', type: 'history' })
                     onClose?.()
@@ -77,7 +81,7 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
             >
                 <ListItemIcon><HistoryTwoToneIcon /></ListItemIcon>
                 <ListItemText primary="History" />
-            </ListItemButton>
+            </ListItemButton>}
         </List>
     )
 }
