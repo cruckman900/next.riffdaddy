@@ -8,7 +8,7 @@
 ![Stars](https://img.shields.io/github/stars/cruckman900/next.riffdaddy?style=for-the-badge)
 ![Issues](https://img.shields.io/github/issues/cruckman900/next.riffdaddy?style=for-the-badge)
 ![Last Commit](https://img.shields.io/github/last-commit/cruckman900/next.riffdaddy?style=for-the-badge)
-Welcome to **NEXTRiff**, a platform for expressive musicians to preview, parse, and riff on guitar tabs with glowing transitions and genre-based themes.
+# Welcome to **NEXTRiff**, a platform for expressive musicians to preview, parse, and riff on guitar tabs with glowing transitions and genre-based themes.
 
 ![NEXTRiff Badge](https://github.com/cruckman900/next.riffdaddy/blob/master/public/NEXTRiff_Badge.png)
 ![Hits](https://hits.sh/github.com/cruckman900/next.riffdaddy.svg)
