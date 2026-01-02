@@ -1,6 +1,5 @@
 # 🎸 NEXTRiff — Riff-Ready Tab Parsing
 ![NEXTRiff](https://img.shields.io/badge/NEXTRiff-LinearDescent-blueviolet?style=for-the-badge&logo=vercel)
-![NEXTRiff](https://img.shields.io/badge/NEXTRiff-LinearDescent-blueviolet?style=for-the-badge&logo=vercel)
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs)
 ![React](https://img.shields.io/badge/React-61dafb?style=for-the-badge&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?style=for-the-badge&logo=typescript)
