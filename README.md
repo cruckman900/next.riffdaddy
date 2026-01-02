@@ -2,7 +2,7 @@
 
 Welcome to **NEXTRiff**, a platform for expressive musicians to preview, parse, and riff on guitar tabs with glowing transitions and genre-based themes.
 
-![NEXTRiff Badge]([/public/nextriff_badge.png](https://github.com/cruckman900/next.riffdaddy/blob/master/public/NEXTRiff_Badge.png))
+![NEXTRiff Badge](https://github.com/cruckman900/next.riffdaddy/blob/master/public/NEXTRiff_Badge.png)
 ![Hits](https://hits.sh/github.com/cruckman900/next.riffdaddy.svg)
 
 ---
