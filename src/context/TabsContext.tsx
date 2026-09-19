@@ -25,6 +25,9 @@ type TabsApi = {
     switchTab: (id: string) => void
     closeTab: (id: string) => void
     renameTab: (id: string, newTitle: string) => void
+    // Merges new fields into a tab's payload (e.g. stashing the backend tab
+    // id after a Save, so a later Save updates rather than re-creates it).
+    updateTabPayload: (id: string, payload: Record<string, unknown>) => void
 }
 
 const TabsContext = createContext<TabsApi | null>(null)
@@ -76,6 +79,13 @@ export const TabsProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }))
     }
 
+    const updateTabPayload = (id: string, payload: Record<string, unknown>) => {
+        setState(prev => ({
+            ...prev,
+            tabs: prev.tabs.map(t => (t.id === id ? { ...t, payload: { ...t.payload, ...payload } } : t)),
+        }))
+    }
+
     const api: TabsApi = useMemo(
         () => ({
             tabs: state.tabs,
@@ -85,6 +95,7 @@ export const TabsProvider: React.FC<{ children: React.ReactNode }> = ({ children
             switchTab,
             closeTab,
             renameTab,
+            updateTabPayload,
         }),
         [state]
     )

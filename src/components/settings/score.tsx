@@ -18,7 +18,11 @@ export function ScoreSettings() {
 
     return (
         <>
-            <Typography variant="h6" gutterBottom color={theme.palette.text.primary}>
+            <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ color: theme.palette.accent.main, fontWeight: 700, textShadow: `0 0 8px ${theme.palette.accent.main}55` }}
+            >
                 Score
             </Typography>
 
@@ -33,13 +37,26 @@ export function ScoreSettings() {
                         max={6}
                         step={1}
                         onChange={(_, val) => setTempMeasuresPerRow(val as number)}
+                        sx={{
+                            color: theme.palette.accent.main,
+                            '& .MuiSlider-thumb': { boxShadow: `0 0 8px ${theme.palette.accent.main}` },
+                        }}
                     />
                 </Box>
             </Box>
 
             <FormControlLabel
                 sx={{ color: theme.palette.text.primary, mt: 2, px: 1 }}
-                control={<Switch checked={scoreFixedWidth} onChange={() => setScoreFixedWidth(!scoreFixedWidth)} />}
+                control={
+                    <Switch
+                        checked={scoreFixedWidth}
+                        onChange={() => setScoreFixedWidth(!scoreFixedWidth)}
+                        sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': { color: theme.palette.accent.main },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: theme.palette.accent.main },
+                        }}
+                    />
+                }
                 label={`Score Width: ${scoreFixedWidth ? 'Fixed' : 'Auto'}`}
             />
         </>

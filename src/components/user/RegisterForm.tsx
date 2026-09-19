@@ -3,15 +3,18 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import axios from "axios"
 import { useAuthContext } from "@/context/AuthProvider"
-import { TextField, Button, Box, Typography, InputAdornment, Divider, IconButton } from "@mui/material"
+import { TextField, Button, Box, Typography, InputAdornment, IconButton, Stack } from "@mui/material"
 import { UserRead } from "@/types/user"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { motion } from "framer-motion"
 import { LockClosedIcon, LockOpenIcon } from "@heroicons/react/24/outline"
+import { useTheme } from "@mui/material/styles"
+import AuthCard from "./AuthCard"
 
 // 1️⃣ Zod schema
 const registerSchema = z.object({
@@ -25,6 +28,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>
 export default function RegisterForm() {
     const { login } = useAuthContext()
     const router = useRouter()
+    const theme = useTheme()
 
     // 2️⃣ React Hook Form setup
     const {
@@ -40,103 +44,109 @@ export default function RegisterForm() {
 
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [errorMsg, setErrorMsg] = useState("");
 
     // 3️⃣ Submit handler
     const onSubmit = async (data: RegisterFormValues) => {
         setLoading(true);
+        setErrorMsg("");
         try {
             const res = await axios.post<UserRead>(`${process.env.NEXT_PUBLIC_API_URL}/users/`, data)
             setSuccess(true);
             const user_id = res.data.id
             const userData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}`)
-            console.log("User Data", userData);
             login(userData.data)
             router.push("/workspace")
         } catch (err) {
-            console.error("Registration failed", err);
+            setErrorMsg(`Registration failed. Please try again. ${err}`);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="max-w-md w-full mx-auto bg-black shadow-md rounded-md p-6"
-        >
-            <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ p: 2 }}>
-                <Typography variant="h5" className="mb-4 text-center font-bold">
-                    Create an Account
-                </Typography>
-
-                <Divider textAlign="left" sx={{ p: 1.5 }}>
-                    <Typography variant="caption" fontSize={16} color="textSecondary">
-                        Account Details
-                    </Typography>
-                </Divider>
-
-                <TextField
-                    label="Username"
-                    variant="outlined"
-                    type="text"
-                    {...register("username")}
-                    error={!!errors.username}
-                    helperText={errors.username?.message}
-                    fullWidth
-                />
-
-                <TextField
-                    label="Email"
-                    variant="outlined"
-                    type="email"
-                    {...register("email")}
-                    error={!!errors.email}
-                    helperText={errors.email?.message}
-                    fullWidth
-                />
-
-                <TextField
-                    label="Password"
-                    variant="outlined"
-                    type={showPassword ? "text" : "password"}
-                    {...register("password")}
-                    error={!!errors.password}
-                    helperText={errors.password?.message}
-                    fullWidth
-                    InputProps={{
-                        endAdornment: (
-                            <InputAdornment position="end">
-                                <IconButton
-                                    onClick={handleTogglePassword}
-                                    aria-label="toggle password visibility"
-                                >
-                                    {showPassword ? <LockOpenIcon className="h-5 w-5 text-gray-500" /> : <LockClosedIcon className="h-5 w-5 text-gray-500" />}
-                                </IconButton>
-                            </InputAdornment>
-                        ),
-                    }}
-                />
-
-                <motion.div whileHover={{ scale: 1.02 }} className="mt-4">
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        color="primary"
+        <AuthCard title="Create an Account" subtitle="Join NEXTRiff and start riffing.">
+            <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+                <Stack spacing={2.5}>
+                    <TextField
+                        label="Username"
+                        variant="outlined"
+                        type="text"
+                        {...register("username")}
+                        error={!!errors.username}
+                        helperText={errors.username?.message}
                         fullWidth
-                        disabled={loading}
-                    >
-                        {loading ? "Registering..." : "Register"}
-                    </Button>
-                </motion.div>
+                    />
 
-                {success && (
-                    <Typography className="text-green-600 text-center mt-2">
-                        Registration successful!
+                    <TextField
+                        label="Email"
+                        variant="outlined"
+                        type="email"
+                        {...register("email")}
+                        error={!!errors.email}
+                        helperText={errors.email?.message}
+                        fullWidth
+                    />
+
+                    <TextField
+                        label="Password"
+                        variant="outlined"
+                        type={showPassword ? "text" : "password"}
+                        {...register("password")}
+                        error={!!errors.password}
+                        helperText={errors.password?.message}
+                        fullWidth
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        onClick={handleTogglePassword}
+                                        aria-label="toggle password visibility"
+                                    >
+                                        {showPassword ? <LockOpenIcon className="h-5 w-5" style={{ color: theme.palette.text.secondary }} /> : <LockClosedIcon className="h-5 w-5" style={{ color: theme.palette.text.secondary }} />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+
+                    <motion.div whileHover={{ scale: 1.02 }}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            fullWidth
+                            disabled={loading}
+                            sx={{
+                                bgcolor: theme.palette.accent.main,
+                                color: theme.palette.getContrastText(theme.palette.accent.main),
+                                boxShadow: `0 0 16px ${theme.palette.accent.main}66`,
+                                '&:hover': { bgcolor: theme.palette.accent.main, boxShadow: `0 0 24px ${theme.palette.accent.main}` },
+                            }}
+                        >
+                            {loading ? "Registering..." : "Register"}
+                        </Button>
+                    </motion.div>
+
+                    {success && (
+                        <Typography variant="body2" sx={{ color: theme.palette.accent.main, textAlign: 'center' }}>
+                            Registration successful!
+                        </Typography>
+                    )}
+
+                    {errorMsg && (
+                        <Typography variant="body2" sx={{ color: theme.palette.error.main, textAlign: 'center' }}>
+                            {errorMsg}
+                        </Typography>
+                    )}
+
+                    <Typography variant="body2" textAlign="center" color="text.secondary">
+                        Already have an account?{' '}
+                        <Link href="/login" style={{ color: theme.palette.accent.main, textDecoration: 'none' }}>
+                            Log in
+                        </Link>
                     </Typography>
-                )}
+                </Stack>
             </Box>
-        </motion.div>
+        </AuthCard>
     )
 }

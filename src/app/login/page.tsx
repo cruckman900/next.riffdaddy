@@ -1,6 +1,6 @@
-// src/app/register/page.tsx
+// src/app/login/page.tsx
 import LoginForm from "@/components/user/LoginForm";
 
-export default function RegisterPage() {
+export default function LoginPage() {
     return <LoginForm />
 }

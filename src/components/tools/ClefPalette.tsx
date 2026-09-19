@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { ToolTemplate } from "./ToolTemplate"
 import { useMusic } from '@/context/MusicContext'
-import { Button, Typography, Stack, Grid, Divider } from '@mui/material'
+import { Button, Typography, Stack, Box, Divider, Chip } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { ToolProps } from '@/types/tooling'
 
 const CLEFS = ['treble', 'bass', 'alto', 'tenor']
@@ -28,6 +29,8 @@ const KEYS = [
 ]
 
 export function ClefPalette({ measureId }: ToolProps) {
+    const theme = useTheme()
+
     const [selectedClef, setSelectedClef] = useState<string | null>('treble')
     const [selectedTimeSignature, setSelectedTimeSignature] = useState<string | null>('4/4')
     const [selectedKeySignature, setSelectedKeySignature] = useState<string | null>('C')
@@ -60,98 +63,103 @@ export function ClefPalette({ measureId }: ToolProps) {
         setSelectedKeySignature(keySignature)
     }
 
+    const chipSx = (active: boolean) => ({
+        fontWeight: active ? 700 : 500,
+        borderColor: active ? theme.palette.accent.main : 'divider',
+        color: active ? theme.palette.accent.main : theme.palette.text.secondary,
+        bgcolor: active ? `${theme.palette.accent.main}1a` : 'transparent',
+        boxShadow: active ? `0 0 8px ${theme.palette.accent.main}66` : 'none',
+        transition: 'all 0.15s ease',
+    })
+
     return (
         <ToolTemplate title="Score and Measure" shortcut="2">
-            <Typography variant="body1" mb={2}>
+            <Typography variant="body1" mb={1.5}>
                 Select a clef for this measure.
             </Typography>
 
-            <Stack direction="row" spacing={3}>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                 {CLEFS.map(clef => (
-                    <Typography
+                    <Chip
                         key={clef}
-                        variant="caption"
-                        sx={{
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            ":hover": { color: 'primary.main' },
-                        }}
+                        label={clef}
+                        variant="outlined"
                         onClick={() => handleChangeClef(clef)}
-                    >
-                        {clef}
-                    </Typography>
+                        sx={chipSx(selectedClef === clef)}
+                    />
                 ))}
             </Stack>
 
             <Divider sx={{ my: 2 }} />
 
-            <Typography variant="body1" mb={2}>
+            <Typography variant="body1" mb={1.5}>
                 Change time signature for this measure.
             </Typography>
 
-            <Stack direction="row" spacing={3}>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                 {TIME_SIGNATURES.map(ts => (
-                    <Typography
+                    <Chip
                         key={ts}
-                        variant="caption"
-                        sx={{
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            ":hover": { color: 'primary.main' },
-                        }}
+                        label={ts}
+                        variant="outlined"
                         onClick={() => handleChangeTimeSignature(ts)}
-                    >
-                        {ts}
-                    </Typography>
+                        sx={chipSx(selectedTimeSignature === ts)}
+                    />
                 ))}
             </Stack>
 
             <Divider sx={{ my: 2 }} />
 
-            <Typography variant="body1" mb={2}>
+            <Typography variant="body1" mb={1}>
                 Manage measures in your score.
             </Typography>
 
-            <Typography variant="subtitle1">
-                Current Settings:
-            </Typography>
+            <Box
+                sx={{
+                    p: 1.5,
+                    mb: 2,
+                    borderRadius: 2,
+                    bgcolor: `${theme.palette.accent.main}0f`,
+                    border: '1px solid',
+                    borderColor: `${theme.palette.accent.main}44`,
+                }}
+            >
+                <Typography variant="subtitle2" sx={{ color: theme.palette.accent.main, fontWeight: 700 }}>
+                    Current Settings
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                    {selectedClef} · {selectedTimeSignature} · {KEYS.find(k => k.sig === selectedKeySignature)?.label}
+                </Typography>
+            </Box>
 
-            <Typography variant="subtitle2" mb={2} px={2}>
-                ({selectedClef} | {selectedTimeSignature} | {KEYS.find(k => k.sig === selectedKeySignature)?.label})
-            </Typography>
-
-            <Button fullWidth variant="contained" onClick={() => {
-                console.log('addMeasure', selectedClef, selectedTimeSignature, selectedKeySignature)
-                addMeasure(selectedClef || 'treble', selectedTimeSignature || '4/4', selectedKeySignature || 'C')
-            }}>
+            <Button
+                fullWidth
+                variant="contained"
+                onClick={() => {
+                    addMeasure(selectedClef || 'treble', selectedTimeSignature || '4/4', selectedKeySignature || 'C')
+                }}
+                sx={{ boxShadow: `0 0 14px ${theme.palette.primary.main}77` }}
+            >
                 Add Measure
             </Button>
 
             <Divider sx={{ my: 2 }} />
 
-            <Typography variant="body1" mb={2}>
+            <Typography variant="body1" mb={1.5}>
                 Select a key signature for this measure.
             </Typography>
 
-            <Grid container spacing={2}>
-                {KEYS.map((key, i) => (
-                    <Grid item xs={6} key={key.sig}>
-                        <Typography
-                            variant="caption"
-                            sx={{
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                textAlign: i % 2 === 0 ? 'left' : 'right',
-                                ":hover": { color: 'primary.main' },
-                                display: 'block',
-                            }}
-                            onClick={() => handleChangeKeySignature(key.sig)}
-                        >
-                            {key.label}
-                        </Typography>
-                    </Grid>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {KEYS.map((key) => (
+                    <Chip
+                        key={key.sig}
+                        label={key.label}
+                        variant="outlined"
+                        onClick={() => handleChangeKeySignature(key.sig)}
+                        sx={chipSx(selectedKeySignature === key.sig)}
+                    />
                 ))}
-            </Grid>
+            </Stack>
 
         </ToolTemplate>
     )

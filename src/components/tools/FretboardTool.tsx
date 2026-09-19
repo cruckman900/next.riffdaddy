@@ -6,6 +6,7 @@ import { Typography, Box, Button, Grid, Stack, Divider } from '@mui/material'
 import { ToolProps } from '@/types/tooling'
 import { useState } from 'react'
 import React from "react"
+import { useTheme } from '@mui/material/styles'
 
 const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 const DIVISIONS = [0, 3, 5, 7, 9, 12, 15, 17, 19, 21, 24]
@@ -26,6 +27,7 @@ function midiToNote(midi: number): string {
 }
 
 export function FretboardTool({ measureId, duration }: ToolProps) {
+    const theme = useTheme()
     const { addNote, tuning } = useMusic()
     const dur = duration ?? 'q'
     const mid = measureId ?? ''
@@ -61,7 +63,6 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
 
     const { addRest } = useMusic()
     const handleAddRest = () => {
-        console.log('RestEntryTool measureId:', mid, 'duration:', dur)
         addRest(mid, { duration: dur })
     }
 
@@ -82,37 +83,57 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
             </Typography>
 
             {/* Toggles */}
-            <Stack direction="row" spacing={2} mb={2}>
-                <Typography variant="caption" sx={{ opacity: 0.7 }}>
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" gap={1} mb={2}>
+                <Typography variant="caption" sx={{ opacity: 0.7, mr: 0.5 }}>
                     Frets:
                 </Typography>
-                {[12, 21, 24].map(count => (
-                    <Typography
-                        key={count}
-                        variant="caption"
-                        sx={{
-                            cursor: 'pointer',
-                            fontWeight: fretCount === count ? 600 : 400,
-                            fontSize: fretCount === count ? '1rem' : '0.8rem',
-                            ":hover": { color: 'primary.main' },
-                        }}
-                        onClick={() => setFretCount(count)}
-                    >
-                        {count}
-                    </Typography>
-                ))}
-                <Typography
-                    variant="caption"
-                    sx={{
-                        px: 3,
-                        cursor: 'pointer',
-                        fontWeight: showOctave ? 600 : 400,
-                        ":hover": { color: 'primary.main' },
-                    }}
+                {[12, 21, 24].map(count => {
+                    const active = fretCount === count
+                    return (
+                        <Box
+                            key={count}
+                            component="button"
+                            onClick={() => setFretCount(count)}
+                            sx={{
+                                cursor: 'pointer',
+                                border: '1px solid',
+                                borderColor: active ? theme.palette.accent.main : 'divider',
+                                borderRadius: 999,
+                                px: 1.5,
+                                py: 0.25,
+                                fontSize: '0.8rem',
+                                fontWeight: active ? 700 : 400,
+                                color: active ? theme.palette.accent.main : theme.palette.text.secondary,
+                                bgcolor: active ? `${theme.palette.accent.main}1a` : 'transparent',
+                                boxShadow: active ? `0 0 8px ${theme.palette.accent.main}66` : 'none',
+                                transition: 'all 0.15s ease',
+                            }}
+                        >
+                            {count}
+                        </Box>
+                    )
+                })}
+                <Box
+                    component="button"
                     onClick={() => setShowOctave(!showOctave)}
+                    sx={{
+                        cursor: 'pointer',
+                        border: '1px solid',
+                        borderColor: showOctave ? theme.palette.accent.main : 'divider',
+                        borderRadius: 999,
+                        px: 1.5,
+                        py: 0.25,
+                        ml: 1,
+                        fontSize: '0.8rem',
+                        fontWeight: showOctave ? 700 : 400,
+                        color: showOctave ? theme.palette.accent.main : theme.palette.text.secondary,
+                        bgcolor: showOctave ? `${theme.palette.accent.main}1a` : 'transparent',
+                        boxShadow: showOctave ? `0 0 8px ${theme.palette.accent.main}66` : 'none',
+                        transition: 'all 0.15s ease',
+                    }}
                 >
                     {showOctave ? 'Octaves On' : 'Octaves Off'}
-                </Typography>
+                </Box>
             </Stack>
 
             {/* Top tuning labels */}
@@ -157,8 +178,14 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
                                                 height: DIVISIONS.includes(fIdx) ? 26 : 24,
                                                 padding: 0,
                                                 fontSize: '0.7rem',
-                                                backgroundColor: selected ? '#1976d2' : undefined,
-                                                color: selected ? '#fff' : undefined,
+                                                transition: 'box-shadow 0.15s ease, transform 0.15s ease',
+                                                backgroundColor: selected ? theme.palette.accent.main : undefined,
+                                                borderColor: selected ? theme.palette.accent.main : undefined,
+                                                color: selected ? theme.palette.getContrastText(theme.palette.accent.main) : undefined,
+                                                boxShadow: selected ? `0 0 10px ${theme.palette.accent.main}88` : 'none',
+                                                '&:hover': {
+                                                    transform: 'scale(1.05)',
+                                                },
                                             }}
                                             onClick={() => toggleSelect(stringNum, fIdx, pitch)}
                                         >
@@ -199,6 +226,9 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
                     variant="contained"
                     disabled={selectedNotes.length === 0}
                     onClick={commitChord}
+                    sx={{
+                        boxShadow: selectedNotes.length > 0 ? `0 0 14px ${theme.palette.primary.main}77` : 'none',
+                    }}
                 >
                     Commit {selectedNotes.length > 1 ? 'Chord' : 'Note'}
                 </Button>

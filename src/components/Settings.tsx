@@ -7,9 +7,27 @@ export default function Settings() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
+    const cardSx = {
+        flexShrink: 0,
+        width: isMobile ? "100%" : "30%",
+        minWidth: isMobile ? 0 : 320,
+        maxWidth: 380,
+        overflowY: "auto",
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 2,
+        boxShadow: `0 0 18px ${theme.palette.accent.main}1a`,
+        backgroundColor: theme.palette.background.paper,
+        p: 2,
+    } as const
+
     return (
         <Box sx={{ p: 2, height: "100%", overflowY: "auto", backgroundColor: theme.palette.background.default }}>
-            <Typography variant="h4" gutterBottom color="text.primary">
+            <Typography
+                variant="h4"
+                gutterBottom
+                sx={{ color: theme.palette.accent.main, fontWeight: 700, textShadow: `0 0 10px ${theme.palette.accent.main}66` }}
+            >
                 Settings
             </Typography>
 
@@ -26,33 +44,11 @@ export default function Settings() {
                     gap: 2,
                 }}
             >
-                <Box
-                    sx={{
-                        flexShrink: 0,
-                        width: isMobile ? "100%" : "30%",
-                        minWidth: isMobile ? 0 : 320,
-                        maxWidth: 380,
-                        overflowY: "auto",
-                        border: "1px solid #2a2f35",
-                        backgroundColor: theme.palette.background.paper,
-                        p: 1,
-                    }}
-                >
+                <Box sx={cardSx}>
                     <GeneralSettings />
                 </Box>
 
-                <Box
-                    sx={{
-                        flexShrink: 0,
-                        width: isMobile ? "100%" : "30%",
-                        minWidth: isMobile ? 0 : 320,
-                        maxWidth: 380,
-                        overflowY: "auto",
-                        border: "1px solid #2a2f35",
-                        backgroundColor: theme.palette.background.paper,
-                        p: 1,
-                    }}
-                >
+                <Box sx={cardSx}>
                     <ScoreSettings />
                 </Box>
             </Stack>

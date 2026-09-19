@@ -2,31 +2,26 @@
 
 import { useEffect, useRef } from 'react'
 import { useMusic } from '@/context/MusicContext'
-import { Renderer, Stave, StaveNote, Voice, Formatter, Beam, Barline } from 'vexflow'
-import { computeMeasureWidths, MEASURE_PADDING } from '@/tools/computeMeasureWidths'
+import { Renderer, Stave, Voice, Formatter, Beam, Barline } from 'vexflow'
+import { computeMeasureLayoutWidths, buildStaffTickables, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
+import { getOrderedMeasureItems } from '@/tools/duration'
+import { MusicNote } from '@/types/music'
 import Box from '@mui/material/Box'
-
-function formatPitch(pitch: string): string {
-  const match = pitch?.match(/^([A-Ga-g])([#b]?)(\d)$/)
-  return match ? `${match[1].toLowerCase()}${match[2]}/${match[3]}` : 'b/4'
-}
-
-function parseTimeSignature(ts?: string) {
-  const [beats, value] = ts?.split('/')?.map(Number) ?? []
-  return { numBeats: beats || 4, beatValue: value || 4 }
-}
 
 interface CombinedRendererProps {
   activeMeasureId?: string | null
 }
 
 export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps) {
-  const { measures, measuresPerRow, scoreFixedWidth } = useMusic()
+  const { measures, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection } = useMusic()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
     containerRef.current.innerHTML = ''
+
+    const isNoteSelected = (measureId: string, noteId: string) =>
+      selectedNoteRefs.some(r => r.measureId === measureId && r.noteId === noteId)
 
     const rendererWidth = scoreFixedWidth ? 800 : (containerRef.current?.clientWidth || window.innerWidth)
     const marginLeft = 10
@@ -34,7 +29,7 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
     const lineHeight = 150
     const staffBaseHeight = 180
 
-    const widths = computeMeasureWidths(measures)
+    const widths = computeMeasureLayoutWidths(measures, 'staff')
     const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG)
     renderer.resize(rendererWidth, Math.max(staffBaseHeight, lineHeight * measures.length))
     const context = renderer.getContext()
@@ -60,9 +55,11 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
       lastKey = rowKey
 
       const rowTotal = rowWidths.reduce((a, b) => a + b, 0)
-      const scale = (rowMeasures.length === measuresPerRow || isLastRow)
-        ? rendererWidth / rowTotal
-        : 1
+      // Justify every row except the last to fill the available width — like
+      // text justification, this keeps rows visually consistent regardless of
+      // whether a row was cut short by the measuresPerRow cap or simply ran
+      // out of room for another measure.
+      const scale = isLastRow ? 1 : rendererWidth / rowTotal
       let x = marginLeft
 
       rowMeasures.forEach((measure, idx) => {
@@ -81,19 +78,7 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
         }
 
         // ✅ Build tickables with chord support
-        const tickables = [
-          ...measure.notes.map(n =>
-            new StaveNote({
-              keys: Array.isArray(n.pitch)
-                ? n.pitch.map(formatPitch)
-                : [formatPitch(n.pitch)],
-              duration: n.duration || 'q'
-            })
-          ),
-          ...measure.rests.map(r =>
-            new StaveNote({ keys: ['b/4'], duration: (r.duration || 'q') + 'r' })
-          ),
-        ]
+        const tickables = buildStaffTickables(measure)
 
         // ✅ Deduplication logic
         if (idx === 0) {
@@ -141,6 +126,8 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
           const voice = new Voice({ numBeats, beatValue }).setStrict(false)
           voice.addTickables(tickables)
           new Formatter().joinVoices([voice]).format([voice], scaledWidth - 40)
+
+          const beforeCount = containerRef.current?.querySelectorAll('.vf-stavenote').length ?? 0
           voice.draw(context, stave)
 
           // ✅ Beam all 8th/16th groups so flags disappear
@@ -149,6 +136,30 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
             maintainStemDirections: true,
           })
           beams.forEach(b => b.setContext(context).draw())
+
+          // Make each note clickable so it can be selected for the notation
+          // toolbar (accents, ornaments, dotted notes, techniques), and
+          // highlight it if already selected. We match rendered SVG note
+          // groups to MusicNote objects by draw order (the same
+          // chronological note+rest order buildStaffTickables used — see
+          // getOrderedMeasureItems), since tickable.getSVGElement() isn't
+          // reliably populated for every VexFlow element type.
+          const orderedItems = getOrderedMeasureItems(measure)
+          const newNoteEls = Array.from(containerRef.current?.querySelectorAll('.vf-stavenote') ?? []).slice(beforeCount)
+          newNoteEls.forEach((el, i) => {
+            const entry = orderedItems[i]
+            if (!entry || entry.type !== 'note') return
+            const note = entry.item as MusicNote
+            const svgEl = el as unknown as SVGGraphicsElement & HTMLElement
+            svgEl.style.cursor = 'pointer'
+            if (isNoteSelected(measure.id, note.id)) {
+              highlightNoteElement(svgEl)
+            }
+            svgEl.addEventListener('click', (e) => {
+              e.stopPropagation()
+              toggleNoteSelection(measure.id, note.id)
+            })
+          })
         }
 
         x += scaledWidth
@@ -173,14 +184,14 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
       rowMeasures.push(measure)
       rowWidths.push(width)
 
-      // break row when we hit the slider count
-      // if (rowMeasures.length === measuresPerRow) {
-      //   flushRow(false)
-      // }
+      // break row when we hit the measuresPerRow cap
+      if (measuresPerRow && rowMeasures.length === measuresPerRow) {
+        flushRow(false)
+      }
     })
 
     flushRow(true)
-  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth])
+  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection])
 
   return (
     <Box sx={{ width: '100%', overflowX: 'auto', padding: 2 }}>

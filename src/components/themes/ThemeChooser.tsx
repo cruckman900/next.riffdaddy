@@ -1,7 +1,7 @@
 // src/components/ThemeChooser.tsx
 'use client'
 
-import { Button, Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
 import { themes } from './themes'
 import { useThemeContext } from '@/context/ThemeContext'
 
@@ -12,31 +12,84 @@ export const ThemeChooser = () => {
         <Stack spacing={2}>
             <Typography variant="h6" color='text.secondary'>Choose Theme</Typography>
 
-            {/* Theme buttons */}
-            <Stack direction="row" spacing={2} flexWrap="wrap">
+            {/* Theme swatches */}
+            <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
                 {Object.entries(themes).map(([name, factory]) => {
-                    const preview = factory(mode) // just to grab icon
+                    const preview = factory(mode)
+                    const active = themeName === name
+                    const swatchColor = preview.palette.accent.main
+
                     return (
-                        <Button
+                        <Box
                             key={name}
-                            variant={themeName === name ? 'contained' : 'outlined'}
+                            component="button"
                             onClick={() => setThemeName(name as keyof typeof themes)}
-                            startIcon={<span>{preview.custom?.icon}</span>}
+                            sx={{
+                                cursor: 'pointer',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: 0.5,
+                                p: 1,
+                                minWidth: 76,
+                                borderRadius: 2,
+                                border: '1px solid',
+                                borderColor: active ? swatchColor : 'divider',
+                                bgcolor: active ? `${swatchColor}1a` : 'transparent',
+                                boxShadow: active ? `0 0 12px ${swatchColor}77` : 'none',
+                                transition: 'all 0.15s ease',
+                            }}
                         >
-                            {name}
-                        </Button>
+                            <Box
+                                sx={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: '50%',
+                                    bgcolor: swatchColor,
+                                    boxShadow: `0 0 10px ${swatchColor}`,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: 14,
+                                }}
+                            >
+                                {preview.custom?.icon}
+                            </Box>
+                            <Typography
+                                variant="caption"
+                                sx={{
+                                    textTransform: 'capitalize',
+                                    fontWeight: active ? 700 : 400,
+                                    color: active ? swatchColor : 'text.secondary',
+                                }}
+                            >
+                                {name}
+                            </Typography>
+                        </Box>
                     )
                 })}
             </Stack>
 
             {/* Light/Dark toggle */}
-            <Button
-                variant="outlined"
+            <Box
+                component="button"
                 onClick={toggleMode}
-                sx={{ mt: 2 }}
+                sx={{
+                    cursor: 'pointer',
+                    mt: 1,
+                    px: 2,
+                    py: 1,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    color: 'text.primary',
+                    bgcolor: 'transparent',
+                    textAlign: 'center',
+                    '&:hover': { borderColor: 'text.secondary' },
+                }}
             >
                 Toggle {mode === 'dark' ? 'Light' : 'Dark'} Mode
-            </Button>
+            </Box>
         </Stack>
     )
 }

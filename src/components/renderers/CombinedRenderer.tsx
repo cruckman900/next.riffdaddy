@@ -6,38 +6,31 @@ import {
     Renderer,
     TabStave,
     Stave,
-    TabNote,
-    StaveNote,
     Voice,
     Formatter,
     Beam,
     StaveConnector,
     Barline,
 } from 'vexflow'
-import { computeMeasureWidths, MEASURE_PADDING } from '@/tools/computeMeasureWidths'
+import { computeMeasureLayoutWidths, buildTabTickables, buildStaffTickables, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
+import { getOrderedMeasureItems } from '@/tools/duration'
+import { MusicNote } from '@/types/music'
 import Box from '@mui/material/Box'
-
-function formatPitch(pitch: string): string {
-    const match = pitch?.match(/^([A-Ga-g])([#b]?)(\d)$/)
-    return match ? `${match[1].toLowerCase()}${match[2]}/${match[3]}` : 'b/4'
-}
-
-function parseTimeSignature(ts?: string) {
-    const [beats, value] = ts?.split('/')?.map(Number) ?? []
-    return { numBeats: beats || 4, beatValue: value || 4 }
-}
 
 interface CombinedRendererProps {
     activeMeasureId?: string | null
 }
 
 export default function CombinedRenderer({ activeMeasureId }: CombinedRendererProps) {
-    const { measures, measuresPerRow, scoreFixedWidth } = useMusic()
+    const { measures, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection } = useMusic()
     const containerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         if (!containerRef.current) return
         containerRef.current.innerHTML = ''
+
+        const isNoteSelected = (measureId: string, noteId: string) =>
+            selectedNoteRefs.some(r => r.measureId === measureId && r.noteId === noteId)
 
         const rendererWidth = scoreFixedWidth
             ? 800
@@ -48,7 +41,7 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
         const staffOffset = 150
         const linePadding = 40
 
-        const widths = computeMeasureWidths(measures)
+        const widths = computeMeasureLayoutWidths(measures, 'combined')
 
         // Estimate number of systems and height
         const numSystems = Math.ceil(measures.length / (measuresPerRow || measures.length))
@@ -80,10 +73,11 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
             lastKey = rowKey
 
             const rowTotal = rowWidths.reduce((a, b) => a + b, 0)
-            // Only scale when row is complete or last row
-            const scale = (rowMeasures.length === measuresPerRow || isLastRow)
-                ? rendererWidth / rowTotal
-                : 1
+            // Justify every row except the last to fill the available width —
+            // like text justification, this keeps rows visually consistent
+            // regardless of whether a row was cut short by the measuresPerRow
+            // cap or simply ran out of room for another measure.
+            const scale = isLastRow ? 1 : rendererWidth / rowTotal
             let x = marginLeft
 
             const tabStaves: TabStave[] = []
@@ -150,20 +144,6 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                     }
                 }
 
-                // Clefs, time, key signatures
-                if (measure.clef && measure.clef !== lastClef) {
-                    tabStave.addClef('tab')
-                    staffStave.addClef(measure.clef)
-                }
-                if (measure.timeSignature && measure.timeSignature !== lastTime) {
-                    tabStave.addTimeSignature(measure.timeSignature)
-                    staffStave.addTimeSignature(measure.timeSignature)
-                }
-                if (measure.keySignature && measure.keySignature !== lastKey) {
-                    tabStave.addKeySignature(measure.keySignature)
-                    staffStave.addKeySignature(measure.keySignature)
-                }
-
                 // End barlines
                 if (isLastRow && idx === rowMeasures.length - 1) {
                     tabStave.setEndBarType(Barline.type.DOUBLE)
@@ -182,59 +162,60 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                 staffStaves.push(staffStave)
 
                 // Tab notes
-                const tabTickables = measure.notes.map(n =>
-                    new TabNote({
-                        positions: Array.isArray(n.string)
-                            ? n.string.map((s, i) => {
-                                let fretValue: number | string = 0
-                                if (Array.isArray(n.fret)) {
-                                    fretValue = n.fret[i] ?? 0
-                                } else if (typeof n.fret === 'number' || typeof n.fret === 'string') {
-                                    fretValue = n.fret
-                                }
-                                return { str: s, fret: fretValue }
-                            })
-                            : [
-                                {
-                                    str: n.string ?? 1,
-                                    fret:
-                                        typeof n.fret === 'number' || typeof n.fret === 'string'
-                                            ? n.fret
-                                            : 0,
-                                },
-                            ],
-                        duration: n.duration || 'q',
-                    })
-                )
+                const tabTickables = buildTabTickables(measure)
 
                 if (tabTickables.length > 0) {
                     const voice = new Voice({ numBeats, beatValue }).setStrict(false)
                     voice.addTickables(tabTickables)
                     new Formatter().joinVoices([voice]).format([voice], scaledWidth - 50)
+
+                    const beforeCount = containerRef.current?.querySelectorAll('.vf-tabnote').length ?? 0
                     voice.draw(context, tabStave)
                     Beam.generateBeams(tabTickables).forEach(b => b.setContext(context).draw())
+
+                    const newNoteEls = Array.from(containerRef.current?.querySelectorAll('.vf-tabnote') ?? []).slice(beforeCount)
+                    newNoteEls.forEach((el, i) => {
+                        const note = measure.notes[i]
+                        if (!note) return
+                        const svgEl = el as unknown as SVGGraphicsElement & HTMLElement
+                        svgEl.style.cursor = 'pointer'
+                        if (isNoteSelected(measure.id, note.id)) {
+                            highlightNoteElement(svgEl)
+                        }
+                        svgEl.addEventListener('click', (e) => {
+                            e.stopPropagation()
+                            toggleNoteSelection(measure.id, note.id)
+                        })
+                    })
                 }
 
                 // Staff notes
-                const staffTickables = [
-                    ...measure.notes.map(n =>
-                        new StaveNote({
-                            keys: Array.isArray(n.pitch)
-                                ? n.pitch.map(formatPitch)
-                                : [formatPitch(n.pitch)],
-                            duration: n.duration || 'q',
-                        })
-                    ),
-                    ...measure.rests.map(r =>
-                        new StaveNote({ keys: ['b/4'], duration: (r.duration || 'q') + 'r' })
-                    ),
-                ]
+                const staffTickables = buildStaffTickables(measure)
                 if (staffTickables.length > 0) {
                     const voice = new Voice({ numBeats, beatValue }).setStrict(false)
                     voice.addTickables(staffTickables)
                     new Formatter().joinVoices([voice]).format([voice], scaledWidth - 50)
+
+                    const beforeCount = containerRef.current?.querySelectorAll('.vf-stavenote').length ?? 0
                     voice.draw(context, staffStave)
                     Beam.generateBeams(staffTickables).forEach(b => b.setContext(context).draw())
+
+                    const newNoteEls = Array.from(containerRef.current?.querySelectorAll('.vf-stavenote') ?? []).slice(beforeCount)
+                    const orderedItems = getOrderedMeasureItems(measure)
+                    newNoteEls.forEach((el, i) => {
+                        const entry = orderedItems[i]
+                        if (!entry || entry.type !== 'note') return
+                        const note = entry.item as MusicNote
+                        const svgEl = el as unknown as SVGGraphicsElement & HTMLElement
+                        svgEl.style.cursor = 'pointer'
+                        if (isNoteSelected(measure.id, note.id)) {
+                            highlightNoteElement(svgEl)
+                        }
+                        svgEl.addEventListener('click', (e) => {
+                            e.stopPropagation()
+                            toggleNoteSelection(measure.id, note.id)
+                        })
+                    })
                 }
 
                 x += scaledWidth
@@ -287,7 +268,7 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
         })
 
         flushRow(true)
-    }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth])
+    }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection])
 
     return (
         <Box sx={{ width: '100%', overflowX: 'auto', padding: 2 }}>

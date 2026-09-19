@@ -1,10 +1,13 @@
 /* eslint-disable prefer-const */
 'use client'
 
-import React, { createContext, useContext, useState } from 'react'
-import { MusicNote, MusicRest, MusicState, Measure } from "@/types/music"
-import { Tuning, tuningPresets } from '@/utils/tunings'
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { MusicNote, MusicRest, MusicState, Measure, CompositionSnapshot } from "@/types/music"
+import { Tuning, tuningPresets, defaultTuningWithOctaves, resolveTuningOctaves } from '@/utils/tunings'
 import { computePitchFromTab, computeTabFromPitch } from '@/tools/conversion'
+import { durationToBeats, getMeasureBeatCount } from '@/tools/duration'
+import { loadSettings, saveSettings } from '@/utils/settingsStore'
+import { useTabs } from '@/context/TabsContext'
 import { v4 as uuid } from 'uuid'
 
 const MusicContext = createContext<MusicState | null>(null)
@@ -14,23 +17,25 @@ function parseTimeSignature(ts?: string) {
     return { numBeats: beats || 4, beatValue: value || 4 }
 }
 
-function durationToBeats(duration: string): number {
-    switch (duration.replace('r', '')) {
-        case 'w': return 4
-        case 'h': return 2
-        case 'q': return 1
-        case '8': return 0.5
-        case '16': return 0.25
-        case '32': return 0.125
-        case '64': return 0.0625
-        default: return 1
+// Builds a brand-new tab's starting composition from the persisted
+// "last used" settings (instrument/tuning/tempo/genre) — matches what a
+// fresh page load used to seed globally, but now scoped per-tab.
+function createDefaultComposition(): CompositionSnapshot {
+    const saved = loadSettings()
+    const presetNotes = tuningPresets[saved.instrument] ?? tuningPresets.guitar
+    const displayNotes = saved.tuningDisplayNotes ?? presetNotes
+    const workingTuning = saved.tuningNotes ?? resolveTuningOctaves(saved.instrument, displayNotes)
+    return {
+        measures: [
+            { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble', beamGroups: [] },
+        ],
+        selectedInstrument: saved.instrument,
+        selectedGenre: saved.genre,
+        selectedTuning: { name: saved.tuningName ?? 'Standard', notes: displayNotes },
+        tuning: workingTuning,
+        tempo: saved.tempo,
+        selectedNoteRefs: [],
     }
-}
-
-// ✅ New helper: compute total beats in a measure
-function getMeasureBeatCount(measure: Measure): number {
-    return measure.notes.reduce((sum, n) => sum + durationToBeats(n.duration), 0) +
-        measure.rests.reduce((sum, r) => sum + durationToBeats(r.duration), 0)
 }
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
@@ -47,14 +52,74 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     const addCustomTuning = (t: Tuning) => setCustomTunings(prev => [...prev, t])
 
+    // Cascading setters — these keep `tuning` (the octave-qualified flat array
+    // the fretboard/renderers actually read pitches from) in sync with
+    // whatever preset/instrument is selected. Previously selecting a tuning or
+    // switching instruments only updated `selectedTuning`/`selectedInstrument`
+    // and never touched `tuning`, so the fretboard silently kept using the
+    // original default tuning no matter what you picked.
+    const selectTuning = (t: Tuning) => {
+        setSelectedTuning(t)
+        setTuning(resolveTuningOctaves(selectedInstrument, t.notes))
+    }
+
+    const selectInstrument = (instrument: string) => {
+        setSelectedInstrument(instrument)
+        const presetNotes = tuningPresets[instrument] ?? tuningPresets.guitar
+        const nextTuning: Tuning = { name: 'Standard', notes: presetNotes, description: 'Default tuning' }
+        setSelectedTuning(nextTuning)
+        setTuning(resolveTuningOctaves(instrument, presetNotes))
+    }
+
     const [measures, setMeasures] = useState<Measure[]>([
         { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble', beamGroups: [] },
     ])
-    const [tuning, setTuning] = useState(['E2', 'A2', 'D3', 'G3', 'B3', 'E4'])
+    const [tuning, setTuning] = useState(defaultTuningWithOctaves.guitar)
 
     // Score Settings
     const [measuresPerRow, setMeasuresPerRow] = useState(4)
     const [scoreFixedWidth, setScoreFixedWidth] = useState(false)
+    const [tempo, setTempo] = useState(120)
+
+    // --- PERSISTENCE ---
+    // Load once on mount (client-only, mirrors ThemeContext's pattern so SSR
+    // and the first client render both start from the same defaults and
+    // avoid a hydration mismatch), then persist on every relevant change.
+    // Instrument/genre/tuning/tempo are NOT loaded here anymore — they're
+    // per-tab composition data now (see createDefaultComposition and the
+    // tab-switch effect below); only the truly global display/layout
+    // preferences are loaded at the top level.
+    const hasLoadedSettings = useRef(false)
+    useEffect(() => {
+        const saved = loadSettings()
+        setShowArcs(saved.showArcs)
+        setUseAlternate(saved.useAlternate)
+        setCustomTunings(saved.customTunings)
+        setMeasuresPerRow(saved.measuresPerRow)
+        setScoreFixedWidth(saved.scoreFixedWidth)
+
+        hasLoadedSettings.current = true
+    }, [])
+
+    useEffect(() => {
+        if (!hasLoadedSettings.current) return
+        const id = setTimeout(() => {
+            saveSettings({
+                instrument: selectedInstrument,
+                genre: selectedGenre,
+                tuningName: selectedTuning.name,
+                tuningDisplayNotes: selectedTuning.notes,
+                tuningNotes: tuning,
+                customTunings,
+                showArcs,
+                useAlternate,
+                measuresPerRow,
+                scoreFixedWidth,
+                tempo,
+            })
+        }, 200)
+        return () => clearTimeout(id)
+    }, [selectedInstrument, selectedGenre, selectedTuning, tuning, customTunings, showArcs, useAlternate, measuresPerRow, scoreFixedWidth, tempo])
 
     // --- MEASURES ---
     const addMeasure = (clef: string = 'treble', timeSignature: string = '4/4', keySignature: string = 'C') => {
@@ -65,8 +130,127 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         setMeasures(prev => prev.filter(m => m.id !== measureId))
     }
 
+    // --- NOTE SELECTION + NOTATION MODIFIERS ---
+    const [selectedNoteRefs, setSelectedNoteRefs] = useState<{ measureId: string; noteId: string }[]>([])
+
+    const toggleNoteSelection = (measureId: string, noteId: string) => {
+        setSelectedNoteRefs(prev => {
+            const exists = prev.some(r => r.measureId === measureId && r.noteId === noteId)
+            return exists
+                ? prev.filter(r => !(r.measureId === measureId && r.noteId === noteId))
+                : [...prev, { measureId, noteId }]
+        })
+    }
+
+    const clearNoteSelection = () => setSelectedNoteRefs([])
+
+    // Clear selection refs pointing at notes/measures that no longer exist
+    // (e.g. the note was removed) so the toolbar never targets stale ids.
+    useEffect(() => {
+        setSelectedNoteRefs(prev => prev.filter(r => {
+            const measure = measures.find(m => m.id === r.measureId)
+            return !!measure?.notes.some(n => n.id === r.noteId)
+        }))
+    }, [measures])
+
+    const toggleModifierOnSelection = (modifierId: string) => {
+        if (selectedNoteRefs.length === 0) return
+        setMeasures(prev => prev.map(m => {
+            const refsForMeasure = selectedNoteRefs.filter(r => r.measureId === m.id)
+            if (refsForMeasure.length === 0) return m
+
+            return {
+                ...m,
+                notes: m.notes.map(n => {
+                    if (!refsForMeasure.some(r => r.noteId === n.id)) return n
+                    const current = n.modifiers ?? []
+                    const has = current.includes(modifierId)
+                    return {
+                        ...n,
+                        modifiers: has ? current.filter(id => id !== modifierId) : [...current, modifierId],
+                    }
+                }),
+            }
+        }))
+    }
+
     const updateMeasure = (measureId: string, updates: Partial<Measure>) => {
         setMeasures(prev => prev.map(m => m.id === measureId ? { ...m, ...updates } : m))
+    }
+
+    // --- PER-TAB COMPOSITION STATE ---
+    // Each open workspace tab (see TabsContext) gets its own independent
+    // measures/instrument/tuning/tempo/selection rather than one giant
+    // shared state. Rather than rewriting every setter above to operate on
+    // a keyed map (which would touch nearly every function in this file),
+    // we snapshot the OUTGOING tab's state into a ref and restore the
+    // INCOMING tab's state whenever the active tab changes — every existing
+    // setter keeps working exactly as before, just against "whichever tab
+    // is currently active."
+    const tabsApi = useTabs()
+    const activeTabId = tabsApi?.activeTab?.id
+    const compositionsRef = useRef<Record<string, CompositionSnapshot>>({})
+    const previousTabIdRef = useRef<string | undefined>(undefined)
+
+    useEffect(() => {
+        const prevId = previousTabIdRef.current
+        // Guard against React 18 StrictMode re-invoking this effect a second
+        // time in dev with the exact same deps (no real tab change) — without
+        // this, the second call would "snapshot" the pre-seed initial state
+        // over top of the freshly-seeded composition below, silently
+        // reverting the active tab's measures out from under it.
+        if (prevId === activeTabId) return
+
+        if (prevId) {
+            compositionsRef.current[prevId] = {
+                measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs,
+            }
+        }
+
+        if (activeTabId) {
+            const snapshot = compositionsRef.current[activeTabId] ?? createDefaultComposition()
+            compositionsRef.current[activeTabId] = snapshot
+            setMeasures(snapshot.measures)
+            setSelectedInstrument(snapshot.selectedInstrument)
+            setSelectedGenre(snapshot.selectedGenre)
+            setSelectedTuning(snapshot.selectedTuning)
+            setTuning(snapshot.tuning)
+            setTempo(snapshot.tempo)
+            setSelectedNoteRefs(snapshot.selectedNoteRefs)
+        }
+
+        previousTabIdRef.current = activeTabId
+        // Only re-run when the active tab actually changes — the outgoing
+        // snapshot deliberately reads the latest measures/etc via closure
+        // rather than being listed as a dependency.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTabId])
+
+    // Drop stale per-tab snapshots once their tab is actually closed, so a
+    // long session doesn't quietly accumulate memory for tabs that no
+    // longer exist.
+    useEffect(() => {
+        if (!tabsApi) return
+        const validIds = new Set(tabsApi.tabs.map(t => t.id))
+        Object.keys(compositionsRef.current).forEach(id => {
+            if (!validIds.has(id)) delete compositionsRef.current[id]
+        })
+    }, [tabsApi, tabsApi?.tabs])
+
+    // Used by "Open"/Load (see the backend tab-storage integration) to seed
+    // a specific tab's composition — including the currently active one,
+    // in which case the change is applied immediately.
+    const loadComposition = (tabId: string, data: CompositionSnapshot) => {
+        compositionsRef.current[tabId] = data
+        if (tabId === activeTabId) {
+            setMeasures(data.measures)
+            setSelectedInstrument(data.selectedInstrument)
+            setSelectedGenre(data.selectedGenre)
+            setSelectedTuning(data.selectedTuning)
+            setTuning(data.tuning)
+            setTempo(data.tempo)
+            setSelectedNoteRefs(data.selectedNoteRefs)
+        }
     }
 
     // --- NOTES ---
@@ -165,24 +349,36 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 const durBeats = durationToBeats(dur)
-                const newNote: MusicNote = { ...note, id: uuid(), duration: dur }
-                updatedMeasures[currentIdx].notes.push(newNote)
+                const newNote: MusicNote = {
+                    ...note,
+                    id: uuid(),
+                    duration: dur,
+                    // Chronological position among this measure's notes+rests
+                    // (see MusicNote.order) — used by playback to reconstruct
+                    // real note/rest sequencing.
+                    order: current.notes.length + current.rests.length,
+                }
 
-                // ✅ Beam grouping for 8ths/16ths
+                // ✅ Beam grouping for 8ths/16ths — built immutably (a new
+                // beamGroups array/tuple each time) rather than mutated in
+                // place, since `updatedMeasures[currentIdx]` still shares
+                // object identity with `prev[currentIdx]` after the shallow
+                // `[...prev]` copy above. Mutating those shared nested arrays
+                // directly caused notes to be inserted twice under React 18
+                // StrictMode, which intentionally invokes state updaters
+                // twice in development to catch exactly this kind of bug.
+                let beamGroups = current.beamGroups ?? []
                 if (dur === '8' || dur === '16') {
-                    // Ensure beamGroups is always initialized
-                    if (!updatedMeasures[currentIdx].beamGroups) {
-                        updatedMeasures[currentIdx].beamGroups = []
-                    }
-
-                    const beamGroups = updatedMeasures[currentIdx].beamGroups
                     const lastGroup = beamGroups.length > 0 ? beamGroups[beamGroups.length - 1] : undefined
+                    beamGroups = (lastGroup && lastGroup.length < 4)
+                        ? [...beamGroups.slice(0, -1), [...lastGroup, newNote.id]]
+                        : [...beamGroups, [newNote.id]]
+                }
 
-                    if (lastGroup && lastGroup.length < 4) {
-                        lastGroup.push(newNote.id)
-                    } else {
-                        beamGroups.push([newNote.id])
-                    }
+                updatedMeasures[currentIdx] = {
+                    ...current,
+                    notes: [...current.notes, newNote],
+                    beamGroups,
                 }
 
                 remainingBeats -= durBeats
@@ -342,7 +538,16 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                     : (remainingBeats >= 4 ? 'w' : remainingBeats >= 2 ? 'h' : remainingBeats >= 1 ? 'q' : remainingBeats >= 0.5 ? '8' : remainingBeats >= 0.25 ? '16' : remainingBeats >= 0.125 ? '32' : '64')
 
                 const durBeats = durationToBeats(dur)
-                updatedMeasures[currentIdx].rests.push({ id: uuid(), duration: dur })
+                // Build a new measure object/rests array rather than mutating
+                // the shared one in place (see addNote for why this matters).
+                updatedMeasures[currentIdx] = {
+                    ...current,
+                    rests: [...current.rests, {
+                        id: uuid(),
+                        duration: dur,
+                        order: current.notes.length + current.rests.length,
+                    }],
+                }
                 remainingBeats -= durBeats
 
                 if (remainingBeats <= 0) break
@@ -373,6 +578,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 setActiveTool,
                 selectedInstrument,
                 setSelectedInstrument,
+                selectInstrument,
                 showArcs,
                 setShowArcs,
                 useAlternate,
@@ -381,6 +587,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 setSelectedGenre,
                 selectedTuning,
                 setSelectedTuning,
+                selectTuning,
                 customTunings,
                 addCustomTuning,
                 tuning,
@@ -396,10 +603,17 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 removeRest,
                 updateRest,
                 getMeasureBeatCount, // ✅ exposed helper
+                selectedNoteRefs,
+                toggleNoteSelection,
+                clearNoteSelection,
+                toggleModifierOnSelection,
                 measuresPerRow,
                 setMeasuresPerRow,
                 scoreFixedWidth,
                 setScoreFixedWidth,
+                tempo,
+                setTempo,
+                loadComposition,
             }}
         >
             {children}

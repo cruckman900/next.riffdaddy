@@ -32,14 +32,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                             <ThemeRegistry>
                                 <AuthProvider>
                                     <Header />
-                                    <MusicProvider>
-                                        <TabsProvider>
+                                    <TabsProvider>
+                                        <MusicProvider>
                                             <Navbar />
                                             <main className="flex-1 overflow-y-auto flex min-h-0">
                                                 {children}
                                             </main>
-                                        </TabsProvider>
-                                    </MusicProvider>
+                                        </MusicProvider>
+                                    </TabsProvider>
                                     <Footer />
                                     <ToastMount />
                                 </AuthProvider>

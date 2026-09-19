@@ -2,14 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import axios from "axios";
 import { useAuthContext } from "@/context/AuthProvider";
-import { TextField, Button, Box, Typography, InputAdornment, Divider, IconButton } from "@mui/material";
+import { TextField, Button, Box, Typography, InputAdornment, IconButton, Stack } from "@mui/material";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import { LockClosedIcon, LockOpenIcon } from "@heroicons/react/24/outline";
+import { useTheme } from "@mui/material/styles";
+import AuthCard from "./AuthCard";
 
 // 1️⃣ Zod schema
 const loginSchema = z.object({
@@ -21,6 +24,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
     const router = useRouter()
+    const theme = useTheme()
 
     // 2️⃣ React Hook Form setup
     const {
@@ -57,97 +61,89 @@ export default function LoginForm() {
     const [showPassword, setShowPassword] = useState(false)
     const handleTogglePassword = () => setShowPassword(!showPassword)
 
-    const handleClick = () => {
-        router.push("/forgot-password")
-    }
-
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="max-w-md w-full mx-auto bg-black shadow-md rounded-md p-6"
-        >
+        <AuthCard title="Welcome Back" subtitle="Log in to keep riffing.">
             <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-                <Typography variant="h5" className="mb-4 text-center font-bold">
-                    Welcome Back
-                </Typography>
-
-                <Divider textAlign="left" sx={{ p: 1.5 }}>
-                    <Typography variant="caption" fontSize={16} color="textSecondary">
-                        Login Credentials
-                    </Typography>
-                </Divider>
-
-                <TextField
-                    label="Email"
-                    variant="outlined"
-                    type="email"
-                    {...register("email")}
-                    autoComplete="email"
-                    error={!!errors.email}
-                    helperText={errors.email?.message}
-                    fullWidth
-                />
-
-                <TextField
-                    label="Password"
-                    variant="outlined"
-                    type={showPassword ? "text" : "password"}
-                    {...register("password")}
-                    autoComplete="password"
-                    error={!!errors.password}
-                    helperText={errors.password?.message}
-                    fullWidth
-                    InputProps={{
-                        endAdornment: (
-                            <InputAdornment position="end">
-                                <IconButton
-                                    onClick={handleTogglePassword}
-                                    aria-label="toggle password visibility"
-                                >
-                                    {showPassword ? <LockOpenIcon className="h-5 w-5 text-gray-500" /> : <LockClosedIcon className="h-5 w-5 text-gray-500" />}
-                                </IconButton>
-                            </InputAdornment>
-                        ),
-                    }}
-                />
-
-                <Typography
-                    variant='button'
-                    sx={{
-                        mx: '50%',
-                        translate: '-50%',
-                        color: 'red',
-                        textDecoration: 'none',
-                        cursor: 'pointer',
-                        display: 'inline-block',
-                        textAlign: 'center',
-                        width: '100%'
-                    }}
-                    onClick={handleClick}
-                >
-                    Forgot Password
-                </Typography>
-
-                <motion.div whileHover={{ scale: 1.02 }} className="mt-4">
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        color="primary"
+                <Stack spacing={2.5}>
+                    <TextField
+                        label="Email"
+                        variant="outlined"
+                        type="email"
+                        {...register("email")}
+                        autoComplete="email"
+                        error={!!errors.email}
+                        helperText={errors.email?.message}
                         fullWidth
-                        disabled={loading}
-                    >
-                        {loading ? "Logging in..." : "Login"}
-                    </Button>
-                </motion.div>
+                    />
 
-                {errorMsg && (
-                    <Typography className="text-red-600 text-center mt-2">
-                        {errorMsg}
+                    <TextField
+                        label="Password"
+                        variant="outlined"
+                        type={showPassword ? "text" : "password"}
+                        {...register("password")}
+                        autoComplete="current-password"
+                        error={!!errors.password}
+                        helperText={errors.password?.message}
+                        fullWidth
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        onClick={handleTogglePassword}
+                                        aria-label="toggle password visibility"
+                                    >
+                                        {showPassword ? <LockOpenIcon className="h-5 w-5" style={{ color: theme.palette.text.secondary }} /> : <LockClosedIcon className="h-5 w-5" style={{ color: theme.palette.text.secondary }} />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+
+                    <Typography
+                        component={Link}
+                        href="/forgot-password"
+                        variant="body2"
+                        sx={{
+                            color: theme.palette.accent.main,
+                            textAlign: 'right',
+                            textDecoration: 'none',
+                            '&:hover': { textDecoration: 'underline' },
+                        }}
+                    >
+                        Forgot password?
                     </Typography>
-                )}
+
+                    <motion.div whileHover={{ scale: 1.02 }}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            fullWidth
+                            disabled={loading}
+                            sx={{
+                                bgcolor: theme.palette.accent.main,
+                                color: theme.palette.getContrastText(theme.palette.accent.main),
+                                boxShadow: `0 0 16px ${theme.palette.accent.main}66`,
+                                '&:hover': { bgcolor: theme.palette.accent.main, boxShadow: `0 0 24px ${theme.palette.accent.main}` },
+                            }}
+                        >
+                            {loading ? "Logging in..." : "Login"}
+                        </Button>
+                    </motion.div>
+
+                    {errorMsg && (
+                        <Typography variant="body2" sx={{ color: theme.palette.error.main, textAlign: 'center' }}>
+                            {errorMsg}
+                        </Typography>
+                    )}
+
+                    <Typography variant="body2" textAlign="center" color="text.secondary">
+                        New to NEXTRiff?{' '}
+                        <Link href="/register" style={{ color: theme.palette.accent.main, textDecoration: 'none' }}>
+                            Create an account
+                        </Link>
+                    </Typography>
+                </Stack>
             </Box>
-        </motion.div>
+        </AuthCard>
     );
 }

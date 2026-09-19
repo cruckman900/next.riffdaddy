@@ -1,7 +1,7 @@
 // app/page.tsx
-import { Box, Stack, Typography } from '@mui/material'
-import Image from 'next/image'
-import React from 'react'
+import { Box } from '@mui/material'
+import HeroSection from '@/components/home/HeroSection'
+import FeatureGrid from '@/components/home/FeatureGrid'
 
 export const metadata = {
   title: 'NEXTRiff — Riff-Ready Tab Parsing',
@@ -32,116 +32,10 @@ export const metadata = {
 }
 
 export default function HomePage() {
-  const images = [
-    {
-      src: '/svg/piano.svg',
-      alt: 'Piano',
-      width: 400,
-      height: 250,
-    },
-    {
-      src: '/svg/guitar.svg',
-      alt: 'Guitar',
-      width: 400,
-      height: 250,
-    },
-    {
-      src: '/svg/drums.svg',
-      alt: 'Drums',
-      width: 400,
-      height: 350,
-    },
-  ]
   return (
-    <React.Fragment>
-      <Box
-        sx={{
-          mx: 'auto',
-          p: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 3,
-          bgcolor: 'background.default',
-          zIndex: 0,
-        }}
-      >
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }} // vertical on mobile, horizontal on desktop
-          spacing={2}
-          alignItems="center"
-          justifyContent="center"
-          sx={{ width: '100%', height: '100%' }}
-        >
-          {images.map((img, index) => (
-            <Box
-              key={index}
-              sx={{
-                flex: '0 1 auto', // allow natural sizing
-                maxWidth: '100%',
-              }}
-            >
-              <Image
-                src={img.src}
-                alt={img.alt}
-                width={img.width}
-                height={img.height}
-                style={{
-                  height: 'auto', // preserve aspect ratio
-                  width: '100%',  // scale to container
-                  objectFit: 'contain', // show full image
-                  opacity: 0.3, // semi-transparent images
-                }}
-              />
-            </Box>
-
-          ))}
-        </Stack>
-      </Box>
-
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          zIndex: 1,
-          pointerEvents: 'none',
-        }}
-      >
-        <Typography
-          variant="h2"
-          sx={{
-            position: 'absolute',
-            top: '20%',
-            left: '10%',
-            paddingRight: '1rem',
-            color: '#b366ff',
-            opacity: 0.75,
-            fontWeight: 'bold',
-            fontSize: '175%',
-            lineHeight: 1.5,
-            textShadow: '2px 2px 4px rgba(0,0,0,0.6)',
-          }}
-        >
-          Welcome to NEXTRiff. Create, preview, parse, and riff on guitar tabs.<br />I&apos;ll be adding other instruments and features soon, but for now...<br />Let&apos;s get started with the basics.
-        </Typography>
-
-        <Typography
-          variant="h5"
-          sx={{
-            position: 'absolute',
-            bottom: '12%',
-            right: '10%',
-            color: '#00e5ff',
-            opacity: 0.75,
-            fontWeight: 'bold',
-            textShadow: '1px 1px 3px rgba(0,0,0,0.6)',
-          }}
-        >
-          Built with a backstage pass.
-        </Typography>
-      </Box>
-    </React.Fragment>
+    <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+      <HeroSection />
+      <FeatureGrid />
+    </Box>
   )
 }

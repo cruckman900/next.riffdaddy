@@ -36,6 +36,64 @@ export interface Tuning {
     genre?: string;
 }
 
+// Octave-qualified defaults (e.g. "E2") used as a reference point when a
+// preset/custom tuning only supplies octave-less note names (e.g. "E").
+// FretboardTool and the renderers need octave-qualified notes to compute
+// MIDI/pitch values, but tuning presets and the custom-tuning form only deal
+// in plain note names, so we resolve a sensible octave per string here.
+export const defaultTuningWithOctaves: { [instrument: string]: string[] } = {
+    guitar: ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'],
+    bass: ['E1', 'A1', 'D2', 'G2'],
+    violin: ['G3', 'D4', 'A4', 'E5'],
+    cello: ['C2', 'G2', 'D3', 'A3'],
+}
+
+function parseNoteOctave(value: string): { name: string; octave: number } | null {
+    const match = value.match(/^([A-G][#b]?)(\d+)$/)
+    if (!match) return null
+    return { name: match[1], octave: parseInt(match[2], 10) }
+}
+
+/**
+ * Resolves a list of octave-less (or already-qualified) note names into
+ * octave-qualified strings (e.g. "E" -> "E2"), by picking whichever octave
+ * keeps each string's pitch closest to the instrument's default tuning at
+ * that string position. This keeps alternate tunings like Drop D or Open G
+ * sensible without requiring users to type octave numbers.
+ */
+export function resolveTuningOctaves(instrument: string, noteNames: string[]): string[] {
+    // Already octave-qualified (e.g. custom tuning typed as "E2, A2, ...")? Pass through.
+    if (noteNames.length > 0 && noteNames.every(n => /\d$/.test(n.trim()))) {
+        return noteNames.map(n => n.trim())
+    }
+
+    const defaults = defaultTuningWithOctaves[instrument] ?? defaultTuningWithOctaves.guitar
+
+    return noteNames.map((rawName, i) => {
+        const name = rawName.trim()
+        const defaultStr = defaults[i] ?? defaults[defaults.length - 1]
+        const parsedDefault = parseNoteOctave(defaultStr)
+        const defaultOctave = parsedDefault?.octave ?? 3
+        const defaultSemitone = noteIndexMap[parsedDefault?.name ?? 'E'] ?? 4
+        const defaultMidi = defaultOctave * 12 + defaultSemitone
+
+        const targetSemitone = noteIndexMap[name] ?? 0
+
+        let bestOctave = defaultOctave
+        let bestDistance = Infinity
+        for (const octave of [defaultOctave - 1, defaultOctave, defaultOctave + 1]) {
+            const midi = octave * 12 + targetSemitone
+            const distance = Math.abs(midi - defaultMidi)
+            if (distance < bestDistance) {
+                bestDistance = distance
+                bestOctave = octave
+            }
+        }
+
+        return `${name}${bestOctave}`
+    })
+}
+
 export const alternateTunings: { [instrument: string]: Tuning[] } = {
     guitar: [
         {

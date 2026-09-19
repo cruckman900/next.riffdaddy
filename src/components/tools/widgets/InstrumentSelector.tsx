@@ -25,28 +25,25 @@ const instrumentOptions: Record<string, { strings: number[]; frets: number[] }> 
 }
 
 export default function InstrumentSelector({ value, onChange }: Props) {
-    const [instrument, setInstrument] = useState<string>(value ?? "guitar")
-    const [strings, setStrings] = useState<number>(instrumentOptions.guitar.strings[0])
-    const [frets, setFrets] = useState<number>(instrumentOptions.guitar.frets[0])
+    const instrument = value ?? "guitar"
+    const currentOpts = instrumentOptions[instrument] ?? instrumentOptions.guitar
 
-    // sync when parent changes instrument
+    const [strings, setStrings] = useState<number>(currentOpts.strings[0])
+    const [frets, setFrets] = useState<number>(currentOpts.frets[0])
+
+    // Reset strings/frets to the new instrument's defaults whenever the
+    // instrument (driven by the parent, e.g. context) changes — previously
+    // this compared against a separately-tracked local `instrument` copy that
+    // could fall out of sync, leaving stale strings/frets values that didn't
+    // belong to the new instrument's option list.
     useEffect(() => {
-        if (typeof value === 'string' && value !== instrument) {
-            setInstrument(value)
-            const opts = instrumentOptions[value]
-            if (opts) {
-                setStrings(opts.strings[0])
-                setFrets(opts.frets[0])
-            }
-        }
+        setStrings(currentOpts.strings[0])
+        setFrets(currentOpts.frets[0])
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [value])
+    }, [instrument])
 
     const handleInstrumentChange = (val: string) => {
-        setInstrument(val)
-        const opts = instrumentOptions[val]
-        setStrings(opts.strings[0])
-        setFrets(opts.frets[0])
+        const opts = instrumentOptions[val] ?? instrumentOptions.guitar
         onChange(val, opts.strings[0], opts.frets[0])
     }
 
@@ -59,8 +56,6 @@ export default function InstrumentSelector({ value, onChange }: Props) {
         setFrets(val)
         onChange(instrument, strings, val)
     }
-
-    const currentOpts = instrumentOptions[instrument]
 
     return (
         <motion.div

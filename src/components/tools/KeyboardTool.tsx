@@ -5,6 +5,7 @@ import { useMusic } from '@/context/MusicContext'
 import { Typography, Box, Button, Stack, Divider } from '@mui/material'
 import { ToolProps } from '@/types/tooling'
 import { useState, useRef } from 'react'
+import { useTheme } from '@mui/material/styles'
 
 type Natural = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B'
 type SharpKey = 'C' | 'D' | 'F' | 'G' | 'A'
@@ -21,6 +22,7 @@ function noteToMidi(note: string): number {
 }
 
 export function KeyboardTool({ measureId, duration }: ToolProps) {
+    const theme = useTheme()
     const { addNote, tuning } = useMusic()
     const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -60,7 +62,6 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
 
     const { addRest } = useMusic()
     const handleAddRest = () => {
-        console.log('RestEntryTool measureId:', mid, 'duration:', dur)
         addRest(mid, { duration: dur })
     }
 
@@ -81,25 +82,36 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
             </Typography>
 
             {/* Octave selector */}
-            <Stack direction="row" spacing={2} mb={2}>
-                <Typography variant="caption" sx={{ opacity: 0.7 }}>
+            <Stack direction="row" spacing={1} alignItems="center" mb={2}>
+                <Typography variant="caption" sx={{ opacity: 0.7, mr: 0.5 }}>
                     Octaves:
                 </Typography>
-                {[1, 2, 3, 4, 5].map(count => (
-                    <Typography
-                        key={count}
-                        variant="caption"
-                        sx={{
-                            cursor: 'pointer',
-                            fontWeight: octaves === count ? 600 : 400,
-                            fontSize: octaves === count ? '1rem' : '0.8rem',
-                            ":hover": { color: 'primary.main' },
-                        }}
-                        onClick={() => setOctaves(count)}
-                    >
-                        {count}
-                    </Typography>
-                ))}
+                {[1, 2, 3, 4, 5].map(count => {
+                    const active = octaves === count
+                    return (
+                        <Box
+                            key={count}
+                            component="button"
+                            onClick={() => setOctaves(count)}
+                            sx={{
+                                cursor: 'pointer',
+                                border: '1px solid',
+                                borderColor: active ? theme.palette.accent.main : 'divider',
+                                borderRadius: 999,
+                                width: 28,
+                                height: 28,
+                                fontSize: '0.8rem',
+                                fontWeight: active ? 700 : 400,
+                                color: active ? theme.palette.accent.main : theme.palette.text.secondary,
+                                bgcolor: active ? `${theme.palette.accent.main}1a` : 'transparent',
+                                boxShadow: active ? `0 0 8px ${theme.palette.accent.main}66` : 'none',
+                                transition: 'all 0.15s ease',
+                            }}
+                        >
+                            {count}
+                        </Box>
+                    )
+                })}
             </Stack>
 
             {/* Keyboard grid */}
@@ -139,16 +151,18 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
                                             sx={{
                                                 minWidth: 40,
                                                 height: 100,
+                                                transition: 'box-shadow 0.15s ease',
                                                 bgcolor: disabled
                                                     ? '#444'
                                                     : selected
-                                                        ? '#1976d2'
+                                                        ? theme.palette.accent.main
                                                         : 'white',
                                                 color: disabled
                                                     ? '#999'
                                                     : selected
-                                                        ? '#fff'
+                                                        ? theme.palette.getContrastText(theme.palette.accent.main)
                                                         : 'black',
+                                                boxShadow: selected ? `0 0 10px ${theme.palette.accent.main}88` : 'none',
                                                 padding: 0,
                                                 display: 'flex',
                                                 alignItems: 'flex-end',
@@ -180,12 +194,14 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
                                                         transform: 'translateX(-50%)',
                                                         minWidth: 28,
                                                         height: 60,
+                                                        transition: 'box-shadow 0.15s ease',
                                                         bgcolor: sharpDisabled
                                                             ? '#222'
                                                             : sharpSelected
-                                                                ? '#1976d2'
+                                                                ? theme.palette.accent.main
                                                                 : 'black',
-                                                        color: 'white',
+                                                        color: sharpSelected ? theme.palette.getContrastText(theme.palette.accent.main) : 'white',
+                                                        boxShadow: sharpSelected ? `0 0 10px ${theme.palette.accent.main}88` : 'none',
                                                         opacity: sharpDisabled ? 0.4 : 1,
                                                         padding: 0,
                                                         zIndex: 1,
@@ -210,6 +226,9 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
                     variant="contained"
                     disabled={selectedKeys.length === 0}
                     onClick={commitChord}
+                    sx={{
+                        boxShadow: selectedKeys.length > 0 ? `0 0 14px ${theme.palette.primary.main}77` : 'none',
+                    }}
                 >
                     Commit {selectedKeys.length > 1 ? 'Chord' : 'Note'}
                 </Button>

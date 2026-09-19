@@ -18,9 +18,19 @@ export default function Workbench() {
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
 
-    // Default to first measure
+    // Default to first measure — also re-anchors when the current
+    // activeMeasureId no longer exists in `measures` at all (not just when
+    // it's unset), since switching workspace tabs replaces the whole
+    // measures array wholesale (see MusicContext's per-tab composition
+    // state) and the previously active measure id would otherwise point at
+    // nothing, silently breaking note entry.
     useEffect(() => {
-        if (!activeMeasureId && measures.length > 0) {
+        if (measures.length === 0) {
+            if (activeMeasureId !== null) setActiveMeasureId(null)
+            return
+        }
+        const stillExists = activeMeasureId != null && measures.some(m => m.id === activeMeasureId)
+        if (!stillExists) {
             setActiveMeasureId(measures[0].id)
         }
     }, [measures, activeMeasureId])
@@ -44,11 +54,11 @@ export default function Workbench() {
                     height: isMobile ? "100%" : 'calc(100vh - 13.55rem)',
                     minHeight: isMobile ? 0 : "100%",
                     flexShrink: 0,
-                    borderBottom: "1px solid #2a2f35",
+                    borderBottom: `1px solid ${theme.palette.divider}`,
                 }}
             >
                 {/* ToolRail */}
-                <div style={{ flexShrink: 0, borderRight: "1px solid #2a2f35" }}>
+                <div style={{ flexShrink: 0, borderRight: `1px solid ${theme.palette.divider}` }}>
                     <ToolRail activeToolId={activeTool} setActiveTool={setActiveTool} />
                 </div>
 
@@ -61,7 +71,7 @@ export default function Workbench() {
                         maxWidth: 380,
                         overflowY: "auto",
                         backgroundColor: theme.palette.muted.main,
-                        borderRight: "1px solid #2a2f35",
+                        borderRight: `1px solid ${theme.palette.divider}`,
                     }}
                 >
                     <ToolPanelManager activeTool={activeTool} measureId={activeMeasureId ?? undefined} />
@@ -80,7 +90,7 @@ export default function Workbench() {
                 <div
                     style={{
                         width: "100%",
-                        borderTop: "1px solid #2a2f35",
+                        borderTop: `1px solid ${theme.palette.divider}`,
                         overflow: "visible",
                         display: "block",
                     }}

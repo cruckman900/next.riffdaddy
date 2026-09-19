@@ -71,11 +71,19 @@ export default function TabBar() {
                 scrollButtons="auto"
                 orientation={isSmall ? 'horizontal' : 'vertical'}
                 aria-label="open tabs"
+                TabIndicatorProps={{
+                    sx: {
+                        backgroundColor: theme.palette.accent.main,
+                        boxShadow: `0 0 8px ${theme.palette.accent.main}`,
+                        width: isSmall ? undefined : 3,
+                    },
+                }}
                 sx={{ flex: 1 }}
             >
                 {tabs.tabs.map((t) => {
                     const isEditing = editingId === t.id
                     const isFile = t.type === 'editor'
+                    const isActive = activeId === t.id
 
                     return (
                         <MuiTab
@@ -112,6 +120,8 @@ export default function TabBar() {
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis',
                                                 whiteSpace: 'nowrap',
+                                                color: isActive ? theme.palette.accent.main : 'inherit',
+                                                textShadow: isActive ? `0 0 8px ${theme.palette.accent.main}66` : 'none',
                                             }}
                                         >
                                             {t.title}
@@ -134,8 +144,12 @@ export default function TabBar() {
                             sx={{
                                 textTransform: 'none',
                                 minWidth: 120,
+                                transition: 'background-color 0.2s ease',
+                                '&:hover': {
+                                    bgcolor: 'rgba(255,255,255,0.04)',
+                                },
                                 '&.Mui-selected': {
-                                    bgcolor: 'surface.main',
+                                    bgcolor: `${theme.palette.accent.main}14`,
                                     color: theme.palette.text.primary,
                                     fontWeight: 'bold',
                                 },
