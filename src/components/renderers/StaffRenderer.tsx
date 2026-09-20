@@ -13,7 +13,7 @@ interface CombinedRendererProps {
 }
 
 export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps) {
-  const { measures, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection } = useMusic()
+  const { measures, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection } = useMusic()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
     // Renderer/SVG instead of sharing one canvas for the whole score.
     const rowHeight = 180
 
-    const widths = computeMeasureLayoutWidths(measures, 'staff')
+    const widths = computeMeasureLayoutWidths(measures, 'staff', noteSpacing)
 
     let rowMeasures: typeof measures = []
     let rowWidths: number[] = []
@@ -204,7 +204,7 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
     })
 
     flushRow(true)
-  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection])
+  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection])
 
   return (
     <Box sx={{ width: '100%', overflowX: 'auto', padding: 2 }}>

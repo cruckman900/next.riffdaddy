@@ -11,7 +11,7 @@ interface CombinedRendererProps {
 }
 
 export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) {
-  const { measures, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection, tuning } = useMusic()
+  const { measures, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tuning } = useMusic()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
     // of a slice of one big canvas.
     const rowHeight = 200
 
-    const widths = computeMeasureLayoutWidths(measures, 'tab')
+    const widths = computeMeasureLayoutWidths(measures, 'tab', noteSpacing)
 
     let rowMeasures: typeof measures = []
     let rowWidths: number[] = []
@@ -209,7 +209,7 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
     })
 
     flushRow(true)
-  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection, tuning])
+  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tuning])
 
   return (
     <Box sx={{ width: '100%', overflowX: 'auto', padding: 2 }}>

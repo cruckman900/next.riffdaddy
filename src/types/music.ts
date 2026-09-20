@@ -158,6 +158,12 @@ export interface MusicState {
     setMeasuresPerRow: (count: number) => void
     scoreFixedWidth: boolean
     setScoreFixedWidth: (fixed: boolean) => void
+    // Extra pixels reserved per note/rest on top of VexFlow's own tight
+    // minimum width — see computeMeasureLayoutWidths in
+    // src/tools/notation.ts for what exactly it affects (and what it
+    // deliberately doesn't).
+    noteSpacing: number
+    setNoteSpacing: (spacing: number) => void
 
     // Playback tempo (BPM), persisted like the other score settings.
     tempo: number

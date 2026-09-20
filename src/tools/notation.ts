@@ -164,13 +164,21 @@ export const MEASURE_PADDING = 10
 // past it and reflects actual note density.
 const MIN_MEASURE_WIDTH = 24
 
-function minVoiceWidth(tickables: (TabNote | StaveNote)[], numBeats: number, beatValue: number): number {
+function minVoiceWidth(tickables: (TabNote | StaveNote)[], numBeats: number, beatValue: number, extraPerNote: number): number {
     if (!tickables.length) return 0
     const voice = new Voice({ numBeats, beatValue }).setStrict(false)
     voice.addTickables(tickables)
     const formatter = new Formatter()
     formatter.joinVoices([voice])
-    return formatter.preCalculateMinTotalWidth([voice])
+    const raw = formatter.preCalculateMinTotalWidth([voice])
+    // VexFlow's own minimum is genuinely tight (packed edge-to-edge with
+    // just enough room for the glyphs themselves) — a *multiplicative*
+    // scale on that tiny base barely moves the needle for a handful of
+    // notes (e.g. 1.5x of ~30px is still only ~45px total, spread across 4
+    // notes). Adding a fixed amount PER NOTE instead gives visible, roughly
+    // constant breathing room between notes regardless of how few or many
+    // there are in the measure.
+    return raw + tickables.length * extraPerNote
 }
 
 // Extra width to reserve for whatever clef/time/key signature a measure
@@ -220,21 +228,30 @@ export type ScoreViewMode = 'tab' | 'staff' | 'combined'
  * wider than one with the same beat count of quarter notes, and a measure
  * should never end up too narrow for VexFlow to lay its notes out cleanly.
  *
+ * `noteSpacing` (default 0 = VexFlow's bare minimum, tightly packed) is a
+ * fixed number of extra pixels reserved per note/rest in the measure — not
+ * the clef/time/key allowance or the empty-measure floor — so users can dial
+ * in more visual breathing room between notes (see Settings → Score → Note
+ * Spacing). It's additive rather than a multiplier specifically so it stays
+ * visible for sparse measures (a handful of quarter notes) without also
+ * ballooning already-wide, densely-packed measures out of proportion.
+ *
  * In 'combined' mode each measure's width is the max of what its tab and
  * staff content need, so the two staves it shares stay the same width.
  */
-export function computeMeasureLayoutWidths(measures: Measure[], mode: ScoreViewMode): number[] {
+export function computeMeasureLayoutWidths(measures: Measure[], mode: ScoreViewMode, noteSpacing = 0): number[] {
     return measures.map(measure => {
         const { numBeats, beatValue } = parseTimeSignature(measure.timeSignature)
-        let width = MIN_MEASURE_WIDTH
+        let contentWidth = 0
 
         if (mode === 'tab' || mode === 'combined') {
-            width = Math.max(width, minVoiceWidth(buildTabTickables(measure), numBeats, beatValue))
+            contentWidth = Math.max(contentWidth, minVoiceWidth(buildTabTickables(measure), numBeats, beatValue, noteSpacing))
         }
         if (mode === 'staff' || mode === 'combined') {
-            width = Math.max(width, minVoiceWidth(buildStaffTickables(measure), numBeats, beatValue))
+            contentWidth = Math.max(contentWidth, minVoiceWidth(buildStaffTickables(measure), numBeats, beatValue, noteSpacing))
         }
 
+        const width = Math.max(MIN_MEASURE_WIDTH, contentWidth)
         return width + measureModifierWidth(measure, mode)
     })
 }

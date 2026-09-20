@@ -134,6 +134,7 @@ export default function HelpContent() {
 
                 <SubHeading>Score</SubHeading>
                 <Bullet>Adjust <strong>Measures Per Row</strong> to control the maximum number of measures the Score Preview will place on one row (a row can still hold fewer if the measures are wide).</Bullet>
+                <Bullet>Drag <strong>Note Spacing</strong> to add breathing room between notes — 0px is VexFlow&apos;s tightest possible packing, higher values add more space per note.</Bullet>
                 <Bullet>Switch <strong>Score Width</strong> between Auto (fills the available space) and Fixed (consistent print-friendly width).</Bullet>
             </HelpSection>
 

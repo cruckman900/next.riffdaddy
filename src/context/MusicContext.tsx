@@ -139,6 +139,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     // Score Settings
     const [measuresPerRow, setMeasuresPerRow] = useState(4)
     const [scoreFixedWidth, setScoreFixedWidth] = useState(false)
+    const [noteSpacing, setNoteSpacing] = useState(18)
     const [tempo, setTempo] = useState(120)
 
     // --- PERSISTENCE ---
@@ -157,6 +158,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         setCustomTunings(saved.customTunings)
         setMeasuresPerRow(saved.measuresPerRow)
         setScoreFixedWidth(saved.scoreFixedWidth)
+        setNoteSpacing(saved.noteSpacing)
 
         hasLoadedSettings.current = true
     }, [])
@@ -175,12 +177,13 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 useAlternate,
                 measuresPerRow,
                 scoreFixedWidth,
+                noteSpacing,
                 tempo,
                 voice: selectedVoice,
             })
         }, 200)
         return () => clearTimeout(id)
-    }, [selectedInstrument, selectedGenre, selectedTuning, tuning, customTunings, showArcs, useAlternate, measuresPerRow, scoreFixedWidth, tempo, selectedVoice])
+    }, [selectedInstrument, selectedGenre, selectedTuning, tuning, customTunings, showArcs, useAlternate, measuresPerRow, scoreFixedWidth, noteSpacing, tempo, selectedVoice])
 
     // Restores whichever toolbar tool (Instrument & Tuning, Fretboard, etc.)
     // was active before a refresh, per signed-in user. Runs once per
@@ -884,6 +887,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 setMeasuresPerRow,
                 scoreFixedWidth,
                 setScoreFixedWidth,
+                noteSpacing,
+                setNoteSpacing,
                 tempo,
                 setTempo,
                 loadComposition,

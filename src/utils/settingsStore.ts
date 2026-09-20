@@ -22,6 +22,12 @@ export interface PersistedSettings {
     useAlternate: boolean
     measuresPerRow: number
     scoreFixedWidth: boolean
+    // Extra pixels reserved per note/rest on top of VexFlow's own tight
+    // minimum width (see computeMeasureLayoutWidths in
+    // src/tools/notation.ts) — 0 is VexFlow's bare/tightly-packed minimum;
+    // higher values add breathing room between notes without affecting
+    // clef/time/key spacing or empty-measure width.
+    noteSpacing: number
     // Playback tempo in BPM — persisted like the other score settings.
     tempo: number
     // Playback voice/timbre id (see src/tools/playback.ts's VoiceOption) —
@@ -40,6 +46,7 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
     useAlternate: false,
     measuresPerRow: 4,
     scoreFixedWidth: false,
+    noteSpacing: 18,
     tempo: 120,
     voice: null,
 }
