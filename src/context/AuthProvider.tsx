@@ -7,7 +7,7 @@ import { UserRead } from "@/types/user";
 export interface AuthContextType {
     user: UserRead | null
     loading: boolean
-    login: (userData: UserRead) => void
+    login: (userData: UserRead, token?: string | null) => void
     logout: () => void
 }
 

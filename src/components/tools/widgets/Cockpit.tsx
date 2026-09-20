@@ -7,6 +7,7 @@ import Collapse from '@mui/material/Collapse'
 import Typography from '@mui/material/Typography'
 import InstrumentSelector from './InstrumentSelector'
 import { tuningPresets, alternateTunings, Tuning } from '@/utils/tunings'
+import { getVoiceOptions } from '@/tools/playback'
 import { Button, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, TextField } from '@mui/material'
 import { useMusic } from '@/context/MusicContext'
 import { useTheme } from "@mui/material/styles"
@@ -32,7 +33,13 @@ export default function Cockpit() {
         showArcs, setShowArcs,
         setUseAlternate,
         customTunings, addCustomTuning,
+        tuning, setStringCount,
+        selectedVoice, setSelectedVoice,
     } = useMusic()
+
+    // Available playback timbres for the current instrument (e.g. guitar's
+    // Acoustic/Clean/Overdrive/Distortion) — see src/tools/playback.ts.
+    const voiceOptions = React.useMemo(() => getVoiceOptions(selectedInstrument), [selectedInstrument])
 
     // compute available tunings for the current instrument/genre filter
     const tuningOptions = React.useMemo(() => {
@@ -93,7 +100,22 @@ export default function Cockpit() {
             <Box height="100%" sx={{ bgcolor: theme.palette.background.default, borderRadius: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box>
                     {/* pass value so InstrumentSelector can show current instrument */}
-                    <InstrumentSelector value={selectedInstrument} onChange={(val) => selectInstrument(val)} />
+                    <InstrumentSelector
+                        value={selectedInstrument}
+                        stringsValue={tuning.length}
+                        onChange={(val, strings) => {
+                            if (val !== selectedInstrument) {
+                                // Switching instrument resets to that instrument's
+                                // default preset/string count.
+                                selectInstrument(val)
+                            } else if (strings !== tuning.length) {
+                                // Same instrument, different string count picked
+                                // (e.g. 6 -> 7-string guitar) — extend/trim the
+                                // current tuning instead of silently ignoring it.
+                                setStringCount(strings)
+                            }
+                        }}
+                    />
                 </Box>
 
                 <FormControlLabel
@@ -148,6 +170,22 @@ export default function Cockpit() {
                                 </MenuItem>
                             ))
                         )}
+                    </Select>
+                </FormControl>
+
+                <FormControl fullWidth>
+                    <InputLabel id="voice-label">Voice</InputLabel>
+                    <Select
+                        labelId="voice-label"
+                        value={voiceOptions.some(v => v.id === selectedVoice) ? selectedVoice : (voiceOptions[0]?.id ?? '')}
+                        label="Voice"
+                        onChange={(e) => setSelectedVoice(e.target.value)}
+                    >
+                        {voiceOptions.map((v) => (
+                            <MenuItem key={v.id} value={v.id}>
+                                {v.label}
+                            </MenuItem>
+                        ))}
                     </Select>
                 </FormControl>
 

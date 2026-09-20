@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Button from '@mui/material/Button'
@@ -20,6 +20,8 @@ import CombinedRenderer from "./CombinedRenderer"
 import NotationToolbar from './NotationToolbar'
 import { useMusic } from '@/context/MusicContext'
 import { useTheme } from "@mui/material/styles"
+import { printScore } from '@/lib/print/printScore'
+import toast from 'react-hot-toast'
 
 interface ScorePreviewProps {
     setActiveMeasureId: (id: string) => void
@@ -30,9 +32,35 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
     const theme = useTheme()
 
     const [viewMode, setViewMode] = useState<'tab' | 'staff' | 'combined'>('tab')
-    const { measures, getMeasureBeatCount } = useMusic()
+    const { measures, getMeasureBeatCount, metadata } = useMusic()
+    const sheetRef = useRef<HTMLDivElement>(null)
+    const [printing, setPrinting] = useState(false)
 
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 600
+
+    const handlePrint = async () => {
+        if (!sheetRef.current || printing) return
+        setPrinting(true)
+        try {
+            await printScore(sheetRef.current)
+        } catch {
+            toast.error('Could not prepare the print preview.')
+        } finally {
+            setPrinting(false)
+        }
+    }
+
+    // Only build a subtitle line out of fields that are actually populated,
+    // so an empty score doesn't show a header full of "·" separators.
+    const subtitleParts = [
+        metadata.artist,
+        metadata.album,
+        metadata.composer && `Composer: ${metadata.composer}`,
+        metadata.year,
+        metadata.capo > 0 && `Capo ${metadata.capo}`,
+        metadata.difficulty,
+    ].filter(Boolean)
+    const hasMetadataHeader = Boolean(metadata.title) || subtitleParts.length > 0
 
 
     // Keyboard navigation
@@ -71,7 +99,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
     }, [measures, activeMeasureId, setActiveMeasureId])
 
     return (
-        <Box height="100%" overflow="auto" p="10px">
+        <Box height="100%" overflow="auto" p="10px" sx={{ '@media print': { height: 'auto', overflow: 'visible', p: 0 } }}>
             <Box
                 sx={{
                     p: 2,
@@ -80,6 +108,11 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                     border: '1px solid',
                     borderColor: 'divider',
                     boxShadow: `0 0 24px ${theme.palette.accent.main}22`,
+                    '@media print': {
+                        p: 0,
+                        border: 'none',
+                        bgcolor: 'transparent',
+                    },
                 }}
             >
                 {/* Header: title + view mode segmented control */}
@@ -102,31 +135,44 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                         Score Preview
                     </Typography>
 
-                    <ToggleButtonGroup
-                        value={viewMode}
-                        exclusive
-                        size="small"
-                        onChange={(_, next) => next && setViewMode(next)}
-                        sx={{
-                            bgcolor: 'rgba(255,255,255,0.03)',
-                            '.MuiToggleButton-root': {
-                                color: theme.palette.text.secondary,
-                                border: '1px solid',
-                                borderColor: 'divider',
-                                textTransform: 'none',
-                                gap: 0.75,
-                                '&.Mui-selected': {
-                                    color: theme.palette.accent.main,
-                                    bgcolor: `${theme.palette.accent.main}1f`,
-                                    boxShadow: `0 0 12px ${theme.palette.accent.main}55`,
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<PrintTwoToneIcon fontSize="small" />}
+                            onClick={handlePrint}
+                            disabled={printing}
+                            sx={{ textTransform: 'none' }}
+                        >
+                            {printing ? 'Preparing…' : 'Print'}
+                        </Button>
+
+                        <ToggleButtonGroup
+                            value={viewMode}
+                            exclusive
+                            size="small"
+                            onChange={(_, next) => next && setViewMode(next)}
+                            sx={{
+                                bgcolor: 'rgba(255,255,255,0.03)',
+                                '.MuiToggleButton-root': {
+                                    color: theme.palette.text.secondary,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    textTransform: 'none',
+                                    gap: 0.75,
+                                    '&.Mui-selected': {
+                                        color: theme.palette.accent.main,
+                                        bgcolor: `${theme.palette.accent.main}1f`,
+                                        boxShadow: `0 0 12px ${theme.palette.accent.main}55`,
+                                    },
                                 },
-                            },
-                        }}
-                    >
-                        <ToggleButton value="tab"><TableRowsTwoToneIcon fontSize="small" /> Tab</ToggleButton>
-                        <ToggleButton value="staff"><MusicNoteTwoToneIcon fontSize="small" /> Staff</ToggleButton>
-                        <ToggleButton value="combined"><LayersTwoToneIcon fontSize="small" /> Combined</ToggleButton>
-                    </ToggleButtonGroup>
+                            }}
+                        >
+                            <ToggleButton value="tab"><TableRowsTwoToneIcon fontSize="small" /> Tab</ToggleButton>
+                            <ToggleButton value="staff"><MusicNoteTwoToneIcon fontSize="small" /> Staff</ToggleButton>
+                            <ToggleButton value="combined"><LayersTwoToneIcon fontSize="small" /> Combined</ToggleButton>
+                        </ToggleButtonGroup>
+                    </Stack>
                 </Stack>
 
                 {!isMobile && (
@@ -145,7 +191,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                             }}
                         >
                             <PrintTwoToneIcon fontSize="small" sx={{ color: theme.palette.accent.main }} />
-                            Heads up: for best print results, set margins to &ldquo;none&rdquo; and scale to &ldquo;100%&rdquo;.
+                            Use the <strong>&nbsp;Print&nbsp;</strong> button above for a paginated, page-numbered printout — or Ctrl/Cmd+P for a quick one-off.
                         </Box>
 
                         <Box
@@ -173,6 +219,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                     gap={1}
                     mt={2}
                     mb={2}
+                    className="print:hidden"
                 >
                     {measures.map((m, idx) => {
                         const [beats, value] = m.timeSignature.split('/').map(Number)
@@ -302,6 +349,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
 
                 {/* Printable Renderers — kept on a light "sheet" for print/notation clarity */}
                 <Box
+                    ref={sheetRef}
                     sx={{
                         bgcolor: '#ffffff',
                         borderRadius: 2,
@@ -309,6 +357,35 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                         overflow: 'hidden',
                     }}
                 >
+                    {hasMetadataHeader && (
+                        <Box
+                            data-print-header="true"
+                            sx={{
+                                px: 3,
+                                pt: 2.5,
+                                pb: 1.5,
+                                textAlign: 'center',
+                                borderBottom: '1px solid rgba(0,0,0,0.1)',
+                                color: '#1a1a1a',
+                            }}
+                        >
+                            {metadata.title && (
+                                <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a1a' }}>
+                                    {metadata.title}
+                                </Typography>
+                            )}
+                            {subtitleParts.length > 0 && (
+                                <Typography variant="body2" sx={{ color: '#555', mt: 0.5 }}>
+                                    {subtitleParts.join(' · ')}
+                                </Typography>
+                            )}
+                            {metadata.notes && (
+                                <Typography variant="caption" sx={{ color: '#777', display: 'block', mt: 0.5, fontStyle: 'italic' }}>
+                                    {metadata.notes}
+                                </Typography>
+                            )}
+                        </Box>
+                    )}
                     {viewMode === 'tab' && <TabRenderer activeMeasureId={activeMeasureId} />}
                     {viewMode === 'staff' && <StaffRenderer activeMeasureId={activeMeasureId} />}
                     {viewMode === 'combined' && <CombinedRenderer activeMeasureId={activeMeasureId} />}

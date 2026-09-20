@@ -2,15 +2,52 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { MusicNote, MusicRest, MusicState, Measure, CompositionSnapshot } from "@/types/music"
-import { Tuning, tuningPresets, defaultTuningWithOctaves, resolveTuningOctaves } from '@/utils/tunings'
+import { MusicNote, MusicRest, MusicState, Measure, CompositionSnapshot, PendingNoteAction, ScoreMetadata } from "@/types/music"
+import { Tuning, tuningPresets, defaultTuningWithOctaves, resolveTuningOctaves, resolveStringCount } from '@/utils/tunings'
 import { computePitchFromTab, computeTabFromPitch } from '@/tools/conversion'
-import { durationToBeats, getMeasureBeatCount } from '@/tools/duration'
+import { durationToBeats, getMeasureBeatCount, getOrderedMeasureItems } from '@/tools/duration'
 import { loadSettings, saveSettings } from '@/utils/settingsStore'
+import { getVoiceOptions } from '@/tools/playback'
+import { EMPTY_METADATA } from '@/lib/api/tabs'
 import { useTabs } from '@/context/TabsContext'
+import { useAuthContext } from '@/context/AuthProvider'
 import { v4 as uuid } from 'uuid'
 
 const MusicContext = createContext<MusicState | null>(null)
+
+// Per-tab composition snapshots + the active toolbar tool are persisted per
+// signed-in user so a refresh (or closing and reopening the browser) never
+// loses in-progress work or drops you back to a blank workspace — only the
+// truly ephemeral stuff (current note selection mid-drag, etc.) is allowed
+// to reset.
+const COMPOSITIONS_STORAGE_PREFIX = 'nextriff.compositions.'
+const ACTIVE_TOOL_STORAGE_PREFIX = 'nextriff.activeTool.'
+
+function compositionsStorageKey(userId: string) {
+    return `${COMPOSITIONS_STORAGE_PREFIX}${userId}`
+}
+function activeToolStorageKey(userId: string) {
+    return `${ACTIVE_TOOL_STORAGE_PREFIX}${userId}`
+}
+
+function readStoredCompositions(userId: string): Record<string, CompositionSnapshot> {
+    if (typeof window === 'undefined') return {}
+    try {
+        const raw = localStorage.getItem(compositionsStorageKey(userId))
+        return raw ? (JSON.parse(raw) as Record<string, CompositionSnapshot>) : {}
+    } catch {
+        return {}
+    }
+}
+
+function readStoredActiveTool(userId: string): string | null {
+    if (typeof window === 'undefined') return null
+    try {
+        return localStorage.getItem(activeToolStorageKey(userId))
+    } catch {
+        return null
+    }
+}
 
 function parseTimeSignature(ts?: string) {
     const [beats, value] = ts?.split('/')?.map(Number) ?? []
@@ -35,10 +72,13 @@ function createDefaultComposition(): CompositionSnapshot {
         tuning: workingTuning,
         tempo: saved.tempo,
         selectedNoteRefs: [],
+        selectedVoice: saved.voice ?? getVoiceOptions(saved.instrument)[0]?.id ?? '',
+        metadata: { ...EMPTY_METADATA },
     }
 }
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
+    const { user } = useAuthContext()
     const [activeTool, setActiveTool] = useState('cockpit')
     const [selectedInstrument, setSelectedInstrument] = useState("guitar")
     const [selectedGenre, setSelectedGenre] = useState("All")
@@ -49,6 +89,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const [showArcs, setShowArcs] = useState(false)
     const [useAlternate, setUseAlternate] = useState(false)
     const [customTunings, setCustomTunings] = useState<Tuning[]>([])
+    const [selectedVoice, setSelectedVoice] = useState(getVoiceOptions('guitar')[0]?.id ?? '')
+    const [metadata, setMetadata] = useState<ScoreMetadata>({ ...EMPTY_METADATA })
+    const updateMetadata = (updates: Partial<ScoreMetadata>) =>
+        setMetadata(prev => ({ ...prev, ...updates }))
 
     const addCustomTuning = (t: Tuning) => setCustomTunings(prev => [...prev, t])
 
@@ -69,6 +113,22 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         const nextTuning: Tuning = { name: 'Standard', notes: presetNotes, description: 'Default tuning' }
         setSelectedTuning(nextTuning)
         setTuning(resolveTuningOctaves(instrument, presetNotes))
+        // The new instrument's voice list is a different set of ids entirely
+        // (e.g. bass's "Slap 1" doesn't exist for violin) — reset to its
+        // first/default voice rather than keeping a stale, meaningless id.
+        setSelectedVoice(getVoiceOptions(instrument)[0]?.id ?? '')
+    }
+
+    // Extends/trims the *current* tuning (whatever preset/custom tuning is
+    // active) to a different string count — e.g. picking "7" in the
+    // Instrument panel's Strings dropdown for a 6-string guitar tuning. This
+    // previously had no effect at all: InstrumentSelector reported the new
+    // string count, but nothing consumed it.
+    const setStringCount = (count: number) => {
+        const adjustedNotes = resolveStringCount(selectedTuning.notes, count)
+        const nextTuning: Tuning = { ...selectedTuning, notes: adjustedNotes }
+        setSelectedTuning(nextTuning)
+        setTuning(resolveTuningOctaves(selectedInstrument, adjustedNotes))
     }
 
     const [measures, setMeasures] = useState<Measure[]>([
@@ -116,10 +176,31 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 measuresPerRow,
                 scoreFixedWidth,
                 tempo,
+                voice: selectedVoice,
             })
         }, 200)
         return () => clearTimeout(id)
-    }, [selectedInstrument, selectedGenre, selectedTuning, tuning, customTunings, showArcs, useAlternate, measuresPerRow, scoreFixedWidth, tempo])
+    }, [selectedInstrument, selectedGenre, selectedTuning, tuning, customTunings, showArcs, useAlternate, measuresPerRow, scoreFixedWidth, tempo, selectedVoice])
+
+    // Restores whichever toolbar tool (Instrument & Tuning, Fretboard, etc.)
+    // was active before a refresh, per signed-in user. Runs once per
+    // resolved user id rather than unconditionally on every render.
+    const hydratedActiveToolForUserIdRef = useRef<string | null>(null)
+    useEffect(() => {
+        if (!user?.id || hydratedActiveToolForUserIdRef.current === user.id) return
+        const stored = readStoredActiveTool(user.id)
+        if (stored) setActiveTool(stored)
+        hydratedActiveToolForUserIdRef.current = user.id
+    }, [user?.id])
+
+    useEffect(() => {
+        if (!user?.id || hydratedActiveToolForUserIdRef.current !== user.id) return
+        try {
+            localStorage.setItem(activeToolStorageKey(user.id), activeTool)
+        } catch {
+            // See the tabs-persistence comment elsewhere — best-effort only.
+        }
+    }, [activeTool, user?.id])
 
     // --- MEASURES ---
     const addMeasure = (clef: string = 'treble', timeSignature: string = '4/4', keySignature: string = 'C') => {
@@ -132,6 +213,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     // --- NOTE SELECTION + NOTATION MODIFIERS ---
     const [selectedNoteRefs, setSelectedNoteRefs] = useState<{ measureId: string; noteId: string }[]>([])
+    // See PendingNoteAction — set by the notation toolbar's Insert Before/
+    // Insert After/Edit actions, consumed by whichever input tool
+    // (Fretboard/Keyboard) the user commits a note from next.
+    const [pendingNoteAction, setPendingNoteAction] = useState<PendingNoteAction | null>(null)
 
     const toggleNoteSelection = (measureId: string, noteId: string) => {
         setSelectedNoteRefs(prev => {
@@ -151,6 +236,13 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             const measure = measures.find(m => m.id === r.measureId)
             return !!measure?.notes.some(n => n.id === r.noteId)
         }))
+        // A pending insert/edit action anchored to a now-deleted note would
+        // otherwise silently target nothing — clear it defensively.
+        setPendingNoteAction(prev => {
+            if (!prev) return prev
+            const measure = measures.find(m => m.id === prev.measureId)
+            return measure?.notes.some(n => n.id === prev.noteId) ? prev : null
+        })
     }, [measures])
 
     const toggleModifierOnSelection = (modifierId: string) => {
@@ -191,8 +283,24 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const activeTabId = tabsApi?.activeTab?.id
     const compositionsRef = useRef<Record<string, CompositionSnapshot>>({})
     const previousTabIdRef = useRef<string | undefined>(undefined)
+    // Tracks which user's persisted compositions we've already merged into
+    // compositionsRef, so it happens exactly once per resolved user id and
+    // (critically) BEFORE the very first tab-switch/seed below reads from
+    // that ref — otherwise a freshly-restored tab would seed a brand-new
+    // blank composition instead of finding its persisted one.
+    const hydratedCompositionsForUserIdRef = useRef<string | null>(null)
 
     useEffect(() => {
+        // Hydrate this user's persisted compositions the first time we know
+        // who they are — deliberately part of the same effect as the
+        // tab-switch logic below (rather than a separate effect) so there's
+        // no ordering race between "load persisted data" and "seed/restore
+        // whichever tab is active."
+        if (user?.id && hydratedCompositionsForUserIdRef.current !== user.id) {
+            compositionsRef.current = { ...readStoredCompositions(user.id), ...compositionsRef.current }
+            hydratedCompositionsForUserIdRef.current = user.id
+        }
+
         const prevId = previousTabIdRef.current
         // Guard against React 18 StrictMode re-invoking this effect a second
         // time in dev with the exact same deps (no real tab change) — without
@@ -203,7 +311,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
         if (prevId) {
             compositionsRef.current[prevId] = {
-                measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs,
+                measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs, selectedVoice, metadata,
             }
         }
 
@@ -217,25 +325,68 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             setTuning(snapshot.tuning)
             setTempo(snapshot.tempo)
             setSelectedNoteRefs(snapshot.selectedNoteRefs)
+            setSelectedVoice(snapshot.selectedVoice)
+            setMetadata(snapshot.metadata ?? { ...EMPTY_METADATA })
         }
 
         previousTabIdRef.current = activeTabId
-        // Only re-run when the active tab actually changes — the outgoing
-        // snapshot deliberately reads the latest measures/etc via closure
-        // rather than being listed as a dependency.
+        // Only re-run when the active tab (or the resolved user) changes —
+        // the outgoing snapshot deliberately reads the latest measures/etc
+        // via closure rather than being listed as a dependency.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTabId])
+    }, [activeTabId, user?.id])
 
     // Drop stale per-tab snapshots once their tab is actually closed, so a
-    // long session doesn't quietly accumulate memory for tabs that no
-    // longer exist.
+    // long session doesn't quietly accumulate memory (and localStorage
+    // space) for tabs that no longer exist. Gated on tabsApi.hydrated:
+    // TabsContext's own tabs list starts out empty before ITS localStorage
+    // restore completes, and treating that transient empty list as "the
+    // user genuinely has no tabs" would wipe out every persisted
+    // composition (including the one just hydrated above) before TabsContext
+    // ever got a chance to restore its matching tab ids.
     useEffect(() => {
-        if (!tabsApi) return
+        if (!tabsApi || !tabsApi.hydrated) return
         const validIds = new Set(tabsApi.tabs.map(t => t.id))
+        let removedAny = false
         Object.keys(compositionsRef.current).forEach(id => {
-            if (!validIds.has(id)) delete compositionsRef.current[id]
+            if (!validIds.has(id)) {
+                delete compositionsRef.current[id]
+                removedAny = true
+            }
         })
-    }, [tabsApi, tabsApi?.tabs])
+        if (removedAny && user?.id) {
+            try {
+                localStorage.setItem(compositionsStorageKey(user.id), JSON.stringify(compositionsRef.current))
+            } catch {
+                // Best-effort — see other persistence comments in this file.
+            }
+        }
+    }, [tabsApi, tabsApi?.tabs, tabsApi?.hydrated, user?.id])
+
+    // Autosaves the composition data itself (measures, instrument, tuning,
+    // etc.) so a refresh never loses in-progress edits. The *active* tab's
+    // freshest values only live in the plain state above (compositionsRef is
+    // only updated for it at tab-switch time), so this merges that live
+    // state in on top of the ref before writing — otherwise a refresh right
+    // after editing notes (without switching tabs first) would restore the
+    // second-to-last saved state instead of what's on screen.
+    useEffect(() => {
+        if (!user?.id || hydratedCompositionsForUserIdRef.current !== user.id) return
+        const id = setTimeout(() => {
+            const merged = { ...compositionsRef.current }
+            if (activeTabId) {
+                merged[activeTabId] = {
+                    measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs, selectedVoice, metadata,
+                }
+            }
+            try {
+                localStorage.setItem(compositionsStorageKey(user.id), JSON.stringify(merged))
+            } catch {
+                // Best-effort — see other persistence comments in this file.
+            }
+        }, 300)
+        return () => clearTimeout(id)
+    }, [measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs, selectedVoice, metadata, activeTabId, user?.id])
 
     // Used by "Open"/Load (see the backend tab-storage integration) to seed
     // a specific tab's composition — including the currently active one,
@@ -250,6 +401,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             setTuning(data.tuning)
             setTempo(data.tempo)
             setSelectedNoteRefs(data.selectedNoteRefs)
+            setSelectedVoice(data.selectedVoice)
+            setMetadata(data.metadata ?? { ...EMPTY_METADATA })
         }
     }
 
@@ -367,11 +520,28 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 // directly caused notes to be inserted twice under React 18
                 // StrictMode, which intentionally invokes state updaters
                 // twice in development to catch exactly this kind of bug.
+                //
+                // A new note only continues the last open group if it's
+                // truly adjacent to it — i.e. the immediately preceding item
+                // in the measure (by chronological order) is that group's
+                // last note. Without this check, a quarter note (or a rest)
+                // inserted between two runs of 8th/16th notes wouldn't reset
+                // beamGroups (that block only runs for beamable durations),
+                // so the next 8th/16th note would incorrectly get appended
+                // onto the earlier, now-noncontiguous group.
                 let beamGroups = current.beamGroups ?? []
                 if (dur === '8' || dur === '16') {
+                    const precedingItems = getOrderedMeasureItems(current)
+                    const precedingItem = precedingItems[precedingItems.length - 1]
                     const lastGroup = beamGroups.length > 0 ? beamGroups[beamGroups.length - 1] : undefined
-                    beamGroups = (lastGroup && lastGroup.length < 4)
-                        ? [...beamGroups.slice(0, -1), [...lastGroup, newNote.id]]
+                    const continuesLastGroup = !!lastGroup
+                        && lastGroup.length < 4
+                        && !!precedingItem
+                        && precedingItem.type === 'note'
+                        && lastGroup[lastGroup.length - 1] === precedingItem.item.id
+
+                    beamGroups = continuesLastGroup
+                        ? [...beamGroups.slice(0, -1), [...lastGroup!, newNote.id]]
                         : [...beamGroups, [newNote.id]]
                 }
 
@@ -394,49 +564,143 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             prev.map(m => {
                 if (m.id !== measureId) return m
 
-                return {
-                    ...m,
-                    notes: m.notes.flatMap(n => {
-                        if (n.id !== noteId) return [n]
+                const notes = m.notes.flatMap(n => {
+                    if (n.id !== noteId) return [n]
 
-                        // ✅ If no specific pitch requested, remove the whole note
-                        if (!pitchToRemove) return []
+                    // ✅ If no specific pitch requested, remove the whole note
+                    if (!pitchToRemove) return []
 
-                        // ✅ If chord, remove just that pitch
-                        if (Array.isArray(n.pitch)) {
-                            const pitchIdx = n.pitch.findIndex(p => p === pitchToRemove)
-                            if (pitchIdx === -1) return [n] // pitch not found, keep note
+                    // ✅ If chord, remove just that pitch
+                    if (Array.isArray(n.pitch)) {
+                        const pitchIdx = n.pitch.findIndex(p => p === pitchToRemove)
+                        if (pitchIdx === -1) return [n] // pitch not found, keep note
 
-                            const newPitch = [...n.pitch]
-                            newPitch.splice(pitchIdx, 1)
+                        const newPitch = [...n.pitch]
+                        newPitch.splice(pitchIdx, 1)
 
-                            const newString = Array.isArray(n.string) ? [...n.string] : n.string ? [n.string] : []
-                            const newFret = Array.isArray(n.fret) ? [...n.fret] : n.fret ? [n.fret] : []
+                        const newString = Array.isArray(n.string) ? [...n.string] : n.string ? [n.string] : []
+                        const newFret = Array.isArray(n.fret) ? [...n.fret] : n.fret ? [n.fret] : []
 
-                            if (pitchIdx < newString.length) newString.splice(pitchIdx, 1)
-                            if (pitchIdx < newFret.length) newFret.splice(pitchIdx, 1)
+                        if (pitchIdx < newString.length) newString.splice(pitchIdx, 1)
+                        if (pitchIdx < newFret.length) newFret.splice(pitchIdx, 1)
 
-                            // If chord is now empty, drop the note entirely
-                            if (newPitch.length === 0) return []
+                        // If chord is now empty, drop the note entirely
+                        if (newPitch.length === 0) return []
 
-                            return [{
-                                ...n,
-                                pitch: newPitch,
-                                string: newString,
-                                fret: newFret,
-                            }]
-                        }
+                        return [{
+                            ...n,
+                            pitch: newPitch,
+                            string: newString,
+                            fret: newFret,
+                        }]
+                    }
 
-                        // ✅ If single note, removing its pitch deletes the note
-                        if (typeof n.pitch === 'string' && n.pitch === pitchToRemove) {
-                            return []
-                        }
+                    // ✅ If single note, removing its pitch deletes the note
+                    if (typeof n.pitch === 'string' && n.pitch === pitchToRemove) {
+                        return []
+                    }
 
-                        return [n]
-                    }),
-                }
+                    return [n]
+                })
+
+                // Whether this note still exists as a note object afterwards
+                // (e.g. only one pitch of a chord was removed) determines
+                // whether it should stay referenced in beamGroups.
+                const stillExists = notes.some(n => n.id === noteId)
+                const beamGroups = stillExists
+                    ? m.beamGroups
+                    : m.beamGroups
+                        .map(group => group.filter(id => id !== noteId))
+                        .filter(group => group.length >= 2)
+
+                return { ...m, notes, beamGroups }
             })
         )
+    }
+
+    // Deletes every currently-selected note (across whichever measures they
+    // belong to) and clears the selection — the notation toolbar's Delete
+    // action. Each removeNote call is its own setMeasures update, but React
+    // batches synchronous updates from the same event handler, so this is
+    // one re-render, not one per note.
+    const deleteSelectedNotes = () => {
+        selectedNoteRefs.forEach(ref => removeNote(ref.measureId, ref.noteId))
+        clearNoteSelection()
+    }
+
+    // Inserts a brand-new note immediately before/after an existing one,
+    // splicing it into the measure's true chronological position (see
+    // getOrderedMeasureItems) rather than appending at the end like addNote.
+    // Deliberately does NOT spill overflow into a following measure the way
+    // addNote does — an insert always stays local to the measure it targets,
+    // even if that pushes it over its beat capacity; the Score Preview
+    // already surfaces an "Overflow!" warning for exactly this case.
+    const insertNoteRelative = (
+        measureId: string,
+        anchorNoteId: string,
+        position: 'before' | 'after',
+        incoming: Partial<MusicNote>
+    ) => {
+        setMeasures(prev => prev.map(m => {
+            if (m.id !== measureId) return m
+
+            // Build the note the same way addNote does: normalize to arrays,
+            // then compute whichever of pitch/tab-position is missing.
+            let note: MusicNote = {
+                id: uuid(),
+                pitch: incoming.pitch ?? '',
+                duration: incoming.duration ?? 'q',
+                string: incoming.string,
+                fret: incoming.fret,
+            }
+            if (!Array.isArray(note.pitch)) note.pitch = note.pitch ? [note.pitch] : []
+            if (note.string != null && !Array.isArray(note.string)) note.string = [note.string]
+            if (note.fret != null && !Array.isArray(note.fret)) note.fret = [note.fret]
+
+            if (note.pitch.length > 0 && (!note.string || !note.fret)) {
+                const strings: number[] = []
+                const frets: number[] = []
+                note.pitch.forEach(p => {
+                    const tab = computeTabFromPitch(p, tuning)
+                    strings.push(tab.string)
+                    frets.push(tab.fret)
+                })
+                note.string = strings
+                note.fret = frets
+            }
+            if ((!note.pitch || note.pitch.length === 0) && note.string && note.fret) {
+                const pitches: string[] = []
+                note.string.forEach((s, i) => {
+                    let f = 0
+                    if (Array.isArray(note.fret)) f = note.fret[i] ?? 0
+                    else if (typeof note.fret === 'number') f = note.fret
+                    pitches.push(computePitchFromTab(s, f, tuning))
+                })
+                note.pitch = pitches
+            }
+
+            const orderedItems = getOrderedMeasureItems(m)
+            const anchorIdx = orderedItems.findIndex(entry => entry.type === 'note' && entry.item.id === anchorNoteId)
+            if (anchorIdx === -1) return m // anchor note not found — no-op
+
+            const insertAt = position === 'before' ? anchorIdx : anchorIdx + 1
+            const newItems = [...orderedItems]
+            newItems.splice(insertAt, 0, { type: 'note', item: note })
+
+            // Reassign sequential order across everything so the new note's
+            // position is reflected consistently for rendering/playback.
+            // The inserted note isn't added to any beamGroups even if it's
+            // an 8th/16th note — it'll render with its own flag; regrouping
+            // surrounding beams around a mid-run insert is a follow-up.
+            const notes: MusicNote[] = []
+            const rests: MusicRest[] = []
+            newItems.forEach((entry, i) => {
+                if (entry.type === 'note') notes.push({ ...(entry.item as MusicNote), order: i })
+                else rests.push({ ...(entry.item as MusicRest), order: i })
+            })
+
+            return { ...m, notes, rests }
+        }))
     }
 
     const updateNote = (measureId: string, noteId: string, updates: Partial<MusicNote>) => {
@@ -579,6 +843,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 selectedInstrument,
                 setSelectedInstrument,
                 selectInstrument,
+                selectedVoice,
+                setSelectedVoice,
+                metadata,
+                updateMetadata,
                 showArcs,
                 setShowArcs,
                 useAlternate,
@@ -588,6 +856,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 selectedTuning,
                 setSelectedTuning,
                 selectTuning,
+                setStringCount,
                 customTunings,
                 addCustomTuning,
                 tuning,
@@ -607,6 +876,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 toggleNoteSelection,
                 clearNoteSelection,
                 toggleModifierOnSelection,
+                deleteSelectedNotes,
+                insertNoteRelative,
+                pendingNoteAction,
+                setPendingNoteAction,
                 measuresPerRow,
                 setMeasuresPerRow,
                 scoreFixedWidth,

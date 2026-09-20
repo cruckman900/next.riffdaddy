@@ -141,3 +141,87 @@
     page-break-inside: avoid;
   }
 }
+
+/* Print support ------------------------------------------------------- */
+
+/* Minimum margins the browser's print engine will honor by default (the
+   user's own "Margins" dropdown in the print dialog still overrides this
+   if they explicitly pick something else, but "Default" now means "small"
+   instead of the browser's usual ~1in). `size: auto` leaves paper size/
+   orientation up to the printer/dialog rather than forcing one. */
+@page {
+  size: auto;
+  margin: 8mm;
+}
+
+@media print {
+  /* Only the Score Preview's white "sheet" (metadata header + renderer)
+     should ever reach paper — everything else (navbar, tool rail, tool
+     panel, tab bar, measure selector, hints, etc.) is marked print:hidden
+     at the component level; this is a belt-and-suspenders fallback for
+     anything that isn't. */
+  html, body {
+    background: #fff !important;
+  }
+
+  #__next, main {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* Each stave/tab row is drawn as its own small SVG (see TabRenderer.tsx /
+     StaffRenderer.tsx / CombinedRenderer.tsx) specifically so this can
+     work: break-inside: avoid tells the printer's pagination to treat a
+     whole row as an indivisible unit, pushing it onto the next page
+     wholesale rather than slicing through the middle of a stave. */
+  .score-print-row {
+    break-inside: avoid;
+    page-break-inside: avoid; /* legacy alias for older print engines */
+  }
+
+  /* Workbench's main flex row is sized to the on-screen viewport
+     (calc(100vh - ...)) with a bottom border — neither makes sense once
+     paginated onto paper, and the fixed height would otherwise visually
+     clip/constrain the score to one screen's worth of content. */
+  .workbench-row {
+    height: auto !important;
+    min-height: 0 !important;
+    border-bottom: none !important;
+  }
+}
+
+/* "Print Score" preview mode (see src/lib/print/printScore.ts) — Paged.js
+   paginates the score into real page-sized boxes appended here, so what's
+   on screen is exactly what prints, including working "Page X of Y"
+   numbers. While active, everything else in the app is hidden (rather than
+   floated in an overlay) so the print engine only ever sees real, unclipped
+   page content — no ancestor's `overflow`/fixed-height layout to fight. */
+body.print-preview-active > *:not([data-print-preview-root]) {
+  display: none !important;
+}
+
+#print-preview-root {
+  background: #525659;
+  min-height: 100vh;
+  overflow: visible !important;
+}
+
+#print-preview-root .pagedjs_page {
+  margin: 24px auto;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  background: #fff;
+}
+
+@media print {
+  #print-preview-root {
+    background: none !important;
+    min-height: 0 !important;
+  }
+
+  #print-preview-root .pagedjs_page {
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+}

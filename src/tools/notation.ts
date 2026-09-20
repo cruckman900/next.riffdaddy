@@ -6,7 +6,7 @@
 // Combined view, so a measure's tab and staff staves always share one width).
 
 import { Measure, MusicNote, MusicRest } from '@/types/music'
-import { TabNote, StaveNote, Voice, Formatter } from 'vexflow'
+import { TabNote, StaveNote, Voice, Formatter, Beam, TabStave, Stave, CanvasContext } from 'vexflow'
 import { applyNoteModifiers } from './noteModifiers'
 import { getOrderedMeasureItems } from './duration'
 
@@ -71,15 +71,98 @@ export function buildStaffTickables(measure: Measure): StaveNote[] {
     })
 }
 
+/**
+ * Maps each MusicNote id to its index within a tab tickables array (which is
+ * always a 1:1, in-order mirror of measure.notes).
+ */
+export function buildTabNoteIndex(measure: Measure): Map<string, number> {
+    const map = new Map<string, number>()
+    measure.notes.forEach((n, i) => map.set(n.id, i))
+    return map
+}
+
+/**
+ * Maps each MusicNote id to its index within a staff tickables array — which
+ * interleaves notes and rests in chronological order (see
+ * getOrderedMeasureItems), so this can't just mirror measure.notes directly
+ * the way the tab index can.
+ */
+export function buildStaffNoteIndex(measure: Measure): Map<string, number> {
+    const map = new Map<string, number>()
+    getOrderedMeasureItems(measure).forEach((entry, i) => {
+        if (entry.type === 'note') map.set(entry.item.id, i)
+    })
+    return map
+}
+
+/**
+ * Builds explicit Beam objects from measure.beamGroups (the runs of
+ * consecutive 8th/16th notes tracked as notes are added — see
+ * MusicContext.addNote) instead of relying on VexFlow's
+ * `Beam.generateBeams(tickables)`, which auto-groups purely by duration and
+ * ignores any notion of "this run of notes was added together." That
+ * mismatch was the cause of flags not disappearing correctly as flagged
+ * notes were added one at a time — generateBeams' own grouping heuristic
+ * doesn't necessarily agree with beamGroups, so the two fought each other.
+ * Groups with fewer than 2 resolvable notes are skipped (a lone flagged
+ * note, or a group whose notes were since deleted) and simply render with
+ * their individual flags, which is correct VexFlow behavior.
+ */
+export function buildBeamsFromGroups(
+    measure: Measure,
+    tickables: (TabNote | StaveNote)[],
+    noteIdToIndex: Map<string, number>
+): Beam[] {
+    const beams: Beam[] = []
+    for (const group of measure.beamGroups) {
+        const groupTickables = group
+            .map(id => noteIdToIndex.get(id))
+            .filter((i): i is number => i !== undefined)
+            .map(i => tickables[i])
+            .filter((t): t is TabNote | StaveNote => !!t)
+
+        if (groupTickables.length < 2) continue
+
+        try {
+            beams.push(new Beam(groupTickables))
+        } catch (err) {
+            console.warn('NEXTRiff: failed to build a beam group', err)
+        }
+    }
+    return beams
+}
+
+// Lazily-created, never-attached-to-the-DOM 2D canvas context, reused for
+// every modifier-width measurement below. VexFlow's Stave.format() needs a
+// real RenderContext to measure text-based glyphs (time signature digits,
+// key signature accidentals) — without one, getNoteStartX() silently
+// degrades to a tiny fixed fallback offset instead of the real width these
+// modifiers need, which is what caused notes to overflow past a measure's
+// own barline for anything beyond a bare treble/tab clef + 4/4 + no
+// accidentals. A plain in-memory canvas 2D context (never appended to the
+// document) is enough for accurate text metrics — no visible/attached
+// canvas or SVG element required.
+let measurementContext: CanvasContext | null = null
+function getMeasurementContext(): CanvasContext | null {
+    if (typeof document === 'undefined') return null // SSR guard
+    if (!measurementContext) {
+        const ctx2d = document.createElement('canvas').getContext('2d')
+        if (!ctx2d) return null
+        measurementContext = new CanvasContext(ctx2d)
+    }
+    return measurementContext
+}
+
 export const MEASURE_PADDING = 10
 
-const MIN_MEASURE_WIDTH = 100
-// Extra width reserved for stave modifiers (clef/time/key signature), which
-// may be drawn at the start of a row. Row membership isn't known yet when
-// measures are first sized, so this is applied to every measure rather than
-// only ones that end up first-in-row — a little generous for the rest, but
-// safe against ever under-sizing and clipping notation.
-const MODIFIER_ALLOWANCE = 60
+// Was 100 — but VexFlow's real preCalculateMinTotalWidth() for a handful of
+// notes (a few quarter notes, say ~9-35px raw) is small, so a 100px floor
+// silently clamped almost every lightly-filled measure to the exact same
+// width, making measures look like they never resized as notes were added.
+// This floor now only exists to keep a genuinely empty measure from
+// collapsing to near-zero width; anything with real content quickly grows
+// past it and reflects actual note density.
+const MIN_MEASURE_WIDTH = 24
 
 function minVoiceWidth(tickables: (TabNote | StaveNote)[], numBeats: number, beatValue: number): number {
     if (!tickables.length) return 0
@@ -88,6 +171,44 @@ function minVoiceWidth(tickables: (TabNote | StaveNote)[], numBeats: number, bea
     const formatter = new Formatter()
     formatter.joinVoices([voice])
     return formatter.preCalculateMinTotalWidth([voice])
+}
+
+// Extra width to reserve for whatever clef/time/key signature a measure
+// would draw if it ends up first-in-row (row membership isn't known yet
+// when measures are first sized, so — like MODIFIER_ALLOWANCE before it —
+// this is applied to every measure rather than only ones that end up
+// first-in-row: a little generous for the rest, but safe against ever
+// under-sizing and clipping notation).
+//
+// This used to be a flat guess (60px) applied uniformly, which was fine for
+// a bare treble/tab clef + 4/4 + C (no accidentals), but silently ran out
+// of room for anything busier — e.g. a key signature with several sharps/
+// flats needs meaningfully more horizontal space than one with none, and a
+// flat guess can't know that. Instead, a throwaway Stave/TabStave is asked
+// to actually lay out the exact same clef/time/key this measure would draw
+// (using the in-memory measurement context above for accurate glyph
+// metrics), and we read back how much space it really consumed. A modest
+// fixed safety margin is added on top since this scratch measurement can
+// run before web fonts (Bravura/Academico) have fully finished loading,
+// giving a slightly smaller number than the real render (which happens
+// later, by which point fonts are ready) — better to reserve a little extra
+// than let a note clip past the barline again.
+const MODIFIER_SAFETY_MARGIN = 20
+function measureModifierWidth(measure: Measure, mode: ScoreViewMode): number {
+    const ctx = getMeasurementContext()
+    const scratchWidth = (isTab: boolean) => {
+        const stave = isTab ? new TabStave(0, 0, 400) : new Stave(0, 0, 400)
+        if (ctx) stave.setContext(ctx)
+        if (measure.clef) stave.addClef(isTab ? 'tab' : measure.clef)
+        if (measure.timeSignature) stave.addTimeSignature(measure.timeSignature)
+        if (measure.keySignature) stave.addKeySignature(measure.keySignature)
+        return stave.getNoteStartX() - stave.getX()
+    }
+
+    let allowance = 0
+    if (mode === 'tab' || mode === 'combined') allowance = Math.max(allowance, scratchWidth(true))
+    if (mode === 'staff' || mode === 'combined') allowance = Math.max(allowance, scratchWidth(false))
+    return allowance + MODIFIER_SAFETY_MARGIN
 }
 
 export type ScoreViewMode = 'tab' | 'staff' | 'combined'
@@ -114,9 +235,10 @@ export function computeMeasureLayoutWidths(measures: Measure[], mode: ScoreViewM
             width = Math.max(width, minVoiceWidth(buildStaffTickables(measure), numBeats, beatValue))
         }
 
-        return width + MODIFIER_ALLOWANCE
+        return width + measureModifierWidth(measure, mode)
     })
 }
+
 
 /**
  * Draws a translucent selection highlight behind an already-rendered note's

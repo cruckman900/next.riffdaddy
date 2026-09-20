@@ -18,16 +18,57 @@ export interface PlaybackEvent {
     pitches: string[]  // e.g. ['E4', 'G#4'] — soundfont-player note names
 }
 
-/** Maps NEXTRiff's instrument keys to a reasonable soundfont-player voice. */
-const INSTRUMENT_SOUND_MAP: Record<string, Parameters<typeof loadInstrument>[1]> = {
-    guitar: 'acoustic_guitar_steel',
-    bass: 'electric_bass_finger',
-    violin: 'violin',
-    cello: 'cello',
+export interface VoiceOption {
+    id: string
+    label: string
+    soundfontName: string
 }
 
-export function instrumentSoundName(instrumentKey: string) {
-    return INSTRUMENT_SOUND_MAP[instrumentKey] ?? 'acoustic_grand_piano'
+// General MIDI has distinct patches for different guitar/bass/string timbres
+// (soundfont-player loads real GM soundfont samples for all of them, free,
+// no API key) — surfaced here as a per-instrument "Voice" picker instead of
+// hard-locking every instrument to a single fixed sound.
+const INSTRUMENT_VOICES: Record<string, VoiceOption[]> = {
+    guitar: [
+        { id: 'acoustic_nylon', label: 'Acoustic (Nylon)', soundfontName: 'acoustic_guitar_nylon' },
+        { id: 'acoustic_steel', label: 'Acoustic (Steel)', soundfontName: 'acoustic_guitar_steel' },
+        { id: 'clean', label: 'Clean Electric', soundfontName: 'electric_guitar_clean' },
+        { id: 'jazz', label: 'Jazz Electric', soundfontName: 'electric_guitar_jazz' },
+        { id: 'muted', label: 'Muted Electric', soundfontName: 'electric_guitar_muted' },
+        { id: 'overdrive', label: 'Overdrive', soundfontName: 'overdriven_guitar' },
+        { id: 'distortion', label: 'Distortion', soundfontName: 'distortion_guitar' },
+        { id: 'harmonics', label: 'Harmonics', soundfontName: 'guitar_harmonics' },
+    ],
+    bass: [
+        { id: 'finger', label: 'Finger', soundfontName: 'electric_bass_finger' },
+        { id: 'pick', label: 'Pick', soundfontName: 'electric_bass_pick' },
+        { id: 'fretless', label: 'Fretless', soundfontName: 'fretless_bass' },
+        { id: 'slap1', label: 'Slap 1', soundfontName: 'slap_bass_1' },
+        { id: 'slap2', label: 'Slap 2', soundfontName: 'slap_bass_2' },
+        { id: 'acoustic', label: 'Acoustic', soundfontName: 'acoustic_bass' },
+    ],
+    violin: [
+        { id: 'standard', label: 'Standard', soundfontName: 'violin' },
+        { id: 'pizzicato', label: 'Pizzicato', soundfontName: 'pizzicato_strings' },
+        { id: 'tremolo', label: 'Tremolo', soundfontName: 'tremolo_strings' },
+        { id: 'ensemble', label: 'Ensemble', soundfontName: 'string_ensemble_1' },
+    ],
+    cello: [
+        { id: 'standard', label: 'Standard', soundfontName: 'cello' },
+        { id: 'pizzicato', label: 'Pizzicato', soundfontName: 'pizzicato_strings' },
+        { id: 'tremolo', label: 'Tremolo', soundfontName: 'tremolo_strings' },
+        { id: 'ensemble', label: 'Ensemble', soundfontName: 'string_ensemble_1' },
+    ],
+}
+
+export function getVoiceOptions(instrumentKey: string): VoiceOption[] {
+    return INSTRUMENT_VOICES[instrumentKey] ?? INSTRUMENT_VOICES.guitar
+}
+
+export function instrumentSoundName(instrumentKey: string, voiceId?: string): Parameters<typeof loadInstrument>[1] {
+    const voices = getVoiceOptions(instrumentKey)
+    const match = voiceId ? voices.find(v => v.id === voiceId) : undefined
+    return (match ?? voices[0])?.soundfontName as Parameters<typeof loadInstrument>[1] ?? 'acoustic_grand_piano'
 }
 
 /**
@@ -90,8 +131,8 @@ export class PlaybackEngine {
         return this.ac
     }
 
-    async ensureInstrument(instrumentKey: string): Promise<void> {
-        const soundName = instrumentSoundName(instrumentKey)
+    async ensureInstrument(instrumentKey: string, voiceId?: string): Promise<void> {
+        const soundName = instrumentSoundName(instrumentKey, voiceId)
         const ac = this.getContext()
         if (ac.state === 'suspended') await ac.resume()
         if (this.player && this.loadedInstrument === soundName) return

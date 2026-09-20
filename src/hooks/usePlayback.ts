@@ -10,7 +10,7 @@ import { useMusic } from '@/context/MusicContext'
 import { PlaybackEngine, buildPlaybackSchedule } from '@/tools/playback'
 
 export function usePlayback() {
-    const { measures, tempo, selectedInstrument } = useMusic()
+    const { measures, tempo, selectedInstrument, selectedVoice } = useMusic()
     const engineRef = useRef<PlaybackEngine | null>(null)
 
     const [isPlaying, setIsPlaying] = useState(false)
@@ -50,7 +50,7 @@ export function usePlayback() {
         setError(null)
         setIsLoading(true)
         try {
-            await engine.ensureInstrument(selectedInstrument)
+            await engine.ensureInstrument(selectedInstrument, selectedVoice)
         } catch {
             setError('Could not load the instrument sound. Check your connection and try again.')
             setIsLoading(false)
@@ -65,7 +65,7 @@ export function usePlayback() {
                 setCurrentMeasureIndex(null)
             },
         })
-    }, [measures, tempo, selectedInstrument])
+    }, [measures, tempo, selectedInstrument, selectedVoice])
 
     const toggle = useCallback(() => {
         if (isPlaying) stop()

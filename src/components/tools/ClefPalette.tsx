@@ -149,17 +149,33 @@ export function ClefPalette({ measureId }: ToolProps) {
                 Select a key signature for this measure.
             </Typography>
 
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {KEYS.map((key) => (
+            {/* Two-column grid instead of a wrapping flex row: with labels of
+                such varied length ("C Major / A Minor" vs "F# Major / D#
+                Minor"), a wrapping Stack produced a jagged right edge as
+                each row broke at a different point. Pinning column 1 chips
+                to the left and column 2 chips to the right keeps both the
+                left and right edges of the container flush/clean instead. */}
+            <Box
+                sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    columnGap: 1,
+                    rowGap: 1,
+                }}
+            >
+                {KEYS.map((key, i) => (
                     <Chip
                         key={key.sig}
                         label={key.label}
                         variant="outlined"
                         onClick={() => handleChangeKeySignature(key.sig)}
-                        sx={chipSx(selectedKeySignature === key.sig)}
+                        sx={{
+                            ...chipSx(selectedKeySignature === key.sig),
+                            justifySelf: i % 2 === 0 ? 'start' : 'end',
+                        }}
                     />
                 ))}
-            </Stack>
+            </Box>
 
         </ToolTemplate>
     )

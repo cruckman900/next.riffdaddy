@@ -7,7 +7,7 @@ import Link from "next/link"
 import axios from "axios"
 import { useAuthContext } from "@/context/AuthProvider"
 import { TextField, Button, Box, Typography, InputAdornment, IconButton, Stack } from "@mui/material"
-import { UserRead } from "@/types/user"
+import { AuthResponse } from "@/types/user"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -51,11 +51,9 @@ export default function RegisterForm() {
         setLoading(true);
         setErrorMsg("");
         try {
-            const res = await axios.post<UserRead>(`${process.env.NEXT_PUBLIC_API_URL}/users/`, data)
+            const res = await axios.post<AuthResponse>(`${process.env.NEXT_PUBLIC_API_URL}/users/`, data)
             setSuccess(true);
-            const user_id = res.data.id
-            const userData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}`)
-            login(userData.data)
+            login(res.data.user, res.data.access_token)
             router.push("/workspace")
         } catch (err) {
             setErrorMsg(`Registration failed. Please try again. ${err}`);

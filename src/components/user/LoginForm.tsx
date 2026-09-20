@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import { useAuthContext } from "@/context/AuthProvider";
+import { AuthResponse } from "@/types/user";
 import { TextField, Button, Box, Typography, InputAdornment, IconButton, Stack } from "@mui/material";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,11 +46,8 @@ export default function LoginForm() {
         setLoading(true);
         setErrorMsg("");
         try {
-            const res = await axios.post<{ user_id: string }>(`${process.env.NEXT_PUBLIC_API_URL}/users/login`, data);
-            const user_id = res.data.user_id
-            const userData = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}`)
-
-            login(userData.data)
+            const res = await axios.post<AuthResponse>(`${process.env.NEXT_PUBLIC_API_URL}/users/login`, data);
+            login(res.data.user, res.data.access_token)
             router.push("/workspace")
         } catch (err) {
             setErrorMsg(`Invalid credentials. Please try again. ${err}`);

@@ -28,7 +28,7 @@ function midiToNote(midi: number): string {
 
 export function FretboardTool({ measureId, duration }: ToolProps) {
     const theme = useTheme()
-    const { addNote, tuning } = useMusic()
+    const { addNote, tuning, measures, pendingNoteAction, setPendingNoteAction, insertNoteRelative, updateNote } = useMusic()
     const dur = duration ?? 'q'
     const mid = measureId ?? ''
 
@@ -37,6 +37,23 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
     const [selectedNotes, setSelectedNotes] = useState<
         { string: number; fret: number; pitch: string }[]
     >([])
+
+    // When the notation toolbar's Edit action targets a note, pre-populate
+    // this tool's selection with that note's existing pitches so the user
+    // sees (and can tweak) what's already there instead of starting blank.
+    const pendingKey = pendingNoteAction ? `${pendingNoteAction.measureId}:${pendingNoteAction.noteId}:${pendingNoteAction.mode}` : null
+    React.useEffect(() => {
+        if (!pendingNoteAction || pendingNoteAction.mode !== 'edit') return
+        const anchor = measures
+            .find(m => m.id === pendingNoteAction.measureId)
+            ?.notes.find(n => n.id === pendingNoteAction.noteId)
+        if (!anchor) return
+        const strings = Array.isArray(anchor.string) ? anchor.string : anchor.string != null ? [anchor.string] : []
+        const frets = Array.isArray(anchor.fret) ? anchor.fret : anchor.fret != null ? [anchor.fret] : []
+        const pitches = Array.isArray(anchor.pitch) ? anchor.pitch : anchor.pitch ? [anchor.pitch] : []
+        setSelectedNotes(strings.map((s, i) => ({ string: s, fret: frets[i] ?? 0, pitch: pitches[i] ?? '' })))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pendingKey])
 
     const toggleSelect = (string: number, fret: number, pitch: string) => {
         const exists = selectedNotes.find(n => n.string === string && n.fret === fret)
@@ -48,13 +65,38 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
     }
 
     const commitChord = () => {
-        if (!mid || selectedNotes.length === 0) return
+        if (selectedNotes.length === 0) return
+
+        if (pendingNoteAction) {
+            const { mode, measureId: targetMeasureId, noteId } = pendingNoteAction
+            const payload = {
+                string: selectedNotes.map(n => n.string),
+                fret: selectedNotes.map(n => n.fret),
+                pitch: selectedNotes.map(n => n.pitch),
+                duration: dur,
+            }
+            if (mode === 'edit') {
+                updateNote(targetMeasureId, noteId, payload)
+            } else {
+                insertNoteRelative(targetMeasureId, noteId, mode === 'insert-before' ? 'before' : 'after', payload)
+            }
+            setPendingNoteAction(null)
+            setSelectedNotes([])
+            return
+        }
+
+        if (!mid) return
         addNote(mid, {
             string: selectedNotes.map(n => n.string),
             fret: selectedNotes.map(n => n.fret),
             pitch: selectedNotes.map(n => n.pitch),
             duration: dur,
         })
+        setSelectedNotes([])
+    }
+
+    const cancelPendingAction = () => {
+        setPendingNoteAction(null)
         setSelectedNotes([])
     }
 
@@ -68,7 +110,32 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
 
     return (
         <ToolTemplate title="Fretboard Input" shortcut="3">
-            <Button fullWidth variant="contained" onClick={handleAddRest}>
+            {pendingNoteAction && (
+                <Box
+                    sx={{
+                        mb: 2,
+                        p: 1.5,
+                        borderRadius: 1.5,
+                        border: '1px solid',
+                        borderColor: theme.palette.accent.main,
+                        bgcolor: `${theme.palette.accent.main}1a`,
+                    }}
+                >
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.accent.main }}>
+                        {pendingNoteAction.mode === 'edit' && 'Editing selected note'}
+                        {pendingNoteAction.mode === 'insert-before' && 'Inserting a note before the selected one'}
+                        {pendingNoteAction.mode === 'insert-after' && 'Inserting a note after the selected one'}
+                    </Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                        Pick frets below, then Commit — or Cancel to go back to normal input.
+                    </Typography>
+                    <Box mt={1}>
+                        <Button size="small" onClick={cancelPendingAction}>Cancel</Button>
+                    </Box>
+                </Box>
+            )}
+
+            <Button fullWidth variant="contained" onClick={handleAddRest} disabled={!!pendingNoteAction}>
                 Insert a {dur} rest.
             </Button>
 
@@ -230,7 +297,7 @@ export function FretboardTool({ measureId, duration }: ToolProps) {
                         boxShadow: selectedNotes.length > 0 ? `0 0 14px ${theme.palette.primary.main}77` : 'none',
                     }}
                 >
-                    Commit {selectedNotes.length > 1 ? 'Chord' : 'Note'}
+                    {pendingNoteAction?.mode === 'edit' ? 'Save Changes' : `Commit ${selectedNotes.length > 1 ? 'Chord' : 'Note'}`}
                 </Button>
             </Box>
         </ToolTemplate>

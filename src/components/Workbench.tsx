@@ -47,6 +47,7 @@ export default function Workbench() {
     return (
         <div style={{ display: "flex", flexDirection: "column", height: "100%", width: "100%" }}>
             <div
+                className="workbench-row"
                 style={{
                     display: "flex",
                     flexDirection: "row",
@@ -58,12 +59,13 @@ export default function Workbench() {
                 }}
             >
                 {/* ToolRail */}
-                <div style={{ flexShrink: 0, borderRight: `1px solid ${theme.palette.divider}` }}>
+                <div className="print:hidden" style={{ flexShrink: 0, borderRight: `1px solid ${theme.palette.divider}` }}>
                     <ToolRail activeToolId={activeTool} setActiveTool={setActiveTool} />
                 </div>
 
                 {/* ToolPanel */}
                 <div
+                    className="print:hidden"
                     style={{
                         flexShrink: 0,
                         width: isMobile ? "calc(100vw - 60px)" : "30%",

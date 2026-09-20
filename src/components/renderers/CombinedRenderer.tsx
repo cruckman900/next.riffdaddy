@@ -8,11 +8,10 @@ import {
     Stave,
     Voice,
     Formatter,
-    Beam,
     StaveConnector,
     Barline,
 } from 'vexflow'
-import { computeMeasureLayoutWidths, buildTabTickables, buildStaffTickables, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
+import { computeMeasureLayoutWidths, buildTabTickables, buildStaffTickables, buildTabNoteIndex, buildStaffNoteIndex, buildBeamsFromGroups, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
 import { getOrderedMeasureItems } from '@/tools/duration'
 import { MusicNote } from '@/types/music'
 import Box from '@mui/material/Box'
@@ -22,7 +21,7 @@ interface CombinedRendererProps {
 }
 
 export default function CombinedRenderer({ activeMeasureId }: CombinedRendererProps) {
-    const { measures, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection } = useMusic()
+    const { measures, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection, tuning } = useMusic()
     const containerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -39,20 +38,14 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
         const marginLeft = 10
         const marginTop = 20
         const staffOffset = 150
-        const linePadding = 40
+        // Height budget for a single row's own small SVG (tab stave + staff
+        // stave stacked, plus breathing room) — see the matching comment in
+        // TabRenderer.tsx for why each row now gets its own Renderer/SVG
+        // instead of sharing one canvas for the whole score.
+        const rowHeight = staffOffset * 2 + 60
 
         const widths = computeMeasureLayoutWidths(measures, 'combined')
 
-        // Estimate number of systems and height
-        const numSystems = Math.ceil(measures.length / (measuresPerRow || measures.length))
-        const estimatedSystemHeight = staffOffset * 2
-        const rendererHeight = marginTop + numSystems * (estimatedSystemHeight + linePadding)
-
-        const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG)
-        renderer.resize(rendererWidth, rendererHeight)
-        const context = renderer.getContext()
-
-        let y = marginTop
         let rowMeasures: typeof measures = []
         let rowWidths: number[] = []
 
@@ -79,6 +72,18 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
             // cap or simply ran out of room for another measure.
             const scale = isLastRow ? 1 : rendererWidth / rowTotal
             let x = marginLeft
+            const y = marginTop
+
+            // Each row gets its own wrapper + VexFlow Renderer/SVG — see the
+            // matching comment in TabRenderer.tsx for why (lets print CSS
+            // keep a whole tab+staff system on one page via
+            // .score-print-row's break-inside: avoid).
+            const rowEl = document.createElement('div')
+            rowEl.className = 'score-print-row'
+            containerRef.current!.appendChild(rowEl)
+            const renderer = new Renderer(rowEl, Renderer.Backends.SVG)
+            renderer.resize(rendererWidth, rowHeight)
+            const context = renderer.getContext()
 
             const tabStaves: TabStave[] = []
             const staffStaves: Stave[] = []
@@ -87,7 +92,10 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                 const scaledWidth = rowWidths[idx] * scale - MEASURE_PADDING
                 const { numBeats, beatValue } = parseTimeSignature(measure.timeSignature)
 
-                const tabStave = new TabStave(x, y, scaledWidth)
+                // Line count must follow the current tuning's string count —
+                // without this, TabStave always defaults to 6 lines
+                // regardless of the selected instrument/tuning.
+                const tabStave = new TabStave(x, y, scaledWidth, { numLines: tuning.length })
                 const staffStave = new Stave(x, y + staffOffset, scaledWidth)
 
                 // Highlight active measure
@@ -167,13 +175,20 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                 if (tabTickables.length > 0) {
                     const voice = new Voice({ numBeats, beatValue }).setStrict(false)
                     voice.addTickables(tabTickables)
-                    new Formatter().joinVoices([voice]).format([voice], scaledWidth - 50)
+                    // formatToStave asks the stave how much space its own
+                    // clef/time/key actually consumed instead of a fudge
+                    // factor — see the matching comment in TabRenderer.tsx.
+                    new Formatter().joinVoices([voice]).formatToStave([voice], tabStave)
 
-                    const beforeCount = containerRef.current?.querySelectorAll('.vf-tabnote').length ?? 0
+                    // Beams must be constructed BEFORE voice.draw() — see the
+                    // matching comment in TabRenderer.tsx for why.
+                    const tabBeams = buildBeamsFromGroups(measure, tabTickables, buildTabNoteIndex(measure))
+
+                    const beforeCount = rowEl.querySelectorAll('.vf-tabnote').length
                     voice.draw(context, tabStave)
-                    Beam.generateBeams(tabTickables).forEach(b => b.setContext(context).draw())
+                    tabBeams.forEach(b => b.setContext(context).draw())
 
-                    const newNoteEls = Array.from(containerRef.current?.querySelectorAll('.vf-tabnote') ?? []).slice(beforeCount)
+                    const newNoteEls = Array.from(rowEl.querySelectorAll('.vf-tabnote')).slice(beforeCount)
                     newNoteEls.forEach((el, i) => {
                         const note = measure.notes[i]
                         if (!note) return
@@ -194,13 +209,20 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                 if (staffTickables.length > 0) {
                     const voice = new Voice({ numBeats, beatValue }).setStrict(false)
                     voice.addTickables(staffTickables)
-                    new Formatter().joinVoices([voice]).format([voice], scaledWidth - 50)
+                    // formatToStave asks the stave how much space its own
+                    // clef/time/key actually consumed instead of a fudge
+                    // factor — see the matching comment in TabRenderer.tsx.
+                    new Formatter().joinVoices([voice]).formatToStave([voice], staffStave)
 
-                    const beforeCount = containerRef.current?.querySelectorAll('.vf-stavenote').length ?? 0
+                    // Beams must be constructed BEFORE voice.draw() — see the
+                    // matching comment in TabRenderer.tsx for why.
+                    const staffBeams = buildBeamsFromGroups(measure, staffTickables, buildStaffNoteIndex(measure))
+
+                    const beforeCount = rowEl.querySelectorAll('.vf-stavenote').length
                     voice.draw(context, staffStave)
-                    Beam.generateBeams(staffTickables).forEach(b => b.setContext(context).draw())
+                    staffBeams.forEach(b => b.setContext(context).draw())
 
-                    const newNoteEls = Array.from(containerRef.current?.querySelectorAll('.vf-stavenote') ?? []).slice(beforeCount)
+                    const newNoteEls = Array.from(rowEl.querySelectorAll('.vf-stavenote')).slice(beforeCount)
                     const orderedItems = getOrderedMeasureItems(measure)
                     newNoteEls.forEach((el, i) => {
                         const entry = orderedItems[i]
@@ -243,12 +265,6 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                     .draw()
             }
 
-            // Advance y by actual system height
-            const tabBB = tabStaves[0].getBoundingBox()
-            const staffBB = staffStaves[0].getBoundingBox()
-            const systemHeight = (staffBB.getY() + staffBB.getH()) - tabBB.getY()
-            y += systemHeight + linePadding
-
             rowMeasures = []
             rowWidths = []
         }
@@ -268,7 +284,7 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
         })
 
         flushRow(true)
-    }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection])
+    }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection, tuning])
 
     return (
         <Box sx={{ width: '100%', overflowX: 'auto', padding: 2 }}>

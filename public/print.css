@@ -1,0 +1,32 @@
+/* public/print.css
+ *
+ * Fed to Paged.js (see src/lib/print/printScore.ts) — NOT loaded by the app
+ * normally. Paged.js's own polyfill actually implements the CSS Paged Media
+ * margin-box spec (unlike real browsers), so this is what lets us have true
+ * per-page numbers.
+ */
+
+@page {
+  size: letter portrait;
+  margin: 12mm;
+
+  @bottom-center {
+    content: "Page " counter(page) " of " counter(pages);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 9pt;
+    color: #666;
+  }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Mirrors .score-print-row in src/app/styles/globals.css — keeps a whole
+   stave/tab row from splitting across two pages. */
+.score-print-row {
+  break-inside: avoid;
+}

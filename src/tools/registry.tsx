@@ -12,6 +12,8 @@ import { KeyboardTool } from "@/components/tools/KeyboardTool"
 import { PlaybackTool } from "@/components/tools/PlaybackTool"
 import { ClefPalette } from "@/components/tools/ClefPalette"
 import { ClefIcon } from "@/components/icons/ClefIcon"
+import { MetadataTool } from "@/components/tools/MetadataTool"
+import { MetadataIcon } from "@/components/icons/MetadataIcon"
 
 export const TOOL_REGISTRY: Record<string, {
     id: string
@@ -55,6 +57,13 @@ export const TOOL_REGISTRY: Record<string, {
         component: PlaybackTool,
         shortcut: "5"
     },
+    metadata: {
+        id: "metadata",
+        label: "Song Info",
+        icon: MetadataIcon,
+        component: MetadataTool,
+        shortcut: "6"
+    },
 }
 
 export const TOOL_ORDER: string[] = [
@@ -63,4 +72,5 @@ export const TOOL_ORDER: string[] = [
     "fretboard",
     "keyboard",
     "playback",
+    "metadata",
 ]

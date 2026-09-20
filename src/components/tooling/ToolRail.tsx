@@ -12,6 +12,7 @@ export function ToolRail({ activeToolId, setActiveTool }: ToolRailProps) {
 
     return (
         <div
+            className="print:hidden"
             style={{
                 width: "60px",
                 height: "100%",

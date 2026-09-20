@@ -10,6 +10,7 @@ import {
     useMediaQuery,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { useTabsStrict } from '@/context/TabsContext'
 import { useTheme } from '@mui/material/styles'
 
@@ -27,6 +28,9 @@ export default function TabBar() {
     // context menu state
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null)
     const [menuTabId, setMenuTabId] = useState<string | null>(null)
+    // Tab id to switch into rename mode for once the context menu has fully
+    // closed (see the Menu's TransitionProps.onExited below).
+    const [pendingRenameId, setPendingRenameId] = useState<string | null>(null)
 
     useEffect(() => {
         const raf = requestAnimationFrame(() => setMounted(true))
@@ -46,13 +50,16 @@ export default function TabBar() {
         setMenuTabId(null)
     }
 
+    // Just requests the rename — the actual setEditingId happens in the
+    // Menu's onExited below, once its closing focus-restoration is done.
     const handleRename = () => {
-        if (menuTabId) setEditingId(menuTabId)
+        setPendingRenameId(menuTabId)
         handleCloseMenu()
     }
 
     return (
         <Box
+            className="print:hidden"
             sx={{
                 display: 'flex',
                 flexDirection: isSmall ? 'row' : 'column',
@@ -127,6 +134,23 @@ export default function TabBar() {
                                             {t.title}
                                         </Box>
                                     )}
+                                    {/* Touch-friendly rename entry point — double-click/right-click
+                                        don't have great mobile equivalents (double-tap usually
+                                        zooms, and there's no "right click"), so small screens get an
+                                        explicit tappable affordance instead. */}
+                                    {isFile && isSmall && !isEditing && (
+                                        <IconButton
+                                            component="span"
+                                            size="small"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                handleContextMenu(e, t.id)
+                                            }}
+                                            aria-label={`Rename ${t.title}`}
+                                        >
+                                            <MoreVertIcon fontSize="small" />
+                                        </IconButton>
+                                    )}
                                     <IconButton
                                         component="span"
                                         size="small"
@@ -164,6 +188,20 @@ export default function TabBar() {
                 anchorEl={menuAnchor}
                 open={Boolean(menuAnchor)}
                 onClose={handleCloseMenu}
+                TransitionProps={{
+                    // Entering edit mode only after the closing transition
+                    // (and MUI's focus-restoration to the menu's anchor) has
+                    // fully finished. Doing it any earlier — even
+                    // synchronously in the MenuItem's onClick — races the
+                    // Menu's own focus-restore: the rename TextField would
+                    // mount and autoFocus, then get its focus immediately
+                    // yanked back and blurred by the still-closing Menu,
+                    // which cancelled the rename before a user could type.
+                    onExited: () => {
+                        if (pendingRenameId) setEditingId(pendingRenameId)
+                        setPendingRenameId(null)
+                    },
+                }}
             >
                 <MenuItem onClick={handleRename}>Rename</MenuItem>
             </Menu>

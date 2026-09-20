@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from 'react'
 import { useMusic } from '@/context/MusicContext'
-import { Renderer, Stave, Voice, Formatter, Beam, Barline } from 'vexflow'
-import { computeMeasureLayoutWidths, buildStaffTickables, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
+import { Renderer, Stave, Voice, Formatter, Barline } from 'vexflow'
+import { computeMeasureLayoutWidths, buildStaffTickables, buildStaffNoteIndex, buildBeamsFromGroups, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
 import { getOrderedMeasureItems } from '@/tools/duration'
 import { MusicNote } from '@/types/music'
 import Box from '@mui/material/Box'
@@ -26,15 +26,13 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
     const rendererWidth = scoreFixedWidth ? 800 : (containerRef.current?.clientWidth || window.innerWidth)
     const marginLeft = 10
     const marginTop = 20
-    const lineHeight = 150
-    const staffBaseHeight = 180
+    // Height budget for a single row's own small SVG — see the matching
+    // comment in TabRenderer.tsx for why each row now gets its own
+    // Renderer/SVG instead of sharing one canvas for the whole score.
+    const rowHeight = 180
 
     const widths = computeMeasureLayoutWidths(measures, 'staff')
-    const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG)
-    renderer.resize(rendererWidth, Math.max(staffBaseHeight, lineHeight * measures.length))
-    const context = renderer.getContext()
 
-    let y = marginTop
     let rowMeasures: typeof measures = []
     let rowWidths: number[] = []
 
@@ -61,6 +59,17 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
       // out of room for another measure.
       const scale = isLastRow ? 1 : rendererWidth / rowTotal
       let x = marginLeft
+      const y = marginTop
+
+      // Each row gets its own wrapper + VexFlow Renderer/SVG — see the
+      // matching comment in TabRenderer.tsx for why (lets print CSS keep a
+      // whole stave on one page via .score-print-row's break-inside: avoid).
+      const rowEl = document.createElement('div')
+      rowEl.className = 'score-print-row'
+      containerRef.current!.appendChild(rowEl)
+      const renderer = new Renderer(rowEl, Renderer.Backends.SVG)
+      renderer.resize(rendererWidth, rowHeight)
+      const context = renderer.getContext()
 
       rowMeasures.forEach((measure, idx) => {
         const scaledWidth = rowWidths[idx] * scale - MEASURE_PADDING
@@ -125,16 +134,21 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
         if (tickables.length > 0) {
           const voice = new Voice({ numBeats, beatValue }).setStrict(false)
           voice.addTickables(tickables)
-          new Formatter().joinVoices([voice]).format([voice], scaledWidth - 40)
+          // formatToStave asks the stave itself how much space its clef/
+          // time/key signature actually consumed (getNoteStartX()) instead
+          // of a hand-picked fudge factor — see the matching comment in
+          // TabRenderer.tsx for why a fixed number silently overflowed
+          // notes past the barline for busier signatures.
+          new Formatter().joinVoices([voice]).formatToStave([voice], stave)
 
-          const beforeCount = containerRef.current?.querySelectorAll('.vf-stavenote').length ?? 0
+          // Beams must be constructed BEFORE voice.draw() — see the matching
+          // comment in TabRenderer.tsx for why (flag-suppression is decided
+          // inside each note's draw() by checking `this.beam`, which the
+          // Beam constructor sets synchronously via note.setBeam()).
+          const beams = buildBeamsFromGroups(measure, tickables, buildStaffNoteIndex(measure))
+
+          const beforeCount = rowEl.querySelectorAll('.vf-stavenote').length
           voice.draw(context, stave)
-
-          // ✅ Beam all 8th/16th groups so flags disappear
-          const beams = Beam.generateBeams(tickables, {
-            beamRests: false,   // don’t beam rests
-            maintainStemDirections: true,
-          })
           beams.forEach(b => b.setContext(context).draw())
 
           // Make each note clickable so it can be selected for the notation
@@ -145,7 +159,7 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
           // getOrderedMeasureItems), since tickable.getSVGElement() isn't
           // reliably populated for every VexFlow element type.
           const orderedItems = getOrderedMeasureItems(measure)
-          const newNoteEls = Array.from(containerRef.current?.querySelectorAll('.vf-stavenote') ?? []).slice(beforeCount)
+          const newNoteEls = Array.from(rowEl.querySelectorAll('.vf-stavenote')).slice(beforeCount)
           newNoteEls.forEach((el, i) => {
             const entry = orderedItems[i]
             if (!entry || entry.type !== 'note') return
@@ -170,7 +184,6 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
         lastKey = measure.keySignature || lastKey
       })
 
-      y += lineHeight
       rowMeasures = []
       rowWidths = []
     }

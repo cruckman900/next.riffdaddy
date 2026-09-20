@@ -24,6 +24,9 @@ export interface PersistedSettings {
     scoreFixedWidth: boolean
     // Playback tempo in BPM — persisted like the other score settings.
     tempo: number
+    // Playback voice/timbre id (see src/tools/playback.ts's VoiceOption) —
+    // null falls back to the current instrument's first voice.
+    voice: string | null
 }
 
 export const DEFAULT_SETTINGS: PersistedSettings = {
@@ -38,6 +41,7 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
     measuresPerRow: 4,
     scoreFixedWidth: false,
     tempo: 120,
+    voice: null,
 }
 
 const STORAGE_KEY = 'nextriff.settings.v1'

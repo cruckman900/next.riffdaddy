@@ -27,10 +27,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             >
                 <DocumentWrapper>
                     <EmotionCacheProvider>
-                        <SplashMount />
                         <ThemeProviderContext>
                             <ThemeRegistry>
                                 <AuthProvider>
+                                    <SplashMount />
                                     <Header />
                                     <TabsProvider>
                                         <MusicProvider>

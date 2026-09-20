@@ -35,6 +35,22 @@ export interface Measure {
     beamGroups: string[][]     // NEW (array of arrays of note IDs to be beamed together)
 }
 
+// Optional descriptive info about the piece itself — Title, Artist, etc. —
+// shown as a header above the printed/previewed score and editable via the
+// Metadata tool (src/components/tools/MetadataTool.tsx). Every field is
+// optional free text so an empty score never forces the user to fill
+// anything in; `capo` is numeric (fret number, 0 = no capo).
+export interface ScoreMetadata {
+    title: string
+    artist: string
+    album: string
+    composer: string
+    year: string
+    capo: number
+    difficulty: string
+    notes: string
+}
+
 // Everything that's independent per open workspace tab (as opposed to
 // global display/layout preferences like measuresPerRow, which live in
 // settingsStore and apply regardless of which tab is active). This is the
@@ -47,6 +63,21 @@ export interface CompositionSnapshot {
     tuning: string[]
     tempo: number
     selectedNoteRefs: { measureId: string; noteId: string }[]
+    // Playback timbre for the selected instrument (e.g. guitar's "Overdrive"
+    // vs "Acoustic (Nylon)") — see src/tools/playback.ts's VoiceOption/
+    // getVoiceOptions. Per-tab like the rest of this snapshot.
+    selectedVoice: string
+    metadata: ScoreMetadata
+}
+
+// Set by the notation toolbar's Insert Before/After/Edit actions (see
+// NotationToolbar.tsx) and consumed by FretboardTool/KeyboardTool: instead
+// of their "Commit" button always appending a brand-new note, it instead
+// updates or inserts relative to `noteId` and then clears this back to null.
+export interface PendingNoteAction {
+    mode: 'edit' | 'insert-before' | 'insert-after'
+    measureId: string
+    noteId: string
 }
 
 export interface MusicState {
@@ -59,6 +90,17 @@ export interface MusicState {
     // to that instrument's default preset (fixes tuning/instrument desync).
     selectInstrument: (instrument: string) => void
 
+    // Playback timbre for the current instrument (e.g. guitar's "Overdrive"
+    // vs "Acoustic (Nylon)") — see src/tools/playback.ts's getVoiceOptions.
+    selectedVoice: string
+    setSelectedVoice: (voice: string) => void
+
+    // Score metadata (Title/Artist/Album/etc.) — see ScoreMetadata. Merges
+    // partial updates so each form field in the Metadata tool can update
+    // independently without callers needing to spread the rest themselves.
+    metadata: ScoreMetadata
+    updateMetadata: (updates: Partial<ScoreMetadata>) => void
+
     selectedGenre: string
     setSelectedGenre: (genre: string) => void
 
@@ -67,6 +109,12 @@ export interface MusicState {
     // Cascading setter: updates selectedTuning AND the flat `tuning` notes
     // array together so the fretboard/renderers actually reflect the change.
     selectTuning: (t: Tuning) => void
+
+    // Adjusts the current tuning to a different string count (e.g. 6 -> 7
+    // string guitar) by extending/trimming from the low string, cascading
+    // into `tuning` the same way selectTuning does. Needed because the
+    // Instrument panel's Strings dropdown previously had no effect at all.
+    setStringCount: (count: number) => void
 
     showArcs: boolean
     setShowArcs: (s: boolean) => void
@@ -87,6 +135,23 @@ export interface MusicState {
     toggleNoteSelection: (measureId: string, noteId: string) => void
     clearNoteSelection: () => void
     toggleModifierOnSelection: (modifierId: string) => void
+
+    // Deletes every currently-selected note and clears the selection — the
+    // notation toolbar's Delete action.
+    deleteSelectedNotes: () => void
+
+    // Inserts a brand-new note immediately before/after an existing one
+    // within the same measure (not appended at the end like addNote) — the
+    // notation toolbar's Insert Before/Insert After actions, fulfilled by
+    // whichever input tool (Fretboard/Keyboard) the user commits a note
+    // from next while `pendingNoteAction` is set.
+    insertNoteRelative: (measureId: string, noteId: string, position: 'before' | 'after', note: Partial<MusicNote>) => void
+
+    // See PendingNoteAction — sets which note (if any) the next Fretboard/
+    // Keyboard "Commit" should edit or insert relative to, instead of its
+    // default behavior of appending a new note.
+    pendingNoteAction: PendingNoteAction | null
+    setPendingNoteAction: (action: PendingNoteAction | null) => void
 
     // Score Settings
     measuresPerRow: number

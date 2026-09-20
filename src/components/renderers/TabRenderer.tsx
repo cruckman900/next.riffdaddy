@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from 'react'
 import { useMusic } from '@/context/MusicContext'
-import { Renderer, TabStave, Voice, Formatter, Beam, Barline } from 'vexflow'
-import { computeMeasureLayoutWidths, buildTabTickables, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
+import { Renderer, TabStave, Voice, Formatter, Barline } from 'vexflow'
+import { computeMeasureLayoutWidths, buildTabTickables, buildTabNoteIndex, buildBeamsFromGroups, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
 import Box from '@mui/material/Box'
 
 interface CombinedRendererProps {
@@ -11,7 +11,7 @@ interface CombinedRendererProps {
 }
 
 export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) {
-  const { measures, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection } = useMusic()
+  const { measures, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection, tuning } = useMusic()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -27,15 +27,14 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
 
     const marginLeft = 10
     const marginTop = 20
-    const lineHeight = 120
-    const tabBaseHeight = 200
+    // Height budget for a single row's own small SVG — matches the vertical
+    // band each row used to occupy inside one shared canvas (rows advanced
+    // by `lineHeight` there), just now as an actual per-row element instead
+    // of a slice of one big canvas.
+    const rowHeight = 200
 
     const widths = computeMeasureLayoutWidths(measures, 'tab')
-    const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG)
-    renderer.resize(rendererWidth, Math.max(tabBaseHeight, lineHeight * measures.length))
-    const context = renderer.getContext()
 
-    let y = marginTop
     let rowMeasures: typeof measures = []
     let rowWidths: number[] = []
 
@@ -62,12 +61,28 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
       // out of room for another measure.
       const scale = isLastRow ? 1 : rendererWidth / rowTotal
       let x = marginLeft
+      const y = marginTop
+
+      // Each row gets its own wrapper + VexFlow Renderer/SVG (rather than
+      // sharing one canvas across the whole score) so `break-inside: avoid`
+      // (see .score-print-row in globals.css) can actually keep a printed
+      // page from splitting a stave in half — a single monolithic SVG has
+      // no DOM boundary a browser's print pagination could respect.
+      const rowEl = document.createElement('div')
+      rowEl.className = 'score-print-row'
+      containerRef.current!.appendChild(rowEl)
+      const renderer = new Renderer(rowEl, Renderer.Backends.SVG)
+      renderer.resize(rendererWidth, rowHeight)
+      const context = renderer.getContext()
 
       rowMeasures.forEach((measure, idx) => {
         const scaledWidth = rowWidths[idx] * scale - MEASURE_PADDING
         const { numBeats, beatValue } = parseTimeSignature(measure.timeSignature)
 
-        const stave = new TabStave(x, y, scaledWidth)
+        // Line count must follow the current tuning's string count (bass = 4,
+        // guitar = 6, etc.) — without this, TabStave always defaults to 6
+        // lines regardless of the selected instrument/tuning.
+        const stave = new TabStave(x, y, scaledWidth, { numLines: tuning.length })
 
         // Highlight active measure using stave bounding box
         if (measure.id === activeMeasureId) {
@@ -126,11 +141,28 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
         if (tickables.length > 0) {
           const voice = new Voice({ numBeats, beatValue }).setStrict(false)
           voice.addTickables(tickables)
-          new Formatter().joinVoices([voice]).format([voice], scaledWidth - 40)
+          // formatToStave (rather than a hand-picked `scaledWidth - N` fudge
+          // factor) asks the stave itself how much space its clef/time/key
+          // signature actually consumed (stave.getNoteStartX()) and lays
+          // notes out in whatever's left — a fixed fudge factor was tuned
+          // for a bare treble/tab clef + 4/4 + no accidentals, and silently
+          // let notes overflow past the barline for anything busier (a key
+          // signature with several sharps/flats, etc).
+          new Formatter().joinVoices([voice]).formatToStave([voice], stave)
 
-          const beforeCount = containerRef.current?.querySelectorAll('.vf-tabnote').length ?? 0
+          // Beams must be constructed BEFORE voice.draw() — StaveNote/TabNote
+          // decide whether to render their own flag glyph by checking
+          // `this.beam` at the exact moment draw() runs (not at some later
+          // reconciliation step), and the Beam constructor is what sets that
+          // flag via note.setBeam(). Building beams after voice.draw() (the
+          // previous order here) meant every flagged note had already drawn
+          // its own flag by the time a beam tried to suppress it — hence
+          // flags visibly sticking around on beamed notes.
+          const beams = buildBeamsFromGroups(measure, tickables, buildTabNoteIndex(measure))
+
+          const beforeCount = rowEl.querySelectorAll('.vf-tabnote').length
           voice.draw(context, stave)
-          Beam.generateBeams(tickables).forEach(b => b.setContext(context).draw())
+          beams.forEach(b => b.setContext(context).draw())
 
           // Make each note clickable so it can be selected for the notation
           // toolbar (accents, ornaments, dotted notes, techniques), and
@@ -138,7 +170,7 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
           // groups to MusicNote objects by draw order, since
           // tickable.getSVGElement() isn't reliably populated for every
           // VexFlow element type.
-          const newNoteEls = Array.from(containerRef.current?.querySelectorAll('.vf-tabnote') ?? []).slice(beforeCount)
+          const newNoteEls = Array.from(rowEl.querySelectorAll('.vf-tabnote')).slice(beforeCount)
           newNoteEls.forEach((el, i) => {
             const note = measure.notes[i]
             if (!note) return
@@ -157,7 +189,6 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
         x += scaledWidth
       })
 
-      y += lineHeight
       rowMeasures = []
       rowWidths = []
     }
@@ -178,7 +209,7 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
     })
 
     flushRow(true)
-  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection])
+  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, selectedNoteRefs, toggleNoteSelection, tuning])
 
   return (
     <Box sx={{ width: '100%', overflowX: 'auto', padding: 2 }}>

@@ -4,7 +4,7 @@ import { ToolTemplate } from "./ToolTemplate"
 import { useMusic } from '@/context/MusicContext'
 import { Typography, Box, Button, Stack, Divider } from '@mui/material'
 import { ToolProps } from '@/types/tooling'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTheme } from '@mui/material/styles'
 
 type Natural = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B'
@@ -23,7 +23,7 @@ function noteToMidi(note: string): number {
 
 export function KeyboardTool({ measureId, duration }: ToolProps) {
     const theme = useTheme()
-    const { addNote, tuning } = useMusic()
+    const { addNote, tuning, measures, pendingNoteAction, setPendingNoteAction, insertNoteRelative, updateNote } = useMusic()
     const scrollRef = useRef<HTMLDivElement>(null)
 
     const dur = duration ?? 'q'
@@ -44,6 +44,20 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
     // lowest guitar string (usually E2)
     const lowestMidi = noteToMidi(tuning[0]) // tuning[0] = low E in standard tuning
 
+    // When the notation toolbar's Edit action targets a note, pre-populate
+    // this tool's selection with that note's existing pitches.
+    const pendingKey = pendingNoteAction ? `${pendingNoteAction.measureId}:${pendingNoteAction.noteId}:${pendingNoteAction.mode}` : null
+    useEffect(() => {
+        if (!pendingNoteAction || pendingNoteAction.mode !== 'edit') return
+        const anchor = measures
+            .find(m => m.id === pendingNoteAction.measureId)
+            ?.notes.find(n => n.id === pendingNoteAction.noteId)
+        if (!anchor) return
+        const pitches = Array.isArray(anchor.pitch) ? anchor.pitch : anchor.pitch ? [anchor.pitch] : []
+        setSelectedKeys(pitches)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pendingKey])
+
     const toggleKey = (pitch: string) => {
         if (selectedKeys.includes(pitch)) {
             setSelectedKeys(selectedKeys.filter(p => p !== pitch))
@@ -53,8 +67,28 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
     }
 
     const commitChord = () => {
-        if (!mid || selectedKeys.length === 0) return
+        if (selectedKeys.length === 0) return
+
+        if (pendingNoteAction) {
+            const { mode, measureId: targetMeasureId, noteId } = pendingNoteAction
+            const payload = { pitch: selectedKeys, duration: dur }
+            if (mode === 'edit') {
+                updateNote(targetMeasureId, noteId, payload)
+            } else {
+                insertNoteRelative(targetMeasureId, noteId, mode === 'insert-before' ? 'before' : 'after', payload)
+            }
+            setPendingNoteAction(null)
+            setSelectedKeys([])
+            return
+        }
+
+        if (!mid) return
         addNote(mid, { pitch: selectedKeys, duration: dur })
+        setSelectedKeys([])
+    }
+
+    const cancelPendingAction = () => {
+        setPendingNoteAction(null)
         setSelectedKeys([])
     }
 
@@ -67,7 +101,32 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
 
     return (
         <ToolTemplate title="Keyboard Input" shortcut="4">
-            <Button fullWidth variant="contained" onClick={handleAddRest}>
+            {pendingNoteAction && (
+                <Box
+                    sx={{
+                        mb: 2,
+                        p: 1.5,
+                        borderRadius: 1.5,
+                        border: '1px solid',
+                        borderColor: theme.palette.accent.main,
+                        bgcolor: `${theme.palette.accent.main}1a`,
+                    }}
+                >
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.accent.main }}>
+                        {pendingNoteAction.mode === 'edit' && 'Editing selected note'}
+                        {pendingNoteAction.mode === 'insert-before' && 'Inserting a note before the selected one'}
+                        {pendingNoteAction.mode === 'insert-after' && 'Inserting a note after the selected one'}
+                    </Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                        Pick keys below, then Commit — or Cancel to go back to normal input.
+                    </Typography>
+                    <Box mt={1}>
+                        <Button size="small" onClick={cancelPendingAction}>Cancel</Button>
+                    </Box>
+                </Box>
+            )}
+
+            <Button fullWidth variant="contained" onClick={handleAddRest} disabled={!!pendingNoteAction}>
                 Insert a {dur} rest.
             </Button>
 
@@ -230,7 +289,7 @@ export function KeyboardTool({ measureId, duration }: ToolProps) {
                         boxShadow: selectedKeys.length > 0 ? `0 0 14px ${theme.palette.primary.main}77` : 'none',
                     }}
                 >
-                    Commit {selectedKeys.length > 1 ? 'Chord' : 'Note'}
+                    {pendingNoteAction?.mode === 'edit' ? 'Save Changes' : `Commit ${selectedKeys.length > 1 ? 'Chord' : 'Note'}`}
                 </Button>
             </Box>
         </ToolTemplate>

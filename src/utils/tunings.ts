@@ -94,6 +94,33 @@ export function resolveTuningOctaves(instrument: string, noteNames: string[]): s
     })
 }
 
+const CHROMATIC_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+/**
+ * Adjusts a tuning's string count by extending/trimming from the low string
+ * — e.g. going from 6 to 7 strings adds a low B a perfect fourth (5
+ * semitones) below the current lowest string, matching how real
+ * extended-range guitars/basses are actually tuned (a 7-string's low B sits
+ * a fourth below standard low E; a 5-string bass's low B sits a fourth below
+ * standard low E, etc). Trimming removes strings from the low end the same
+ * way. This gives every instrument+string-count combination a sensible
+ * default without needing a hand-authored preset for every possible count —
+ * players who want something more specific can still use "Add Custom Tuning".
+ */
+export function resolveStringCount(baseNotes: string[], targetCount: number): string[] {
+    if (targetCount <= 0 || baseNotes.length === 0) return baseNotes
+    let notes = [...baseNotes]
+    while (notes.length < targetCount) {
+        const lowestSemitone = noteIndexMap[notes[0]] ?? 4
+        const nextSemitone = ((lowestSemitone - 5) % 12 + 12) % 12
+        notes = [CHROMATIC_NAMES[nextSemitone], ...notes]
+    }
+    while (notes.length > targetCount) {
+        notes = notes.slice(1)
+    }
+    return notes
+}
+
 export const alternateTunings: { [instrument: string]: Tuning[] } = {
     guitar: [
         {

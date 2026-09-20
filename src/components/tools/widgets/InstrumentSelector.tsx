@@ -14,6 +14,12 @@ import { motion } from "framer-motion"
 
 type Props = {
     value?: string
+    // Actual current string count (e.g. tuning.length from MusicContext) —
+    // keeps the dropdown in sync with reality even across remounts (e.g.
+    // switching away to another tool panel and back used to silently reset
+    // this to the instrument's default, showing "6" while the tuning/TAB
+    // underneath was still genuinely 7 strings).
+    stringsValue?: number
     onChange: (instrument: string, strings: number, frets: number) => void
 }
 
@@ -24,23 +30,27 @@ const instrumentOptions: Record<string, { strings: number[]; frets: number[] }> 
     violin: { strings: [4], frets: [12, 15] },  // positions
 }
 
-export default function InstrumentSelector({ value, onChange }: Props) {
+export default function InstrumentSelector({ value, stringsValue, onChange }: Props) {
     const instrument = value ?? "guitar"
     const currentOpts = instrumentOptions[instrument] ?? instrumentOptions.guitar
 
-    const [strings, setStrings] = useState<number>(currentOpts.strings[0])
+    const [strings, setStrings] = useState<number>(stringsValue ?? currentOpts.strings[0])
     const [frets, setFrets] = useState<number>(currentOpts.frets[0])
 
-    // Reset strings/frets to the new instrument's defaults whenever the
-    // instrument (driven by the parent, e.g. context) changes — previously
-    // this compared against a separately-tracked local `instrument` copy that
-    // could fall out of sync, leaving stale strings/frets values that didn't
-    // belong to the new instrument's option list.
+    // Reset frets to the new instrument's defaults whenever the instrument
+    // (driven by the parent, e.g. context) changes — previously this also
+    // reset `strings`, which fought with `stringsValue` syncing below.
     useEffect(() => {
-        setStrings(currentOpts.strings[0])
         setFrets(currentOpts.frets[0])
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [instrument])
+
+    // Keep the displayed string count following the real current tuning
+    // length whenever it changes elsewhere (instrument switch, a custom
+    // tuning being selected, or just this component remounting).
+    useEffect(() => {
+        if (stringsValue != null) setStrings(stringsValue)
+    }, [stringsValue])
 
     const handleInstrumentChange = (val: string) => {
         const opts = instrumentOptions[val] ?? instrumentOptions.guitar
