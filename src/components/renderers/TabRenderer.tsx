@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useMusic } from '@/context/MusicContext'
 import { Renderer, TabStave, Voice, Formatter, Barline } from 'vexflow'
-import { computeMeasureLayoutWidths, buildTabTickables, buildTabNoteIndex, buildBeamsFromGroups, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
+import { computeMeasureLayoutWidths, buildTabTickables, buildTabNoteIndex, buildBeamsFromGroups, buildTiesFromGroups, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
 import Box from '@mui/material/Box'
 
 interface CombinedRendererProps {
@@ -159,10 +159,15 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
           // its own flag by the time a beam tried to suppress it — hence
           // flags visibly sticking around on beamed notes.
           const beams = buildBeamsFromGroups(measure, tickables, buildTabNoteIndex(measure))
+          // Ties are separate Element instances drawn after the voice/beams
+          // (unlike beams, they don't need to exist before voice.draw() —
+          // see buildTiesFromGroups for why).
+          const ties = buildTiesFromGroups(measure, tickables, buildTabNoteIndex(measure), 'tab')
 
           const beforeCount = rowEl.querySelectorAll('.vf-tabnote').length
           voice.draw(context, stave)
           beams.forEach(b => b.setContext(context).draw())
+          ties.forEach(t => t.setContext(context).draw())
 
           // Make each note clickable so it can be selected for the notation
           // toolbar (accents, ornaments, dotted notes, techniques), and

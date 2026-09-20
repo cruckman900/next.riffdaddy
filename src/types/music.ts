@@ -33,6 +33,12 @@ export interface Measure {
     timeSignature: string
     keySignature?: string       // NEW (optional, defaults to 'C')
     beamGroups: string[][]     // NEW (array of arrays of note IDs to be beamed together)
+    // Array of arrays of note IDs to be tied together, in chronological order
+    // within the group — e.g. ['a','b','c'] draws a tie from a→b and b→c.
+    // Ties are drawn as curved arcs connecting adjacent notes (visually like
+    // a slur) and are only supported between notes within the same measure —
+    // see toggleTieOnSelection in MusicContext.
+    tieGroups: string[][]
 }
 
 // Optional descriptive info about the piece itself — Title, Artist, etc. —
@@ -135,6 +141,13 @@ export interface MusicState {
     toggleNoteSelection: (measureId: string, noteId: string) => void
     clearNoteSelection: () => void
     toggleModifierOnSelection: (modifierId: string) => void
+
+    // Ties (or unties) every currently-selected note together, in
+    // chronological order, within whichever single measure they belong to —
+    // a no-op if fewer than 2 notes are selected or the selection spans more
+    // than one measure. See buildTiesFromGroups in src/tools/notation.ts for
+    // how a tie group is actually rendered.
+    toggleTieOnSelection: () => void
 
     // Deletes every currently-selected note and clears the selection — the
     // notation toolbar's Delete action.

@@ -11,7 +11,7 @@ import {
     StaveConnector,
     Barline,
 } from 'vexflow'
-import { computeMeasureLayoutWidths, buildTabTickables, buildStaffTickables, buildTabNoteIndex, buildStaffNoteIndex, buildBeamsFromGroups, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
+import { computeMeasureLayoutWidths, buildTabTickables, buildStaffTickables, buildTabNoteIndex, buildStaffNoteIndex, buildBeamsFromGroups, buildTiesFromGroups, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
 import { getOrderedMeasureItems } from '@/tools/duration'
 import { MusicNote } from '@/types/music'
 import Box from '@mui/material/Box'
@@ -183,10 +183,12 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                     // Beams must be constructed BEFORE voice.draw() — see the
                     // matching comment in TabRenderer.tsx for why.
                     const tabBeams = buildBeamsFromGroups(measure, tabTickables, buildTabNoteIndex(measure))
+                    const tabTies = buildTiesFromGroups(measure, tabTickables, buildTabNoteIndex(measure), 'tab')
 
                     const beforeCount = rowEl.querySelectorAll('.vf-tabnote').length
                     voice.draw(context, tabStave)
                     tabBeams.forEach(b => b.setContext(context).draw())
+                    tabTies.forEach(t => t.setContext(context).draw())
 
                     const newNoteEls = Array.from(rowEl.querySelectorAll('.vf-tabnote')).slice(beforeCount)
                     newNoteEls.forEach((el, i) => {
@@ -217,10 +219,12 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                     // Beams must be constructed BEFORE voice.draw() — see the
                     // matching comment in TabRenderer.tsx for why.
                     const staffBeams = buildBeamsFromGroups(measure, staffTickables, buildStaffNoteIndex(measure))
+                    const staffTies = buildTiesFromGroups(measure, staffTickables, buildStaffNoteIndex(measure), 'staff')
 
                     const beforeCount = rowEl.querySelectorAll('.vf-stavenote').length
                     voice.draw(context, staffStave)
                     staffBeams.forEach(b => b.setContext(context).draw())
+                    staffTies.forEach(t => t.setContext(context).draw())
 
                     const newNoteEls = Array.from(rowEl.querySelectorAll('.vf-stavenote')).slice(beforeCount)
                     const orderedItems = getOrderedMeasureItems(measure)

@@ -8,6 +8,7 @@ import DeleteTwoToneIcon from '@mui/icons-material/DeleteTwoTone'
 import KeyboardArrowLeftTwoToneIcon from '@mui/icons-material/KeyboardArrowLeftTwoTone'
 import KeyboardArrowRightTwoToneIcon from '@mui/icons-material/KeyboardArrowRightTwoTone'
 import EditTwoToneIcon from '@mui/icons-material/EditTwoTone'
+import GestureTwoToneIcon from '@mui/icons-material/GestureTwoTone'
 import { useMusic } from '@/context/MusicContext'
 import { NOTE_MODIFIERS, NOTE_MODIFIER_CATEGORIES } from '@/tools/noteModifiers'
 
@@ -21,7 +22,7 @@ export default function NotationToolbar() {
     const theme = useTheme()
     const {
         measures, selectedNoteRefs, clearNoteSelection, toggleModifierOnSelection,
-        deleteSelectedNotes, setPendingNoteAction, setActiveTool,
+        toggleTieOnSelection, deleteSelectedNotes, setPendingNoteAction, setActiveTool,
     } = useMusic()
 
     if (selectedNoteRefs.length === 0) return null
@@ -34,6 +35,21 @@ export default function NotationToolbar() {
         selectedNotes.length > 0 && selectedNotes.every(n => n.modifiers?.includes(modifierId))
 
     const singleRef = selectedNoteRefs.length === 1 ? selectedNoteRefs[0] : null
+
+    // Ties connect adjacent notes rather than decorating one at a time, so
+    // (unlike the modifier chips below) they only make sense for a selection
+    // of 2+ notes that all live in the same measure.
+    const selectedMeasureIds = new Set(selectedNoteRefs.map(r => r.measureId))
+    const canTie = selectedNoteRefs.length >= 2 && selectedMeasureIds.size === 1
+    const tieMeasure = canTie ? measures.find(m => m.id === selectedNoteRefs[0].measureId) : undefined
+    const isTieActive = (() => {
+        if (!canTie || !tieMeasure) return false
+        const selectedIds = selectedNoteRefs.map(r => r.noteId)
+        const orderedIds = tieMeasure.notes.map(n => n.id).filter(id => selectedIds.includes(id))
+        return (tieMeasure.tieGroups ?? []).some(
+            g => g.length === orderedIds.length && g.every((id, i) => id === orderedIds[i])
+        )
+    })()
 
     const startPendingAction = (mode: 'edit' | 'insert-before' | 'insert-after') => {
         if (!singleRef) return
@@ -80,6 +96,31 @@ export default function NotationToolbar() {
                                 </Button>
                             </Tooltip>
                         </>
+                    )}
+                    {selectedNoteRefs.length >= 2 && (
+                        <Tooltip
+                            title={
+                                canTie
+                                    ? (isTieActive ? 'Remove the tie connecting these notes' : 'Tie these notes together (in their left-to-right order)')
+                                    : 'Select 2 or more notes within the same measure to tie them'
+                            }
+                        >
+                            <span>
+                                <Button
+                                    size="small"
+                                    disabled={!canTie}
+                                    onClick={toggleTieOnSelection}
+                                    startIcon={<GestureTwoToneIcon fontSize="small" />}
+                                    sx={isTieActive ? {
+                                        color: theme.palette.accent.main,
+                                        borderColor: theme.palette.accent.main,
+                                    } : undefined}
+                                    variant={isTieActive ? 'outlined' : 'text'}
+                                >
+                                    {isTieActive ? 'Untie' : 'Tie'}
+                                </Button>
+                            </span>
+                        </Tooltip>
                     )}
                     <Button size="small" color="error" onClick={deleteSelectedNotes} startIcon={<DeleteTwoToneIcon fontSize="small" />}>
                         Delete

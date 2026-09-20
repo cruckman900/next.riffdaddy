@@ -6,7 +6,7 @@
 // Combined view, so a measure's tab and staff staves always share one width).
 
 import { Measure, MusicNote, MusicRest } from '@/types/music'
-import { TabNote, StaveNote, Voice, Formatter, Beam, TabStave, Stave, CanvasContext } from 'vexflow'
+import { TabNote, StaveNote, Voice, Formatter, Beam, TabStave, Stave, CanvasContext, StaveTie, TabTie } from 'vexflow'
 import { applyNoteModifiers } from './noteModifiers'
 import { getOrderedMeasureItems } from './duration'
 
@@ -130,6 +130,42 @@ export function buildBeamsFromGroups(
         }
     }
     return beams
+}
+
+/**
+ * Builds StaveTie (staff notation) or TabTie (tab notation) objects from
+ * measure.tieGroups — each group is a chronologically-ordered run of note
+ * IDs, rendered as a chain of pairwise ties (a group of 3 notes draws 2 arcs:
+ * note1→note2 and note2→note3), matching how a real tie chain looks in
+ * standard notation. Unlike beams, ties are pure Element instances that
+ * don't need to exist before voice.draw() — they're drawn as a separate pass
+ * afterwards, same as it works in VexFlow's own examples.
+ */
+export function buildTiesFromGroups(
+    measure: Measure,
+    tickables: (TabNote | StaveNote)[],
+    noteIdToIndex: Map<string, number>,
+    variant: 'tab' | 'staff'
+): (StaveTie | TabTie)[] {
+    const TieClass = variant === 'tab' ? TabTie : StaveTie
+    const ties: (StaveTie | TabTie)[] = []
+    for (const group of measure.tieGroups ?? []) {
+        for (let i = 0; i < group.length - 1; i++) {
+            const firstIdx = noteIdToIndex.get(group[i])
+            const lastIdx = noteIdToIndex.get(group[i + 1])
+            if (firstIdx === undefined || lastIdx === undefined) continue
+            const firstNote = tickables[firstIdx]
+            const lastNote = tickables[lastIdx]
+            if (!firstNote || !lastNote) continue
+
+            try {
+                ties.push(new TieClass({ firstNote, lastNote }))
+            } catch (err) {
+                console.warn('NEXTRiff: failed to build a tie', err)
+            }
+        }
+    }
+    return ties
 }
 
 // Lazily-created, never-attached-to-the-DOM 2D canvas context, reused for

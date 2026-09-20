@@ -64,7 +64,7 @@ function createDefaultComposition(): CompositionSnapshot {
     const workingTuning = saved.tuningNotes ?? resolveTuningOctaves(saved.instrument, displayNotes)
     return {
         measures: [
-            { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble', beamGroups: [] },
+            { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble', beamGroups: [], tieGroups: [] },
         ],
         selectedInstrument: saved.instrument,
         selectedGenre: saved.genre,
@@ -132,7 +132,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
 
     const [measures, setMeasures] = useState<Measure[]>([
-        { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble', beamGroups: [] },
+        { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble', beamGroups: [], tieGroups: [] },
     ])
     const [tuning, setTuning] = useState(defaultTuningWithOctaves.guitar)
 
@@ -207,7 +207,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     // --- MEASURES ---
     const addMeasure = (clef: string = 'treble', timeSignature: string = '4/4', keySignature: string = 'C') => {
-        setMeasures(prev => [...prev, { id: uuid(), notes: [], rests: [], clef, timeSignature, keySignature, beamGroups: [] }])
+        setMeasures(prev => [...prev, { id: uuid(), notes: [], rests: [], clef, timeSignature, keySignature, beamGroups: [], tieGroups: [] }])
     }
 
     const removeMeasure = (measureId: string) => {
@@ -266,6 +266,49 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                     }
                 }),
             }
+        }))
+    }
+
+    // Ties are drawn between adjacent notes rather than being a per-note
+    // modifier (see buildTiesFromGroups in src/tools/notation.ts), so unlike
+    // toggleModifierOnSelection this needs the group of selected note IDs —
+    // in their real chronological order within the measure, not selection
+    // click order — rather than a single note at a time. Only whole-measure
+    // selections make sense here (VexFlow ties connect notes that share a
+    // stave/voice); a selection spanning multiple measures is a no-op.
+    const toggleTieOnSelection = () => {
+        if (selectedNoteRefs.length < 2) return
+
+        const idsByMeasure = new Map<string, string[]>()
+        selectedNoteRefs.forEach(r => {
+            const list = idsByMeasure.get(r.measureId) ?? []
+            list.push(r.noteId)
+            idsByMeasure.set(r.measureId, list)
+        })
+        if (idsByMeasure.size !== 1) return
+
+        setMeasures(prev => prev.map(m => {
+            const selectedIds = idsByMeasure.get(m.id)
+            if (!selectedIds || selectedIds.length < 2) return m
+
+            // Re-derive the true left-to-right order from the measure itself
+            // — selectedNoteRefs reflects click order, not position.
+            const orderedIds = m.notes.map(n => n.id).filter(id => selectedIds.includes(id))
+            if (orderedIds.length < 2) return m
+
+            const existingGroups = m.tieGroups ?? []
+            const sameGroup = (g: string[]) => g.length === orderedIds.length && g.every((id, i) => id === orderedIds[i])
+            const alreadyTied = existingGroups.some(sameGroup)
+
+            const tieGroups = alreadyTied
+                // Toggle off: remove exactly this tie chain.
+                ? existingGroups.filter(g => !sameGroup(g))
+                // Toggle on: drop any existing group sharing a note with this
+                // selection (avoids overlapping/duplicate ties on one note),
+                // then add the new chain.
+                : [...existingGroups.filter(g => !g.some(id => orderedIds.includes(id))), orderedIds]
+
+            return { ...m, tieGroups }
         }))
     }
 
@@ -486,6 +529,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                             timeSignature: current.timeSignature,
                             keySignature: current.keySignature,
                             beamGroups: [],
+                            tieGroups: [],
                         })
                     }
                     continue
@@ -608,15 +652,22 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
                 // Whether this note still exists as a note object afterwards
                 // (e.g. only one pitch of a chord was removed) determines
-                // whether it should stay referenced in beamGroups.
+                // whether it should stay referenced in beamGroups/tieGroups.
                 const stillExists = notes.some(n => n.id === noteId)
                 const beamGroups = stillExists
                     ? m.beamGroups
                     : m.beamGroups
                         .map(group => group.filter(id => id !== noteId))
                         .filter(group => group.length >= 2)
+                // A tie group needs at least 2 notes to draw any arc at all —
+                // same threshold as beamGroups above.
+                const tieGroups = stillExists
+                    ? (m.tieGroups ?? [])
+                    : (m.tieGroups ?? [])
+                        .map(group => group.filter(id => id !== noteId))
+                        .filter(group => group.length >= 2)
 
-                return { ...m, notes, beamGroups }
+                return { ...m, notes, beamGroups, tieGroups }
             })
         )
     }
@@ -795,6 +846,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                             timeSignature: current.timeSignature,
                             keySignature: current.keySignature,
                             beamGroups: [],
+                            tieGroups: [],
                         })
                     }
                     continue
@@ -879,6 +931,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 toggleNoteSelection,
                 clearNoteSelection,
                 toggleModifierOnSelection,
+                toggleTieOnSelection,
                 deleteSelectedNotes,
                 insertNoteRelative,
                 pendingNoteAction,

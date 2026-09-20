@@ -43,13 +43,15 @@ function serialize(composition: CompositionSnapshot): string {
 // Fills in fields a measure might be missing (older saved tabs, or a
 // hand-edited/foreign JSON file opened via Local Disk) so rendering never
 // crashes on an undefined array — every consumer (beat-count, beaming,
-// width calc, …) assumes `notes`/`rests`/`beamGroups` are always arrays.
+// width calc, tie rendering, …) assumes `notes`/`rests`/`beamGroups`/
+// `tieGroups` are always arrays.
 function normalizeMeasure(measure: Partial<Measure>): Measure {
     return {
         id: measure.id ?? crypto.randomUUID(),
         notes: Array.isArray(measure.notes) ? measure.notes : [],
         rests: Array.isArray(measure.rests) ? measure.rests : [],
         beamGroups: Array.isArray(measure.beamGroups) ? measure.beamGroups : [],
+        tieGroups: Array.isArray(measure.tieGroups) ? measure.tieGroups : [],
         clef: measure.clef,
         timeSignature: measure.timeSignature ?? '4/4',
         keySignature: measure.keySignature,

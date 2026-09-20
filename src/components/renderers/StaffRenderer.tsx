@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useMusic } from '@/context/MusicContext'
 import { Renderer, Stave, Voice, Formatter, Barline } from 'vexflow'
-import { computeMeasureLayoutWidths, buildStaffTickables, buildStaffNoteIndex, buildBeamsFromGroups, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
+import { computeMeasureLayoutWidths, buildStaffTickables, buildStaffNoteIndex, buildBeamsFromGroups, buildTiesFromGroups, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
 import { getOrderedMeasureItems } from '@/tools/duration'
 import { MusicNote } from '@/types/music'
 import Box from '@mui/material/Box'
@@ -146,10 +146,14 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
           // inside each note's draw() by checking `this.beam`, which the
           // Beam constructor sets synchronously via note.setBeam()).
           const beams = buildBeamsFromGroups(measure, tickables, buildStaffNoteIndex(measure))
+          // See the matching comment in TabRenderer.tsx — ties are drawn as
+          // a separate pass after the voice/beams, not before.
+          const ties = buildTiesFromGroups(measure, tickables, buildStaffNoteIndex(measure), 'staff')
 
           const beforeCount = rowEl.querySelectorAll('.vf-stavenote').length
           voice.draw(context, stave)
           beams.forEach(b => b.setContext(context).draw())
+          ties.forEach(t => t.setContext(context).draw())
 
           // Make each note clickable so it can be selected for the notation
           // toolbar (accents, ornaments, dotted notes, techniques), and

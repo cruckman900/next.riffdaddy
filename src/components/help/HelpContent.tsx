@@ -98,6 +98,7 @@ export default function HelpContent() {
 
                 <SubHeading>Managing individual notes</SubHeading>
                 <Bullet>With exactly one note selected: <strong>Insert Before</strong> / <strong>Insert After</strong> add a brand-new note next to it, and <strong>Edit</strong> lets you replace its pitch/fret — both jump you to Fretboard Input to commit the change.</Bullet>
+                <Bullet>With 2 or more notes selected in the same measure: <strong>Tie</strong> connects them with a curved arc (in their left-to-right order) that draws in both Tab and Staff view — click it again (now labeled <strong>Untie</strong>) to remove it. Ties currently can&apos;t span across a barline into the next measure.</Bullet>
                 <Bullet><strong>Delete</strong> removes every selected note; <strong>Clear</strong> just deselects without changing anything.</Bullet>
             </HelpSection>
 
