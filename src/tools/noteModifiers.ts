@@ -15,6 +15,12 @@ export interface NoteModifierDef {
     label: string
     category: NoteModifierCategory
     apply: (note: NotatableVexNote) => void
+    // When set, this modifier belongs to a mutually-exclusive family (e.g.
+    // every Bend amount) — the notation toolbar collapses all members
+    // sharing a group into a single chip that opens a menu of options,
+    // rather than showing every variant as its own permanently-visible chip.
+    // See setExclusiveModifierOnSelection in MusicContext.
+    group?: string
 }
 
 // VexFlow modifiers can throw if a note can't accommodate them in a given
@@ -148,10 +154,49 @@ export const NOTE_MODIFIERS: NoteModifierDef[] = [
         }, 'Harmonic'),
     },
     {
-        id: 'bend',
-        label: 'Bend',
+        id: 'bend-quarter',
+        label: '1/4 Step',
         category: 'Technique',
-        apply: (note) => safeApply(() => note.addModifier(new Bend([{ type: Bend.UP, text: 'Full' }])), 'Bend'),
+        group: 'bend',
+        apply: (note) => safeApply(() => note.addModifier(new Bend([{ type: Bend.UP, text: '1/4' }])), '1/4 Step Bend'),
+    },
+    {
+        id: 'bend-half',
+        label: '1/2 Step',
+        category: 'Technique',
+        group: 'bend',
+        apply: (note) => safeApply(() => note.addModifier(new Bend([{ type: Bend.UP, text: '1/2' }])), '1/2 Step Bend'),
+    },
+    {
+        id: 'bend-full',
+        label: 'Full Step',
+        category: 'Technique',
+        group: 'bend',
+        apply: (note) => safeApply(() => note.addModifier(new Bend([{ type: Bend.UP, text: 'Full' }])), 'Full Step Bend'),
+    },
+    {
+        id: 'bend-one-half',
+        label: '1 1/2 Steps',
+        category: 'Technique',
+        group: 'bend',
+        apply: (note) => safeApply(() => note.addModifier(new Bend([{ type: Bend.UP, text: '1 1/2' }])), '1 1/2 Step Bend'),
+    },
+    {
+        id: 'bend-two',
+        label: '2 Steps',
+        category: 'Technique',
+        group: 'bend',
+        apply: (note) => safeApply(() => note.addModifier(new Bend([{ type: Bend.UP, text: '2' }])), '2 Step Bend'),
+    },
+    {
+        id: 'bend-release',
+        label: 'Bend & Release',
+        category: 'Technique',
+        group: 'bend',
+        apply: (note) => safeApply(() => note.addModifier(new Bend([
+            { type: Bend.UP, text: 'Full' },
+            { type: Bend.DOWN, text: '' },
+        ])), 'Bend & Release'),
     },
     {
         id: 'tremolo',

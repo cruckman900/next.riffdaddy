@@ -3,15 +3,16 @@
 import { useEffect, useRef } from 'react'
 import { useMusic } from '@/context/MusicContext'
 import { Renderer, TabStave, Voice, Formatter, Barline } from 'vexflow'
-import { computeMeasureLayoutWidths, buildTabTickables, buildTabNoteIndex, buildBeamsFromGroups, buildTiesFromGroups, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
+import { computeMeasureLayoutWidths, buildTabTickables, buildTabNoteIndex, buildBeamsFromGroups, buildTiesFromGroups, addToRowNoteLookup, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
 import Box from '@mui/material/Box'
+import type { TabNote } from 'vexflow'
 
 interface CombinedRendererProps {
   activeMeasureId?: string | null
 }
 
 export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) {
-  const { measures, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tuning } = useMusic()
+  const { measures, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tuning, tieGroups } = useMusic()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -74,6 +75,12 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
       const renderer = new Renderer(rowEl, Renderer.Backends.SVG)
       renderer.resize(rendererWidth, rowHeight)
       const context = renderer.getContext()
+
+      // Populated as each measure below is built, then used once after the
+      // whole row is drawn to resolve tie endpoints — a tie can cross a
+      // barline into the next measure, which might still be in this same
+      // row (see buildTiesFromGroups in notation.ts).
+      const rowNoteLookup = new Map<string, TabNote>()
 
       rowMeasures.forEach((measure, idx) => {
         const scaledWidth = rowWidths[idx] * scale - MEASURE_PADDING
@@ -159,15 +166,11 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
           // its own flag by the time a beam tried to suppress it — hence
           // flags visibly sticking around on beamed notes.
           const beams = buildBeamsFromGroups(measure, tickables, buildTabNoteIndex(measure))
-          // Ties are separate Element instances drawn after the voice/beams
-          // (unlike beams, they don't need to exist before voice.draw() —
-          // see buildTiesFromGroups for why).
-          const ties = buildTiesFromGroups(measure, tickables, buildTabNoteIndex(measure), 'tab')
 
           const beforeCount = rowEl.querySelectorAll('.vf-tabnote').length
           voice.draw(context, stave)
           beams.forEach(b => b.setContext(context).draw())
-          ties.forEach(t => t.setContext(context).draw())
+          addToRowNoteLookup(rowNoteLookup, measure, tickables, buildTabNoteIndex(measure))
 
           // Make each note clickable so it can be selected for the notation
           // toolbar (accents, ornaments, dotted notes, techniques), and
@@ -201,6 +204,12 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
         x += scaledWidth
       })
 
+      // Drawn once per row (not per measure) so a tie chain can resolve an
+      // endpoint sitting in whichever measure comes right after it, as long
+      // as both ended up on this same printed row — see buildTiesFromGroups.
+      const ties = buildTiesFromGroups(tieGroups, rowNoteLookup, 'tab')
+      ties.forEach(t => t.setContext(context).draw())
+
       rowMeasures = []
       rowWidths = []
     }
@@ -221,7 +230,7 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
     })
 
     flushRow(true)
-  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tuning])
+  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tuning, tieGroups])
 
   return (
     <Box sx={{ width: '100%', overflowX: 'auto', padding: 2 }}>

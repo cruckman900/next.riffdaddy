@@ -58,7 +58,7 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
     const { user } = useAuthContext()
     const {
         measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs,
-        selectedVoice, metadata, loadComposition,
+        selectedVoice, metadata, tieGroups, loadComposition,
     } = useMusic()
 
     const [saving, setSaving] = useState(false)
@@ -75,7 +75,7 @@ export default function LeftMenu({ onClose }: { onClose?: () => void }) {
     if (!tabs) return null
 
     const currentComposition = (): CompositionSnapshot => ({
-        measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs, selectedVoice, metadata,
+        measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs, selectedVoice, metadata, tieGroups,
     })
 
     // Shared by both Save and Save As, for the Database location only.

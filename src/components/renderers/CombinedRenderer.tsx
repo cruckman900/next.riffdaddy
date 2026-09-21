@@ -11,17 +11,18 @@ import {
     StaveConnector,
     Barline,
 } from 'vexflow'
-import { computeMeasureLayoutWidths, buildTabTickables, buildStaffTickables, buildTabNoteIndex, buildStaffNoteIndex, buildBeamsFromGroups, buildTiesFromGroups, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
+import { computeMeasureLayoutWidths, buildTabTickables, buildStaffTickables, buildTabNoteIndex, buildStaffNoteIndex, buildBeamsFromGroups, buildTiesFromGroups, addToRowNoteLookup, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
 import { getOrderedMeasureItems } from '@/tools/duration'
 import { MusicNote } from '@/types/music'
 import Box from '@mui/material/Box'
+import type { TabNote, StaveNote } from 'vexflow'
 
 interface CombinedRendererProps {
     activeMeasureId?: string | null
 }
 
 export default function CombinedRenderer({ activeMeasureId }: CombinedRendererProps) {
-    const { measures, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tuning } = useMusic()
+    const { measures, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tuning, tieGroups } = useMusic()
     const containerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -87,6 +88,11 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
 
             const tabStaves: TabStave[] = []
             const staffStaves: Stave[] = []
+            // See the matching comment in TabRenderer.tsx — one combined
+            // lookup per clef, populated per measure, resolved once the
+            // whole row is drawn so a tie can cross into the next measure.
+            const tabNoteLookup = new Map<string, TabNote>()
+            const staffNoteLookup = new Map<string, StaveNote>()
 
             rowMeasures.forEach((measure, idx) => {
                 const scaledWidth = rowWidths[idx] * scale - MEASURE_PADDING
@@ -183,12 +189,11 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                     // Beams must be constructed BEFORE voice.draw() — see the
                     // matching comment in TabRenderer.tsx for why.
                     const tabBeams = buildBeamsFromGroups(measure, tabTickables, buildTabNoteIndex(measure))
-                    const tabTies = buildTiesFromGroups(measure, tabTickables, buildTabNoteIndex(measure), 'tab')
 
                     const beforeCount = rowEl.querySelectorAll('.vf-tabnote').length
                     voice.draw(context, tabStave)
                     tabBeams.forEach(b => b.setContext(context).draw())
-                    tabTies.forEach(t => t.setContext(context).draw())
+                    addToRowNoteLookup(tabNoteLookup, measure, tabTickables, buildTabNoteIndex(measure))
 
                     const newNoteEls = Array.from(rowEl.querySelectorAll('.vf-tabnote')).slice(beforeCount)
                     newNoteEls.forEach((el, i) => {
@@ -223,12 +228,11 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                     // Beams must be constructed BEFORE voice.draw() — see the
                     // matching comment in TabRenderer.tsx for why.
                     const staffBeams = buildBeamsFromGroups(measure, staffTickables, buildStaffNoteIndex(measure))
-                    const staffTies = buildTiesFromGroups(measure, staffTickables, buildStaffNoteIndex(measure), 'staff')
 
                     const beforeCount = rowEl.querySelectorAll('.vf-stavenote').length
                     voice.draw(context, staffStave)
                     staffBeams.forEach(b => b.setContext(context).draw())
-                    staffTies.forEach(t => t.setContext(context).draw())
+                    addToRowNoteLookup(staffNoteLookup, measure, staffTickables, buildStaffNoteIndex(measure))
 
                     const newNoteEls = Array.from(rowEl.querySelectorAll('.vf-stavenote')).slice(beforeCount)
                     const orderedItems = getOrderedMeasureItems(measure)
@@ -254,6 +258,13 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                 lastTime = measure.timeSignature || lastTime
                 lastKey = measure.keySignature || lastKey
             })
+
+            // See the matching comment in TabRenderer.tsx — drawn once per
+            // row, separately for each clef's own lookup.
+            const tabTies = buildTiesFromGroups(tieGroups, tabNoteLookup, 'tab')
+            tabTies.forEach(t => t.setContext(context).draw())
+            const staffTies = buildTiesFromGroups(tieGroups, staffNoteLookup, 'staff')
+            staffTies.forEach(t => t.setContext(context).draw())
 
             // Connectors
             if (tabStaves.length && staffStaves.length) {
@@ -293,7 +304,7 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
         })
 
         flushRow(true)
-    }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tuning])
+    }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tuning, tieGroups])
 
     return (
         <Box sx={{ width: '100%', overflowX: 'auto', padding: 2 }}>

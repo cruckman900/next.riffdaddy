@@ -33,12 +33,15 @@ export interface Measure {
     timeSignature: string
     keySignature?: string       // NEW (optional, defaults to 'C')
     beamGroups: string[][]     // NEW (array of arrays of note IDs to be beamed together)
-    // Array of arrays of note IDs to be tied together, in chronological order
-    // within the group — e.g. ['a','b','c'] draws a tie from a→b and b→c.
-    // Ties are drawn as curved arcs connecting adjacent notes (visually like
-    // a slur) and are only supported between notes within the same measure —
-    // see toggleTieOnSelection in MusicContext.
-    tieGroups: string[][]
+}
+
+// A pointer to one specific note, used by tieGroups below — ties are tracked
+// at the composition level (not per-measure) specifically so a tie can span
+// across a barline into a different measure, not just connect notes within
+// the same one.
+export interface TieNoteRef {
+    measureId: string
+    noteId: string
 }
 
 // Optional descriptive info about the piece itself — Title, Artist, etc. —
@@ -74,6 +77,13 @@ export interface CompositionSnapshot {
     // getVoiceOptions. Per-tab like the rest of this snapshot.
     selectedVoice: string
     metadata: ScoreMetadata
+    // Chains of tied notes, in chronological order within each chain — e.g.
+    // [{measureId:'a',noteId:'1'}, {measureId:'b',noteId:'2'}] draws one tie
+    // arc from measure a's note 1 into measure b's note 2. Lives here rather
+    // than per-measure specifically so a tie can cross a barline. See
+    // toggleTieOnSelection in MusicContext and buildTiesFromGroups in
+    // src/tools/notation.ts.
+    tieGroups: TieNoteRef[][]
 }
 
 // Set by the notation toolbar's Insert Before/After/Edit actions (see
@@ -142,11 +152,22 @@ export interface MusicState {
     clearNoteSelection: () => void
     toggleModifierOnSelection: (modifierId: string) => void
 
-    // Ties (or unties) every currently-selected note together, in
-    // chronological order, within whichever single measure they belong to —
-    // a no-op if fewer than 2 notes are selected or the selection spans more
-    // than one measure. See buildTiesFromGroups in src/tools/notation.ts for
-    // how a tie group is actually rendered.
+    // Sets (or clears, when reselecting the currently-active option) a
+    // mutually-exclusive modifier variant on every selected note — e.g. only
+    // one Bend amount (1/4, 1/2, Full, …) can be active on a note at once.
+    // `groupIds` is every id in that family, so switching variants correctly
+    // removes whichever one was previously applied before adding the new one.
+    setExclusiveModifierOnSelection: (groupIds: string[], modifierId: string) => void
+
+    // Chains of tied notes across the whole composition (not scoped to one
+    // measure — see TieNoteRef) — read by the renderers to draw tie arcs.
+    tieGroups: TieNoteRef[][]
+
+    // Ties (or unties) every currently-selected note together, in true
+    // chronological order across the whole composition (not just within one
+    // measure) — a no-op if fewer than 2 notes are selected. A tie only
+    // actually renders where both of its endpoints land in the same printed
+    // row — see buildTiesFromGroups in src/tools/notation.ts.
     toggleTieOnSelection: () => void
 
     // Deletes every currently-selected note and clears the selection — the

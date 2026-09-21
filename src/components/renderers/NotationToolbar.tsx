@@ -1,7 +1,8 @@
 // src/components/renderers/NotationToolbar.tsx
 'use client'
 
-import { Box, Stack, Typography, Chip, Button, Tooltip } from '@mui/material'
+import { useState } from 'react'
+import { Box, Stack, Typography, Chip, Button, Tooltip, Menu, MenuItem } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import CloseTwoToneIcon from '@mui/icons-material/CloseTwoTone'
 import DeleteTwoToneIcon from '@mui/icons-material/DeleteTwoTone'
@@ -9,8 +10,62 @@ import KeyboardArrowLeftTwoToneIcon from '@mui/icons-material/KeyboardArrowLeftT
 import KeyboardArrowRightTwoToneIcon from '@mui/icons-material/KeyboardArrowRightTwoTone'
 import EditTwoToneIcon from '@mui/icons-material/EditTwoTone'
 import GestureTwoToneIcon from '@mui/icons-material/GestureTwoTone'
+import ArrowDropDownTwoToneIcon from '@mui/icons-material/ArrowDropDownTwoTone'
 import { useMusic } from '@/context/MusicContext'
-import { NOTE_MODIFIERS, NOTE_MODIFIER_CATEGORIES } from '@/tools/noteModifiers'
+import { NOTE_MODIFIERS, NOTE_MODIFIER_CATEGORIES, NoteModifierDef } from '@/tools/noteModifiers'
+
+// A family of mutually-exclusive modifier variants (currently just Bend's
+// 1/4 / 1/2 / Full / … amounts) collapsed into one chip that opens a menu of
+// options, instead of showing every variant as its own permanently-visible
+// chip — see setExclusiveModifierOnSelection in MusicContext.
+function ModifierGroupChip({
+    label, options, activeId, onSelect,
+}: {
+    label: string
+    options: NoteModifierDef[]
+    activeId?: string
+    onSelect: (id: string) => void
+}) {
+    const theme = useTheme()
+    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
+    const activeOption = options.find(o => o.id === activeId)
+
+    return (
+        <>
+            <Chip
+                label={
+                    <Stack direction="row" alignItems="center" spacing={0.25}>
+                        <span>{activeOption ? `${label}: ${activeOption.label}` : label}</span>
+                        <ArrowDropDownTwoToneIcon fontSize="small" />
+                    </Stack>
+                }
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+                variant="outlined"
+                sx={{
+                    borderColor: activeOption ? theme.palette.accent.main : 'divider',
+                    color: activeOption ? theme.palette.accent.main : 'text.secondary',
+                    bgcolor: activeOption ? `${theme.palette.accent.main}1a` : 'transparent',
+                    boxShadow: activeOption ? `0 0 8px ${theme.palette.accent.main}66` : 'none',
+                    fontWeight: activeOption ? 700 : 500,
+                }}
+            />
+            <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(null)}>
+                {options.map(opt => (
+                    <MenuItem
+                        key={opt.id}
+                        selected={opt.id === activeId}
+                        onClick={() => {
+                            onSelect(opt.id)
+                            setAnchorEl(null)
+                        }}
+                    >
+                        {opt.label}
+                    </MenuItem>
+                ))}
+            </Menu>
+        </>
+    )
+}
 
 // Contextual toolbar that appears above the score preview whenever one or
 // more notes are selected (click a note in Tab/Staff/Combined view to toggle
@@ -21,8 +76,9 @@ import { NOTE_MODIFIERS, NOTE_MODIFIER_CATEGORIES } from '@/tools/noteModifiers'
 export default function NotationToolbar() {
     const theme = useTheme()
     const {
-        measures, selectedNoteRefs, clearNoteSelection, toggleModifierOnSelection,
-        toggleTieOnSelection, deleteSelectedNotes, setPendingNoteAction, setActiveTool,
+        measures, tieGroups, selectedNoteRefs, clearNoteSelection, toggleModifierOnSelection,
+        setExclusiveModifierOnSelection, toggleTieOnSelection, deleteSelectedNotes,
+        setPendingNoteAction, setActiveTool,
     } = useMusic()
 
     if (selectedNoteRefs.length === 0) return null
@@ -34,22 +90,31 @@ export default function NotationToolbar() {
     const isModifierActive = (modifierId: string) =>
         selectedNotes.length > 0 && selectedNotes.every(n => n.modifiers?.includes(modifierId))
 
+    // Which variant (if any) of a group is active on every selected note —
+    // undefined if the selection has none, or a mix of different variants.
+    const activeGroupVariant = (groupIds: string[]): string | undefined =>
+        groupIds.find(id => isModifierActive(id))
+
     const singleRef = selectedNoteRefs.length === 1 ? selectedNoteRefs[0] : null
 
-    // Ties connect adjacent notes rather than decorating one at a time, so
-    // (unlike the modifier chips below) they only make sense for a selection
-    // of 2+ notes that all live in the same measure.
-    const selectedMeasureIds = new Set(selectedNoteRefs.map(r => r.measureId))
-    const canTie = selectedNoteRefs.length >= 2 && selectedMeasureIds.size === 1
-    const tieMeasure = canTie ? measures.find(m => m.id === selectedNoteRefs[0].measureId) : undefined
-    const isTieActive = (() => {
-        if (!canTie || !tieMeasure) return false
-        const selectedIds = selectedNoteRefs.map(r => r.noteId)
-        const orderedIds = tieMeasure.notes.map(n => n.id).filter(id => selectedIds.includes(id))
-        return (tieMeasure.tieGroups ?? []).some(
-            g => g.length === orderedIds.length && g.every((id, i) => id === orderedIds[i])
-        )
+    // Ties connect two or more note endpoints rather than decorating one at
+    // a time — since they're now tracked at the composition level (not
+    // per-measure), a selection can span any number of different measures.
+    const orderedSelectedRefs = (() => {
+        const selectedKeys = new Set(selectedNoteRefs.map(r => `${r.measureId}:${r.noteId}`))
+        const ordered: { measureId: string; noteId: string }[] = []
+        measures.forEach(m => {
+            m.notes.forEach(n => {
+                if (selectedKeys.has(`${m.id}:${n.id}`)) ordered.push({ measureId: m.id, noteId: n.id })
+            })
+        })
+        return ordered
     })()
+    const canTie = orderedSelectedRefs.length >= 2
+    const isTieActive = canTie && tieGroups.some(
+        g => g.length === orderedSelectedRefs.length
+            && g.every((r, i) => r.measureId === orderedSelectedRefs[i].measureId && r.noteId === orderedSelectedRefs[i].noteId)
+    )
 
     const startPendingAction = (mode: 'edit' | 'insert-before' | 'insert-after') => {
         if (!singleRef) return
@@ -101,8 +166,8 @@ export default function NotationToolbar() {
                         <Tooltip
                             title={
                                 canTie
-                                    ? (isTieActive ? 'Remove the tie connecting these notes' : 'Tie these notes together (in their left-to-right order)')
-                                    : 'Select 2 or more notes within the same measure to tie them'
+                                    ? (isTieActive ? 'Remove the tie connecting these notes' : 'Tie these notes together (in their left-to-right order) — can cross into the next measure')
+                                    : 'Select 2 or more notes to tie them'
                             }
                         >
                             <span>
@@ -138,36 +203,57 @@ export default function NotationToolbar() {
                     gap: 2,
                 }}
             >
-                {NOTE_MODIFIER_CATEGORIES.map(category => (
-                    <Box key={category}>
-                        <Typography
-                            variant="caption"
-                            sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}
-                        >
-                            {category}
-                        </Typography>
-                        <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 0.5 }}>
-                            {NOTE_MODIFIERS.filter(m => m.category === category).map(m => {
-                                const active = isModifierActive(m.id)
-                                return (
-                                    <Chip
-                                        key={m.id}
-                                        label={m.label}
-                                        onClick={() => toggleModifierOnSelection(m.id)}
-                                        variant="outlined"
-                                        sx={{
-                                            borderColor: active ? theme.palette.accent.main : 'divider',
-                                            color: active ? theme.palette.accent.main : 'text.secondary',
-                                            bgcolor: active ? `${theme.palette.accent.main}1a` : 'transparent',
-                                            boxShadow: active ? `0 0 8px ${theme.palette.accent.main}66` : 'none',
-                                            fontWeight: active ? 700 : 500,
-                                        }}
-                                    />
-                                )
-                            })}
-                        </Stack>
-                    </Box>
-                ))}
+                {NOTE_MODIFIER_CATEGORIES.map(category => {
+                    const categoryModifiers = NOTE_MODIFIERS.filter(m => m.category === category)
+                    const seenGroups = new Set<string>()
+
+                    return (
+                        <Box key={category}>
+                            <Typography
+                                variant="caption"
+                                sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                            >
+                                {category}
+                            </Typography>
+                            <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 0.5 }}>
+                                {categoryModifiers.map(m => {
+                                    if (m.group) {
+                                        if (seenGroups.has(m.group)) return null
+                                        seenGroups.add(m.group)
+                                        const groupOptions = categoryModifiers.filter(x => x.group === m.group)
+                                        const groupLabel = m.group.charAt(0).toUpperCase() + m.group.slice(1)
+                                        return (
+                                            <ModifierGroupChip
+                                                key={m.group}
+                                                label={groupLabel}
+                                                options={groupOptions}
+                                                activeId={activeGroupVariant(groupOptions.map(o => o.id))}
+                                                onSelect={(id) => setExclusiveModifierOnSelection(groupOptions.map(o => o.id), id)}
+                                            />
+                                        )
+                                    }
+
+                                    const active = isModifierActive(m.id)
+                                    return (
+                                        <Chip
+                                            key={m.id}
+                                            label={m.label}
+                                            onClick={() => toggleModifierOnSelection(m.id)}
+                                            variant="outlined"
+                                            sx={{
+                                                borderColor: active ? theme.palette.accent.main : 'divider',
+                                                color: active ? theme.palette.accent.main : 'text.secondary',
+                                                bgcolor: active ? `${theme.palette.accent.main}1a` : 'transparent',
+                                                boxShadow: active ? `0 0 8px ${theme.palette.accent.main}66` : 'none',
+                                                fontWeight: active ? 700 : 500,
+                                            }}
+                                        />
+                                    )
+                                })}
+                            </Stack>
+                        </Box>
+                    )
+                })}
             </Box>
         </Box>
     )

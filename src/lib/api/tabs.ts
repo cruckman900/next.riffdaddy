@@ -5,7 +5,7 @@
 // Save/File Open menu items to persist and restore a CompositionSnapshot.
 
 import axios from 'axios'
-import { CompositionSnapshot, Measure, ScoreMetadata } from '@/types/music'
+import { CompositionSnapshot, Measure, ScoreMetadata, TieNoteRef } from '@/types/music'
 import { getVoiceOptions } from '@/tools/playback'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
@@ -43,19 +43,40 @@ function serialize(composition: CompositionSnapshot): string {
 // Fills in fields a measure might be missing (older saved tabs, or a
 // hand-edited/foreign JSON file opened via Local Disk) so rendering never
 // crashes on an undefined array — every consumer (beat-count, beaming,
-// width calc, tie rendering, …) assumes `notes`/`rests`/`beamGroups`/
-// `tieGroups` are always arrays.
+// width calc, …) assumes `notes`/`rests`/`beamGroups` are always arrays.
 function normalizeMeasure(measure: Partial<Measure>): Measure {
     return {
         id: measure.id ?? crypto.randomUUID(),
         notes: Array.isArray(measure.notes) ? measure.notes : [],
         rests: Array.isArray(measure.rests) ? measure.rests : [],
         beamGroups: Array.isArray(measure.beamGroups) ? measure.beamGroups : [],
-        tieGroups: Array.isArray(measure.tieGroups) ? measure.tieGroups : [],
         clef: measure.clef,
         timeSignature: measure.timeSignature ?? '4/4',
         keySignature: measure.keySignature,
     }
+}
+
+// Ties used to be stored per-measure (same-measure-only chains of plain
+// note-id strings) before they could cross a barline. Old saved tabs/local
+// files may still have that shape sitting on individual measures — this
+// converts any of those into the current composition-level
+// {measureId, noteId}[][] shape so opening an old file doesn't silently
+// drop its ties.
+function migrateLegacyTieGroups(parsed: Partial<CompositionSnapshot>): TieNoteRef[][] {
+    const migrated: TieNoteRef[][] = []
+    const rawMeasures = Array.isArray(parsed.measures) ? parsed.measures : []
+    for (const m of rawMeasures) {
+        const legacyGroups = (m as unknown as { tieGroups?: unknown }).tieGroups
+        if (!Array.isArray(legacyGroups) || !m.id) continue
+        for (const group of legacyGroups) {
+            if (!Array.isArray(group)) continue
+            const refs = group
+                .filter((noteId): noteId is string => typeof noteId === 'string')
+                .map(noteId => ({ measureId: m.id as string, noteId }))
+            if (refs.length >= 2) migrated.push(refs)
+        }
+    }
+    return migrated
 }
 
 export const EMPTY_METADATA: ScoreMetadata = {
@@ -67,6 +88,12 @@ export const EMPTY_METADATA: ScoreMetadata = {
 // crashes on an undefined field. Shared by deserializeComposition (backend
 // JSON string) and the local-disk file loader (src/lib/localFile.ts).
 export function normalizeComposition(parsed: Partial<CompositionSnapshot>): CompositionSnapshot {
+    // Prefer already-valid current-format tie data; otherwise fall back to
+    // migrating whatever legacy per-measure shape (if any) was found.
+    const validNewTieGroups = Array.isArray(parsed.tieGroups)
+        ? parsed.tieGroups.filter((g): g is TieNoteRef[] => Array.isArray(g) && g.length >= 2)
+        : []
+
     return {
         ...parsed,
         measures: Array.isArray(parsed.measures) && parsed.measures.length > 0
@@ -75,6 +102,7 @@ export function normalizeComposition(parsed: Partial<CompositionSnapshot>): Comp
         selectedNoteRefs: Array.isArray(parsed.selectedNoteRefs) ? parsed.selectedNoteRefs : [],
         selectedVoice: parsed.selectedVoice ?? getVoiceOptions(parsed.selectedInstrument ?? 'guitar')[0]?.id ?? '',
         metadata: { ...EMPTY_METADATA, ...parsed.metadata },
+        tieGroups: validNewTieGroups.length > 0 ? validNewTieGroups : migrateLegacyTieGroups(parsed),
     } as CompositionSnapshot
 }
 

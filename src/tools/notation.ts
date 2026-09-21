@@ -5,7 +5,7 @@
 // CombinedRenderer so all three lay measures out the same way (and, in
 // Combined view, so a measure's tab and staff staves always share one width).
 
-import { Measure, MusicNote, MusicRest } from '@/types/music'
+import { Measure, MusicNote, MusicRest, TieNoteRef } from '@/types/music'
 import { TabNote, StaveNote, Voice, Formatter, Beam, TabStave, Stave, CanvasContext, StaveTie, TabTie } from 'vexflow'
 import { applyNoteModifiers } from './noteModifiers'
 import { getOrderedMeasureItems } from './duration'
@@ -133,29 +133,59 @@ export function buildBeamsFromGroups(
 }
 
 /**
- * Builds StaveTie (staff notation) or TabTie (tab notation) objects from
- * measure.tieGroups — each group is a chronologically-ordered run of note
- * IDs, rendered as a chain of pairwise ties (a group of 3 notes draws 2 arcs:
- * note1→note2 and note2→note3), matching how a real tie chain looks in
- * standard notation. Unlike beams, ties are pure Element instances that
- * don't need to exist before voice.draw() — they're drawn as a separate pass
- * afterwards, same as it works in VexFlow's own examples.
+ * Key format shared by addToRowNoteLookup/buildTiesFromGroups: a note is
+ * uniquely identified across the whole composition by its measure + note id
+ * together (note ids are only unique within their own measure).
  */
-export function buildTiesFromGroups(
+function tieKey(ref: TieNoteRef): string {
+    return `${ref.measureId}:${ref.noteId}`
+}
+
+/**
+ * Adds every note in one measure's already-built tickables to a shared
+ * lookup Map, keyed by tieKey — renderers call this once per measure while
+ * building a printed row, so the row ends up with a combined lookup letting
+ * buildTiesFromGroups resolve a tie's endpoints even when they land in two
+ * different (but same-row) measures.
+ */
+export function addToRowNoteLookup(
+    lookup: Map<string, TabNote | StaveNote>,
     measure: Measure,
     tickables: (TabNote | StaveNote)[],
-    noteIdToIndex: Map<string, number>,
+    noteIdToIndex: Map<string, number>
+) {
+    noteIdToIndex.forEach((idx, noteId) => {
+        const tickable = tickables[idx]
+        if (tickable) lookup.set(tieKey({ measureId: measure.id, noteId }), tickable)
+    })
+}
+
+/**
+ * Builds StaveTie (staff notation) or TabTie (tab notation) objects from the
+ * composition-level tieGroups (see TieNoteRef) — each group is a
+ * chronologically-ordered chain of {measureId, noteId} refs, rendered as a
+ * chain of pairwise ties (a group of 3 notes draws 2 arcs: note1→note2 and
+ * note2→note3), matching how a real tie chain looks in standard notation.
+ * Because a chain can cross a barline into a different measure, `noteLookup`
+ * must be built from every measure sharing this row (see
+ * addToRowNoteLookup) — a tie whose two endpoints end up on different
+ * printed rows (i.e. the measures wrapped onto separate lines) simply isn't
+ * drawn for that segment, the same graceful degradation as an unresolvable
+ * note id. Unlike beams, ties are pure Element instances that don't need to
+ * exist before voice.draw() — they're drawn as a separate pass afterwards,
+ * same as it works in VexFlow's own examples.
+ */
+export function buildTiesFromGroups(
+    tieGroups: TieNoteRef[][],
+    noteLookup: Map<string, TabNote | StaveNote>,
     variant: 'tab' | 'staff'
 ): (StaveTie | TabTie)[] {
     const TieClass = variant === 'tab' ? TabTie : StaveTie
     const ties: (StaveTie | TabTie)[] = []
-    for (const group of measure.tieGroups ?? []) {
+    for (const group of tieGroups) {
         for (let i = 0; i < group.length - 1; i++) {
-            const firstIdx = noteIdToIndex.get(group[i])
-            const lastIdx = noteIdToIndex.get(group[i + 1])
-            if (firstIdx === undefined || lastIdx === undefined) continue
-            const firstNote = tickables[firstIdx]
-            const lastNote = tickables[lastIdx]
+            const firstNote = noteLookup.get(tieKey(group[i]))
+            const lastNote = noteLookup.get(tieKey(group[i + 1]))
             if (!firstNote || !lastNote) continue
 
             try {

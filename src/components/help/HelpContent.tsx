@@ -95,10 +95,11 @@ export default function HelpContent() {
                 <SubHeading>Modifying a selection</SubHeading>
                 <Bullet>Modifiers are grouped into categories — <strong>Duration</strong> (dotted/double-dotted), <strong>Articulation</strong> (accent, staccato, tenuto, marcato, fermata, up-/down-bow), <strong>Ornament</strong> (trill, turn, mordent), <strong>Technique</strong> (vibrato, harmonic, bend, tremolo, pizzicato), <strong>Stroke</strong> (brush/roll up or down, arpeggio), <strong>Dynamics</strong> (pp through ff), and <strong>Fingering</strong> (1–4, T).</Bullet>
                 <Bullet>Click a chip to toggle that modifier on every currently-selected note; an active modifier glows to show it&apos;s applied.</Bullet>
+                <Bullet><strong>Bend</strong> is a dropdown rather than a plain toggle — click it to choose an amount (1/4, 1/2, Full, 1 1/2, 2 Steps, or Bend &amp; Release); picking a new amount replaces whichever one was already applied, and re-picking the active one removes it.</Bullet>
 
                 <SubHeading>Managing individual notes</SubHeading>
                 <Bullet>With exactly one note selected: <strong>Insert Before</strong> / <strong>Insert After</strong> add a brand-new note next to it, and <strong>Edit</strong> lets you replace its pitch/fret — both jump you to Fretboard Input to commit the change.</Bullet>
-                <Bullet>With 2 or more notes selected in the same measure: <strong>Tie</strong> connects them with a curved arc (in their left-to-right order) that draws in both Tab and Staff view — click it again (now labeled <strong>Untie</strong>) to remove it. Ties currently can&apos;t span across a barline into the next measure.</Bullet>
+                <Bullet>With 2 or more notes selected — even across different measures: <strong>Tie</strong> connects them with a curved arc (in their true left-to-right order) that draws in Tab, Staff, and Combined view, including across a barline — click it again (now labeled <strong>Untie</strong>) to remove it. A tie only actually draws where both notes land on the same printed row; one spanning a line break isn&apos;t drawn.</Bullet>
                 <Bullet><strong>Delete</strong> removes every selected note; <strong>Clear</strong> just deselects without changing anything.</Bullet>
             </HelpSection>
 

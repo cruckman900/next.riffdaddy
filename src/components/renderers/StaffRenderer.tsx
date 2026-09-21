@@ -3,17 +3,18 @@
 import { useEffect, useRef } from 'react'
 import { useMusic } from '@/context/MusicContext'
 import { Renderer, Stave, Voice, Formatter, Barline } from 'vexflow'
-import { computeMeasureLayoutWidths, buildStaffTickables, buildStaffNoteIndex, buildBeamsFromGroups, buildTiesFromGroups, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
+import { computeMeasureLayoutWidths, buildStaffTickables, buildStaffNoteIndex, buildBeamsFromGroups, buildTiesFromGroups, addToRowNoteLookup, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
 import { getOrderedMeasureItems } from '@/tools/duration'
 import { MusicNote } from '@/types/music'
 import Box from '@mui/material/Box'
+import type { StaveNote } from 'vexflow'
 
 interface CombinedRendererProps {
   activeMeasureId?: string | null
 }
 
 export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps) {
-  const { measures, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection } = useMusic()
+  const { measures, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tieGroups } = useMusic()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -70,6 +71,11 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
       const renderer = new Renderer(rowEl, Renderer.Backends.SVG)
       renderer.resize(rendererWidth, rowHeight)
       const context = renderer.getContext()
+
+      // See the matching comment in TabRenderer.tsx — populated per measure,
+      // used once after the whole row is drawn to resolve tie endpoints that
+      // may cross into the next measure.
+      const rowNoteLookup = new Map<string, StaveNote>()
 
       rowMeasures.forEach((measure, idx) => {
         const scaledWidth = rowWidths[idx] * scale - MEASURE_PADDING
@@ -146,14 +152,11 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
           // inside each note's draw() by checking `this.beam`, which the
           // Beam constructor sets synchronously via note.setBeam()).
           const beams = buildBeamsFromGroups(measure, tickables, buildStaffNoteIndex(measure))
-          // See the matching comment in TabRenderer.tsx — ties are drawn as
-          // a separate pass after the voice/beams, not before.
-          const ties = buildTiesFromGroups(measure, tickables, buildStaffNoteIndex(measure), 'staff')
 
           const beforeCount = rowEl.querySelectorAll('.vf-stavenote').length
           voice.draw(context, stave)
           beams.forEach(b => b.setContext(context).draw())
-          ties.forEach(t => t.setContext(context).draw())
+          addToRowNoteLookup(rowNoteLookup, measure, tickables, buildStaffNoteIndex(measure))
 
           // Make each note clickable so it can be selected for the notation
           // toolbar (accents, ornaments, dotted notes, techniques), and
@@ -192,6 +195,10 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
         lastKey = measure.keySignature || lastKey
       })
 
+      // See the matching comment in TabRenderer.tsx — drawn once per row.
+      const ties = buildTiesFromGroups(tieGroups, rowNoteLookup, 'staff')
+      ties.forEach(t => t.setContext(context).draw())
+
       rowMeasures = []
       rowWidths = []
     }
@@ -212,7 +219,7 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
     })
 
     flushRow(true)
-  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection])
+  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tieGroups])
 
   return (
     <Box sx={{ width: '100%', overflowX: 'auto', padding: 2 }}>

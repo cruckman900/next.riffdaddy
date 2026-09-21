@@ -2,7 +2,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { MusicNote, MusicRest, MusicState, Measure, CompositionSnapshot, PendingNoteAction, ScoreMetadata } from "@/types/music"
+import { MusicNote, MusicRest, MusicState, Measure, CompositionSnapshot, PendingNoteAction, ScoreMetadata, TieNoteRef } from "@/types/music"
 import { Tuning, tuningPresets, defaultTuningWithOctaves, resolveTuningOctaves, resolveStringCount } from '@/utils/tunings'
 import { computePitchFromTab, computeTabFromPitch } from '@/tools/conversion'
 import { durationToBeats, getMeasureBeatCount, getOrderedMeasureItems } from '@/tools/duration'
@@ -64,7 +64,7 @@ function createDefaultComposition(): CompositionSnapshot {
     const workingTuning = saved.tuningNotes ?? resolveTuningOctaves(saved.instrument, displayNotes)
     return {
         measures: [
-            { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble', beamGroups: [], tieGroups: [] },
+            { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble', beamGroups: [] },
         ],
         selectedInstrument: saved.instrument,
         selectedGenre: saved.genre,
@@ -74,6 +74,7 @@ function createDefaultComposition(): CompositionSnapshot {
         selectedNoteRefs: [],
         selectedVoice: saved.voice ?? getVoiceOptions(saved.instrument)[0]?.id ?? '',
         metadata: { ...EMPTY_METADATA },
+        tieGroups: [],
     }
 }
 
@@ -132,8 +133,12 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
 
     const [measures, setMeasures] = useState<Measure[]>([
-        { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble', beamGroups: [], tieGroups: [] },
+        { id: uuid(), notes: [], rests: [], timeSignature: '4/4', keySignature: 'C', clef: 'treble', beamGroups: [] },
     ])
+    // Chains of tied notes across the whole composition — see TieNoteRef.
+    // Lives alongside `measures` (not inside it) specifically so a tie can
+    // cross a barline into a different measure.
+    const [tieGroups, setTieGroups] = useState<TieNoteRef[][]>([])
     const [tuning, setTuning] = useState(defaultTuningWithOctaves.guitar)
 
     // Score Settings
@@ -207,11 +212,16 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     // --- MEASURES ---
     const addMeasure = (clef: string = 'treble', timeSignature: string = '4/4', keySignature: string = 'C') => {
-        setMeasures(prev => [...prev, { id: uuid(), notes: [], rests: [], clef, timeSignature, keySignature, beamGroups: [], tieGroups: [] }])
+        setMeasures(prev => [...prev, { id: uuid(), notes: [], rests: [], clef, timeSignature, keySignature, beamGroups: [] }])
     }
 
     const removeMeasure = (measureId: string) => {
         setMeasures(prev => prev.filter(m => m.id !== measureId))
+        // Drop any tie chain endpoint that lived in the removed measure, and
+        // any chain that no longer has at least 2 notes left to connect.
+        setTieGroups(prev => prev
+            .map(group => group.filter(r => r.measureId !== measureId))
+            .filter(group => group.length >= 2))
     }
 
     // --- NOTE SELECTION + NOTATION MODIFIERS ---
@@ -235,10 +245,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     // Clear selection refs pointing at notes/measures that no longer exist
     // (e.g. the note was removed) so the toolbar never targets stale ids.
     useEffect(() => {
-        setSelectedNoteRefs(prev => prev.filter(r => {
-            const measure = measures.find(m => m.id === r.measureId)
-            return !!measure?.notes.some(n => n.id === r.noteId)
-        }))
+        const noteExists = (measureId: string, noteId: string) =>
+            !!measures.find(m => m.id === measureId)?.notes.some(n => n.id === noteId)
+
+        setSelectedNoteRefs(prev => prev.filter(r => noteExists(r.measureId, r.noteId)))
         // A pending insert/edit action anchored to a now-deleted note would
         // otherwise silently target nothing — clear it defensively.
         setPendingNoteAction(prev => {
@@ -246,6 +256,12 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             const measure = measures.find(m => m.id === prev.measureId)
             return measure?.notes.some(n => n.id === prev.noteId) ? prev : null
         })
+        // Same defensive cleanup for tie chains — belt-and-suspenders on top
+        // of removeNote/removeMeasure's own targeted cleanup, in case a note
+        // ever disappears through some other path.
+        setTieGroups(prev => prev
+            .map(group => group.filter(r => noteExists(r.measureId, r.noteId)))
+            .filter(group => group.length >= 2))
     }, [measures])
 
     const toggleModifierOnSelection = (modifierId: string) => {
@@ -269,47 +285,70 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         }))
     }
 
-    // Ties are drawn between adjacent notes rather than being a per-note
+    // Like toggleModifierOnSelection, but for a family of mutually-exclusive
+    // variants (e.g. Bend's 1/4 / 1/2 / Full / … amounts) — applying one
+    // first strips every other id in `groupIds` from the note so a note can
+    // never end up with two conflicting variants at once. Re-selecting the
+    // variant that's already active on every selected note removes it
+    // instead (acts as a toggle-off), matching toggleModifierOnSelection's
+    // behavior for a plain single modifier.
+    const setExclusiveModifierOnSelection = (groupIds: string[], modifierId: string) => {
+        if (selectedNoteRefs.length === 0) return
+        const selectedNotes = selectedNoteRefs
+            .map(ref => measures.find(m => m.id === ref.measureId)?.notes.find(n => n.id === ref.noteId))
+            .filter((n): n is NonNullable<typeof n> => !!n)
+        const alreadyActive = selectedNotes.length > 0 && selectedNotes.every(n => n.modifiers?.includes(modifierId))
+
+        setMeasures(prev => prev.map(m => {
+            const refsForMeasure = selectedNoteRefs.filter(r => r.measureId === m.id)
+            if (refsForMeasure.length === 0) return m
+
+            return {
+                ...m,
+                notes: m.notes.map(n => {
+                    if (!refsForMeasure.some(r => r.noteId === n.id)) return n
+                    const withoutGroup = (n.modifiers ?? []).filter(id => !groupIds.includes(id))
+                    return { ...n, modifiers: alreadyActive ? withoutGroup : [...withoutGroup, modifierId] }
+                }),
+            }
+        }))
+    }
+
+    // Ties are drawn between two note endpoints rather than being a per-note
     // modifier (see buildTiesFromGroups in src/tools/notation.ts), so unlike
-    // toggleModifierOnSelection this needs the group of selected note IDs —
-    // in their real chronological order within the measure, not selection
-    // click order — rather than a single note at a time. Only whole-measure
-    // selections make sense here (VexFlow ties connect notes that share a
-    // stave/voice); a selection spanning multiple measures is a no-op.
+    // toggleModifierOnSelection this needs the whole ordered group of
+    // selected notes — in their real chronological order across the entire
+    // composition, not selection click order, and not limited to one
+    // measure — rather than a single note at a time. Storing chains as
+    // {measureId, noteId} pairs (see TieNoteRef) is what lets a tie span a
+    // barline into a different measure.
     const toggleTieOnSelection = () => {
         if (selectedNoteRefs.length < 2) return
 
-        const idsByMeasure = new Map<string, string[]>()
-        selectedNoteRefs.forEach(r => {
-            const list = idsByMeasure.get(r.measureId) ?? []
-            list.push(r.noteId)
-            idsByMeasure.set(r.measureId, list)
+        const selectedKeys = new Set(selectedNoteRefs.map(r => `${r.measureId}:${r.noteId}`))
+        const orderedRefs: TieNoteRef[] = []
+        measures.forEach(m => {
+            m.notes.forEach(n => {
+                if (selectedKeys.has(`${m.id}:${n.id}`)) orderedRefs.push({ measureId: m.id, noteId: n.id })
+            })
         })
-        if (idsByMeasure.size !== 1) return
+        if (orderedRefs.length < 2) return
 
-        setMeasures(prev => prev.map(m => {
-            const selectedIds = idsByMeasure.get(m.id)
-            if (!selectedIds || selectedIds.length < 2) return m
+        setTieGroups(prev => {
+            const sameGroup = (g: TieNoteRef[]) =>
+                g.length === orderedRefs.length && g.every((r, i) => r.measureId === orderedRefs[i].measureId && r.noteId === orderedRefs[i].noteId)
+            const alreadyTied = prev.some(sameGroup)
 
-            // Re-derive the true left-to-right order from the measure itself
-            // — selectedNoteRefs reflects click order, not position.
-            const orderedIds = m.notes.map(n => n.id).filter(id => selectedIds.includes(id))
-            if (orderedIds.length < 2) return m
-
-            const existingGroups = m.tieGroups ?? []
-            const sameGroup = (g: string[]) => g.length === orderedIds.length && g.every((id, i) => id === orderedIds[i])
-            const alreadyTied = existingGroups.some(sameGroup)
-
-            const tieGroups = alreadyTied
+            if (alreadyTied) {
                 // Toggle off: remove exactly this tie chain.
-                ? existingGroups.filter(g => !sameGroup(g))
-                // Toggle on: drop any existing group sharing a note with this
-                // selection (avoids overlapping/duplicate ties on one note),
-                // then add the new chain.
-                : [...existingGroups.filter(g => !g.some(id => orderedIds.includes(id))), orderedIds]
-
-            return { ...m, tieGroups }
-        }))
+                return prev.filter(g => !sameGroup(g))
+            }
+            // Toggle on: drop any existing group sharing a note with this
+            // selection (avoids overlapping/duplicate ties on one note),
+            // then add the new chain.
+            const overlaps = (g: TieNoteRef[]) => g.some(r => orderedRefs.some(o => o.measureId === r.measureId && o.noteId === r.noteId))
+            return [...prev.filter(g => !overlaps(g)), orderedRefs]
+        })
     }
 
     const updateMeasure = (measureId: string, updates: Partial<Measure>) => {
@@ -357,7 +396,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
         if (prevId) {
             compositionsRef.current[prevId] = {
-                measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs, selectedVoice, metadata,
+                measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs, selectedVoice, metadata, tieGroups,
             }
         }
 
@@ -373,6 +412,9 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             setSelectedNoteRefs(snapshot.selectedNoteRefs)
             setSelectedVoice(snapshot.selectedVoice)
             setMetadata(snapshot.metadata ?? { ...EMPTY_METADATA })
+            // Older saved snapshots (before ties existed) won't have this
+            // field at all — default to no ties rather than crashing.
+            setTieGroups(snapshot.tieGroups ?? [])
         }
 
         previousTabIdRef.current = activeTabId
@@ -422,7 +464,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             const merged = { ...compositionsRef.current }
             if (activeTabId) {
                 merged[activeTabId] = {
-                    measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs, selectedVoice, metadata,
+                    measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs, selectedVoice, metadata, tieGroups,
                 }
             }
             try {
@@ -432,7 +474,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             }
         }, 300)
         return () => clearTimeout(id)
-    }, [measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs, selectedVoice, metadata, activeTabId, user?.id])
+    }, [measures, selectedInstrument, selectedGenre, selectedTuning, tuning, tempo, selectedNoteRefs, selectedVoice, metadata, tieGroups, activeTabId, user?.id])
 
     // Used by "Open"/Load (see the backend tab-storage integration) to seed
     // a specific tab's composition — including the currently active one,
@@ -449,6 +491,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             setSelectedNoteRefs(data.selectedNoteRefs)
             setSelectedVoice(data.selectedVoice)
             setMetadata(data.metadata ?? { ...EMPTY_METADATA })
+            setTieGroups(data.tieGroups ?? [])
         }
     }
 
@@ -529,7 +572,6 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                             timeSignature: current.timeSignature,
                             keySignature: current.keySignature,
                             beamGroups: [],
-                            tieGroups: [],
                         })
                     }
                     continue
@@ -606,7 +648,21 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         })
     }
 
+    // Whether a removeNote(...) call with this pitchToRemove would delete
+    // the note object entirely, as opposed to just trimming one pitch out
+    // of a chord and leaving the rest of the note in place — mirrors the
+    // exact same branching as the flatMap below. Used to decide whether the
+    // note needs cleaning out of any tie chain that references it.
+    const wouldFullyRemoveNote = (note: MusicNote, pitchToRemove?: string): boolean => {
+        if (!pitchToRemove) return true
+        if (Array.isArray(note.pitch)) return note.pitch.includes(pitchToRemove) && note.pitch.length === 1
+        return note.pitch === pitchToRemove
+    }
+
     const removeNote = (measureId: string, noteId: string, pitchToRemove?: string) => {
+        const noteBefore = measures.find(m => m.id === measureId)?.notes.find(n => n.id === noteId)
+        const willFullyRemove = !!noteBefore && wouldFullyRemoveNote(noteBefore, pitchToRemove)
+
         setMeasures(prev =>
             prev.map(m => {
                 if (m.id !== measureId) return m
@@ -652,24 +708,27 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
                 // Whether this note still exists as a note object afterwards
                 // (e.g. only one pitch of a chord was removed) determines
-                // whether it should stay referenced in beamGroups/tieGroups.
+                // whether it should stay referenced in beamGroups.
                 const stillExists = notes.some(n => n.id === noteId)
                 const beamGroups = stillExists
                     ? m.beamGroups
                     : m.beamGroups
                         .map(group => group.filter(id => id !== noteId))
                         .filter(group => group.length >= 2)
-                // A tie group needs at least 2 notes to draw any arc at all —
-                // same threshold as beamGroups above.
-                const tieGroups = stillExists
-                    ? (m.tieGroups ?? [])
-                    : (m.tieGroups ?? [])
-                        .map(group => group.filter(id => id !== noteId))
-                        .filter(group => group.length >= 2)
 
-                return { ...m, notes, beamGroups, tieGroups }
+                return { ...m, notes, beamGroups }
             })
         )
+
+        // A tie group needs at least 2 notes to draw any arc at all — same
+        // threshold as beamGroups above. This lives outside setMeasures
+        // since tieGroups is now tracked at the composition level, not per
+        // measure (see TieNoteRef).
+        if (willFullyRemove) {
+            setTieGroups(prev => prev
+                .map(group => group.filter(r => !(r.measureId === measureId && r.noteId === noteId)))
+                .filter(group => group.length >= 2))
+        }
     }
 
     // Deletes every currently-selected note (across whichever measures they
@@ -846,7 +905,6 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                             timeSignature: current.timeSignature,
                             keySignature: current.keySignature,
                             beamGroups: [],
-                            tieGroups: [],
                         })
                     }
                     continue
@@ -931,6 +989,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 toggleNoteSelection,
                 clearNoteSelection,
                 toggleModifierOnSelection,
+                setExclusiveModifierOnSelection,
+                tieGroups,
                 toggleTieOnSelection,
                 deleteSelectedNotes,
                 insertNoteRelative,
