@@ -1,7 +1,7 @@
 // utils/instruments.ts
 
 import { IconType } from 'react-icons'
-import { GiGuitar, GiViolin } from 'react-icons/gi'
+import { GiGuitar, GiViolin, GiDrumKit } from 'react-icons/gi'
 import { FaGuitar } from 'react-icons/fa'
 
 export interface Instrument {
@@ -15,4 +15,5 @@ export const instruments: Instrument[] = [
   { label: 'Bass', value: 'bass', icon: GiGuitar },
   { label: 'Violin', value: 'violin', icon: GiViolin },
   { label: 'Cello', value: 'cello', icon: FaGuitar },
+  { label: 'Drums', value: 'drums', icon: GiDrumKit },
 ]

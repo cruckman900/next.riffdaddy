@@ -9,6 +9,7 @@ import { Measure, MusicNote, MusicRest, TieNoteRef } from '@/types/music'
 import { TabNote, StaveNote, Voice, Formatter, Beam, TabStave, Stave, CanvasContext, StaveTie, TabTie } from 'vexflow'
 import { applyNoteModifiers } from './noteModifiers'
 import { getOrderedMeasureItems } from './duration'
+import { DRUM_PIECES, DrumPieceId } from '@/utils/drumKits'
 
 export function parseTimeSignature(ts?: string) {
     const [beats, value] = ts?.split('/')?.map(Number) ?? []
@@ -61,6 +62,39 @@ export function buildStaffTickables(measure: Measure): StaveNote[] {
             const n = item as MusicNote
             const vexNote = new StaveNote({
                 keys: Array.isArray(n.pitch) ? n.pitch.map(formatPitch) : [formatPitch(n.pitch)],
+                duration: n.duration || 'q',
+            })
+            applyNoteModifiers(vexNote, n.modifiers)
+            return vexNote
+        }
+        const r = item as MusicRest
+        return new StaveNote({ keys: ['b/4'], duration: (r.duration || 'q') + 'r' })
+    })
+}
+
+// For a drum note, `pitch` holds one or more DrumPieceId strings (not a real
+// pitch — see DRUM_PIECES in utils/drumKits.ts) identifying which piece(s)
+// were hit together. This builds the VexFlow key format VexFlow expects
+// ("letter/octave" plus an optional "/glyph-code" for a non-default
+// notehead, e.g. "f/5/x2" for an x-notehead hi-hat) directly from each
+// piece's predefined staff position, instead of formatPitch's real-note
+// parsing (which would just fail on a piece id like "kick").
+function formatDrumKey(pieceId: string): string {
+    const piece = DRUM_PIECES[pieceId as DrumPieceId]
+    if (!piece) return 'b/4'
+    return piece.notehead ? `${piece.notationKey}/${piece.notehead}` : piece.notationKey
+}
+
+// Percussion-staff equivalent of buildStaffTickables — same chronological
+// note+rest ordering, just resolving keys through formatDrumKey instead of
+// formatPitch. Drums have no TAB view, so there's no drum equivalent of
+// buildTabTickables.
+export function buildDrumStaffTickables(measure: Measure): StaveNote[] {
+    return getOrderedMeasureItems(measure).map(({ type, item }) => {
+        if (type === 'note') {
+            const n = item as MusicNote
+            const vexNote = new StaveNote({
+                keys: Array.isArray(n.pitch) ? n.pitch.map(formatDrumKey) : [formatDrumKey(n.pitch)],
                 duration: n.duration || 'q',
             })
             applyNoteModifiers(vexNote, n.modifiers)
@@ -281,11 +315,11 @@ function measureModifierWidth(measure: Measure, mode: ScoreViewMode): number {
 
     let allowance = 0
     if (mode === 'tab' || mode === 'combined') allowance = Math.max(allowance, scratchWidth(true))
-    if (mode === 'staff' || mode === 'combined') allowance = Math.max(allowance, scratchWidth(false))
+    if (mode === 'staff' || mode === 'combined' || mode === 'drum-staff') allowance = Math.max(allowance, scratchWidth(false))
     return allowance + MODIFIER_SAFETY_MARGIN
 }
 
-export type ScoreViewMode = 'tab' | 'staff' | 'combined'
+export type ScoreViewMode = 'tab' | 'staff' | 'combined' | 'drum-staff'
 
 /**
  * Computes each measure's real rendered width from its actual note content
@@ -315,6 +349,9 @@ export function computeMeasureLayoutWidths(measures: Measure[], mode: ScoreViewM
         }
         if (mode === 'staff' || mode === 'combined') {
             contentWidth = Math.max(contentWidth, minVoiceWidth(buildStaffTickables(measure), numBeats, beatValue, noteSpacing))
+        }
+        if (mode === 'drum-staff') {
+            contentWidth = Math.max(contentWidth, minVoiceWidth(buildDrumStaffTickables(measure), numBeats, beatValue, noteSpacing))
         }
 
         const width = Math.max(MIN_MEASURE_WIDTH, contentWidth)

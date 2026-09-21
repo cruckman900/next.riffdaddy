@@ -1,6 +1,7 @@
 import { TOOL_REGISTRY, TOOL_ORDER } from "@/tools/registry";
 import { ToolButton } from "./ToolButton";
 import { useTheme } from "@mui/material/styles"
+import { useMusic } from "@/context/MusicContext"
 
 interface ToolRailProps {
     activeToolId: string;
@@ -9,6 +10,15 @@ interface ToolRailProps {
 
 export function ToolRail({ activeToolId, setActiveTool }: ToolRailProps) {
     const theme = useTheme()
+    const { selectedInstrument } = useMusic()
+    const isDrumKit = selectedInstrument === 'drums'
+
+    // Drums get their own input tool in place of Fretboard/Keyboard (neither
+    // makes sense without a fretboard or piano-style pitches) — see
+    // TOOL_REGISTRY's comment on the "drum" entry.
+    const visibleOrder = TOOL_ORDER.filter(id => (
+        isDrumKit ? (id !== 'fretboard' && id !== 'keyboard') : id !== 'drum'
+    ))
 
     return (
         <div
@@ -25,7 +35,7 @@ export function ToolRail({ activeToolId, setActiveTool }: ToolRailProps) {
                 gap: "12px",
             }}
         >
-            {TOOL_ORDER.map((id) => {
+            {visibleOrder.map((id) => {
                 const tool = TOOL_REGISTRY[id];
                 const Icon = tool.icon;
 

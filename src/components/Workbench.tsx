@@ -11,12 +11,25 @@ import { useMusic } from '@/context/MusicContext'
 
 export default function Workbench() {
     // const [activeTool, setActiveTool] = useState("cockpit")
-    const { activeTool, setActiveTool } = useMusic()
+    const { activeTool, setActiveTool, selectedInstrument } = useMusic()
     const [activeMeasureId, setActiveMeasureId] = useState<string | null>(null)
     const { measures } = useMusic()
 
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+
+    // Fretboard/Keyboard Input don't make sense for Drums (no fretboard, no
+    // pitched keys), and Drum Input doesn't make sense for anything else —
+    // switch to whichever one the current instrument actually supports
+    // rather than leaving the tool panel stuck on a hidden rail button.
+    useEffect(() => {
+        const isDrumKit = selectedInstrument === 'drums'
+        if (isDrumKit && (activeTool === 'fretboard' || activeTool === 'keyboard')) {
+            setActiveTool('drum')
+        } else if (!isDrumKit && activeTool === 'drum') {
+            setActiveTool('fretboard')
+        }
+    }, [selectedInstrument, activeTool, setActiveTool])
 
     // Default to first measure — also re-anchors when the current
     // activeMeasureId no longer exists in `measures` at all (not just when

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useMusic } from '@/context/MusicContext'
 import { Renderer, Stave, Voice, Formatter, Barline } from 'vexflow'
-import { computeMeasureLayoutWidths, buildStaffTickables, buildStaffNoteIndex, buildBeamsFromGroups, buildTiesFromGroups, addToRowNoteLookup, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
+import { computeMeasureLayoutWidths, buildStaffTickables, buildDrumStaffTickables, buildStaffNoteIndex, buildBeamsFromGroups, buildTiesFromGroups, addToRowNoteLookup, highlightNoteElement, parseTimeSignature, MEASURE_PADDING } from '@/tools/notation'
 import { getOrderedMeasureItems } from '@/tools/duration'
 import { MusicNote } from '@/types/music'
 import Box from '@mui/material/Box'
@@ -14,7 +14,8 @@ interface CombinedRendererProps {
 }
 
 export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps) {
-  const { measures, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tieGroups } = useMusic()
+  const { measures, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tieGroups, selectedInstrument } = useMusic()
+  const isDrumKit = selectedInstrument === 'drums'
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
     // Renderer/SVG instead of sharing one canvas for the whole score.
     const rowHeight = 180
 
-    const widths = computeMeasureLayoutWidths(measures, 'staff', noteSpacing)
+    const widths = computeMeasureLayoutWidths(measures, isDrumKit ? 'drum-staff' : 'staff', noteSpacing)
 
     let rowMeasures: typeof measures = []
     let rowWidths: number[] = []
@@ -93,13 +94,13 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
         }
 
         // ✅ Build tickables with chord support
-        const tickables = buildStaffTickables(measure)
+        const tickables = isDrumKit ? buildDrumStaffTickables(measure) : buildStaffTickables(measure)
 
         // ✅ Deduplication logic
         if (idx === 0) {
           // Always add clef/time/key at the start of the row
           if (measure.clef) {
-            stave.addClef(measure.clef)   // or use measure.clef if you want non-tab clefs
+            stave.addClef(isDrumKit ? 'percussion' : measure.clef)
             lastClef = measure.clef
           }
           if (measure.timeSignature) {
@@ -113,7 +114,7 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
         } else {
           // Only add if changed mid‑row
           if (measure.clef && measure.clef !== lastClef) {
-            stave.addClef('tab')
+            stave.addClef(isDrumKit ? 'percussion' : 'tab')
             lastClef = measure.clef
           }
           if (measure.timeSignature && measure.timeSignature !== lastTime) {
@@ -219,7 +220,7 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
     })
 
     flushRow(true)
-  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tieGroups])
+  }, [measures, activeMeasureId, measuresPerRow, scoreFixedWidth, noteSpacing, selectedNoteRefs, toggleNoteSelection, tieGroups, isDrumKit])
 
   return (
     <Box sx={{ width: '100%', overflowX: 'auto', padding: 2 }}>

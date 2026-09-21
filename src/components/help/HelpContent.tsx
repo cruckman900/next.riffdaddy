@@ -50,14 +50,17 @@ export default function HelpContent() {
 
             <HelpSection id="tools" title={topic('tools').title} icon={topic('tools').icon}>
                 <Typography variant="body2">
-                    Six tools live on the tool rail. Switch between them by clicking an icon or pressing its number shortcut.
+                    Seven tools live on the tool rail, though only six show at once — Fretboard and Keyboard Input swap
+                    out for Drum Input automatically when your instrument is a drum kit. Switch tools by clicking an
+                    icon or pressing its number shortcut.
                 </Typography>
 
                 <SubHeading>1 · Instrument &amp; Tuning</SubHeading>
-                <Bullet>Pick an instrument, string count, and fret count — the TAB staff and fretboard both update to match.</Bullet>
+                <Bullet>Pick an instrument — guitars, bass, other pitched instruments, or <strong>Drums</strong>. For pitched instruments, choose a string count and fret count and the TAB staff and fretboard both update to match.</Bullet>
                 <Bullet>Filter tunings by genre, choose a preset, or expand <strong>Add Custom Tuning</strong> to define your own.</Bullet>
                 <Bullet>Pick a <strong>Voice</strong> (e.g. a guitar&apos;s Acoustic, Clean, Overdrive, or Distortion timbre) — this is what Playback uses for this tab.</Bullet>
                 <Bullet>The radar dial visualizes your open strings; toggle <strong>Show Harmonic Arcs</strong> to see interval relationships colored by distance (unison, 4th, 5th, octave).</Bullet>
+                <Bullet>For <strong>Drums</strong>, the panel switches to kit-building controls: <strong>Pieces</strong> (4–8, replacing string count) and <strong>Bass</strong> (1–2 kick pedals, replacing fret count), a <strong>Kit Style</strong> preset (Standard, Jazz, Metal, replacing Tuning), and a <strong>Voice</strong> of Acoustic Kit or Electronic Kit. The radar dial and harmonic arcs are hidden since they don&apos;t apply to a kit.</Bullet>
 
                 <SubHeading>2 · Score &amp; Measure</SubHeading>
                 <Bullet>Choose a clef, time signature, and key signature using the glowing chip selectors.</Bullet>
@@ -72,8 +75,13 @@ export default function HelpContent() {
                 <Bullet>Click piano keys (white and black) across up to 5 octaves to build notes or chords, then commit them the same way as the fretboard.</Bullet>
                 <Bullet>Keys below your instrument&apos;s lowest string are disabled automatically.</Bullet>
 
+                <SubHeading>7 · Drum Input</SubHeading>
+                <Bullet>Only shown when your instrument is <strong>Drums</strong> (it replaces Fretboard and Keyboard Input on the tool rail). Pieces are laid out as circular pads arranged like a real kit — kick and hi-hat pedals at the bottom, toms and cymbals above.</Bullet>
+                <Bullet>Click one or more pads to build a hit — e.g. kick + closed hi-hat together — then click <strong>Commit</strong> to add it to the active measure, the same way as Fretboard/Keyboard Input. Use <strong>Insert a rest</strong> for a rest instead.</Bullet>
+                <Bullet>The Score Preview shows a percussion staff only for drum tabs (no Tab/Combined views), with a distinct notehead per piece — a plain notehead for drums/toms and an X notehead for hi-hats, cymbals, and rides.</Bullet>
+
                 <SubHeading>Rhythm Palette</SubHeading>
-                <Bullet>Shown above the Fretboard and Keyboard tools, it sets the duration (whole through 64th note) applied to the next note, chord, or rest you commit.</Bullet>
+                <Bullet>Shown above the Fretboard, Keyboard, and Drum Input tools, it sets the duration (whole through 64th note) applied to the next note, chord, or rest you commit.</Bullet>
 
                 <SubHeading>5 · Playback</SubHeading>
                 <Bullet>Press the play button to hear your composition using the Voice picked in Instrument &amp; Tuning — the active measure highlights as it plays.</Bullet>
@@ -150,6 +158,7 @@ export default function HelpContent() {
                 <ShortcutRow keys={<Kbd>4</Kbd>} description="Keyboard Input tool" />
                 <ShortcutRow keys={<Kbd>5</Kbd>} description="Playback tool" />
                 <ShortcutRow keys={<Kbd>6</Kbd>} description="Song Info tool" />
+                <ShortcutRow keys={<Kbd>7</Kbd>} description="Drum Input tool (only when your instrument is Drums)" />
                 <ShortcutRow keys={<><Kbd>←</Kbd><Kbd>→</Kbd></>} description="Cycle the active measure in Score Preview" />
                 <ShortcutRow keys={<><Kbd>↑</Kbd><Kbd>↓</Kbd></>} description="Switch Score Preview view mode (Tab / Staff / Combined)" />
                 <ShortcutRow keys={<Kbd>Esc</Kbd>} description="Close the print preview" />

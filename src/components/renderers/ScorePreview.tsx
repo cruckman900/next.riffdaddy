@@ -22,6 +22,7 @@ import { useMusic } from '@/context/MusicContext'
 import { useTheme } from "@mui/material/styles"
 import { printScore } from '@/lib/print/printScore'
 import toast from 'react-hot-toast'
+import { DRUM_PIECES, DrumPieceId } from '@/utils/drumKits'
 
 interface ScorePreviewProps {
     setActiveMeasureId: (id: string) => void
@@ -32,11 +33,19 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
     const theme = useTheme()
 
     const [viewMode, setViewMode] = useState<'tab' | 'staff' | 'combined'>('tab')
-    const { measures, getMeasureBeatCount, metadata, selectedTuning } = useMusic()
+    const { measures, getMeasureBeatCount, metadata, selectedTuning, selectedInstrument } = useMusic()
+    const isDrumKit = selectedInstrument === 'drums'
     const sheetRef = useRef<HTMLDivElement>(null)
     const [printing, setPrinting] = useState(false)
 
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 600
+
+    // Drums have no fretboard, so there's no Tab or Combined view for them —
+    // force Staff (the only mode with a drum-aware renderer) rather than
+    // silently showing a TabRenderer full of garbage fret numbers.
+    useEffect(() => {
+        if (isDrumKit) setViewMode('staff')
+    }, [isDrumKit])
 
     const handlePrint = async () => {
         if (!sheetRef.current || printing) return
@@ -53,8 +62,12 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
     // Tuning is always meaningful (it defaults to "Standard" — never blank),
     // so unlike the fields below it isn't conditionally included — the whole
     // point of the Metadata tool's "reference only" tuning readout is that
-    // it actually shows up on the score, not just in the tool panel.
-    const tuningLabel = `${selectedTuning.name} Tuning (${selectedTuning.notes.join(' ')})`
+    // it actually shows up on the score, not just in the tool panel. For
+    // drums, `notes` holds DrumPieceId strings (see DRUM_KIT_STYLE_PRESETS)
+    // rather than real pitches, so they're resolved to human-readable labels.
+    const tuningLabel = isDrumKit
+        ? `${selectedTuning.name} Kit (${selectedTuning.notes.map(id => DRUM_PIECES[id as DrumPieceId]?.label ?? id).join(', ')})`
+        : `${selectedTuning.name} Tuning (${selectedTuning.notes.join(' ')})`
 
     // Only build a subtitle line out of fields that are actually populated,
     // so an empty score doesn't show a header full of "·" separators.
@@ -95,6 +108,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
             }
 
             if (e.key === 'ArrowUp') {
+                if (isDrumKit) return
                 setViewMode(prev => {
                     if (prev === 'tab') return 'staff'
                     if (prev === 'staff') return 'combined'
@@ -102,6 +116,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                 })
             }
             if (e.key === 'ArrowDown') {
+                if (isDrumKit) return
                 setViewMode(prev => {
                     if (prev === 'tab') return 'combined'
                     if (prev === 'combined') return 'staff'
@@ -112,7 +127,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
 
         window.addEventListener('keydown', handleKey)
         return () => window.removeEventListener('keydown', handleKey)
-    }, [measures, activeMeasureId, setActiveMeasureId])
+    }, [measures, activeMeasureId, setActiveMeasureId, isDrumKit])
 
     return (
         <Box height="100%" overflow="auto" p="10px" sx={{ '@media print': { height: 'auto', overflow: 'visible', p: 0 } }}>
@@ -163,31 +178,33 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                             {printing ? 'Preparing…' : 'Print'}
                         </Button>
 
-                        <ToggleButtonGroup
-                            value={viewMode}
-                            exclusive
-                            size="small"
-                            onChange={(_, next) => next && setViewMode(next)}
-                            sx={{
-                                bgcolor: 'rgba(255,255,255,0.03)',
-                                '.MuiToggleButton-root': {
-                                    color: theme.palette.text.secondary,
-                                    border: '1px solid',
-                                    borderColor: 'divider',
-                                    textTransform: 'none',
-                                    gap: 0.75,
-                                    '&.Mui-selected': {
-                                        color: theme.palette.accent.main,
-                                        bgcolor: `${theme.palette.accent.main}1f`,
-                                        boxShadow: `0 0 12px ${theme.palette.accent.main}55`,
+                        {!isDrumKit && (
+                            <ToggleButtonGroup
+                                value={viewMode}
+                                exclusive
+                                size="small"
+                                onChange={(_, next) => next && setViewMode(next)}
+                                sx={{
+                                    bgcolor: 'rgba(255,255,255,0.03)',
+                                    '.MuiToggleButton-root': {
+                                        color: theme.palette.text.secondary,
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        textTransform: 'none',
+                                        gap: 0.75,
+                                        '&.Mui-selected': {
+                                            color: theme.palette.accent.main,
+                                            bgcolor: `${theme.palette.accent.main}1f`,
+                                            boxShadow: `0 0 12px ${theme.palette.accent.main}55`,
+                                        },
                                     },
-                                },
-                            }}
-                        >
-                            <ToggleButton value="tab"><TableRowsTwoToneIcon fontSize="small" /> Tab</ToggleButton>
-                            <ToggleButton value="staff"><MusicNoteTwoToneIcon fontSize="small" /> Staff</ToggleButton>
-                            <ToggleButton value="combined"><LayersTwoToneIcon fontSize="small" /> Combined</ToggleButton>
-                        </ToggleButtonGroup>
+                                }}
+                            >
+                                <ToggleButton value="tab"><TableRowsTwoToneIcon fontSize="small" /> Tab</ToggleButton>
+                                <ToggleButton value="staff"><MusicNoteTwoToneIcon fontSize="small" /> Staff</ToggleButton>
+                                <ToggleButton value="combined"><LayersTwoToneIcon fontSize="small" /> Combined</ToggleButton>
+                            </ToggleButtonGroup>
+                        )}
                     </Stack>
                 </Stack>
 
@@ -223,7 +240,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
                             }}
                         >
                             <KeyboardTwoToneIcon fontSize="small" />
-                            ← → cycles measures · ↑ ↓ switches view
+                            {isDrumKit ? '← → cycles measures' : '← → cycles measures · ↑ ↓ switches view'}
                         </Box>
                     </Stack>
                 )}

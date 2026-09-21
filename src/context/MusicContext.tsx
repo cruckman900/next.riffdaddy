@@ -5,6 +5,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import { MusicNote, MusicRest, MusicState, Measure, CompositionSnapshot, PendingNoteAction, ScoreMetadata, TieNoteRef } from "@/types/music"
 import { Tuning, tuningPresets, defaultTuningWithOctaves, resolveTuningOctaves, resolveStringCount } from '@/utils/tunings'
 import { computePitchFromTab, computeTabFromPitch } from '@/tools/conversion'
+import { DRUM_KIT_STYLE_PRESETS, getKitPieces } from '@/utils/drumKits'
 import { durationToBeats, getMeasureBeatCount, getOrderedMeasureItems } from '@/tools/duration'
 import { loadSettings, saveSettings } from '@/utils/settingsStore'
 import { getVoiceOptions } from '@/tools/playback'
@@ -103,17 +104,30 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     // switching instruments only updated `selectedTuning`/`selectedInstrument`
     // and never touched `tuning`, so the fretboard silently kept using the
     // original default tuning no matter what you picked.
+    //
+    // Drums are special-cased throughout: `tuning`/`selectedTuning.notes`
+    // hold DrumPieceId strings (not real pitches) in the same positional
+    // "string index" role a real tuning's note names play, so
+    // resolveTuningOctaves (which parses real note-letter/octave strings)
+    // must never run on them — see DRUM_KIT_STYLE_PRESETS in drumKits.ts.
     const selectTuning = (t: Tuning) => {
         setSelectedTuning(t)
-        setTuning(resolveTuningOctaves(selectedInstrument, t.notes))
+        setTuning(selectedInstrument === 'drums' ? t.notes : resolveTuningOctaves(selectedInstrument, t.notes))
     }
 
     const selectInstrument = (instrument: string) => {
         setSelectedInstrument(instrument)
-        const presetNotes = tuningPresets[instrument] ?? tuningPresets.guitar
-        const nextTuning: Tuning = { name: 'Standard', notes: presetNotes, description: 'Default tuning' }
-        setSelectedTuning(nextTuning)
-        setTuning(resolveTuningOctaves(instrument, presetNotes))
+        if (instrument === 'drums') {
+            const standard = DRUM_KIT_STYLE_PRESETS[0]
+            const nextTuning: Tuning = { name: standard.name, notes: standard.pieces, description: standard.description }
+            setSelectedTuning(nextTuning)
+            setTuning(nextTuning.notes)
+        } else {
+            const presetNotes = tuningPresets[instrument] ?? tuningPresets.guitar
+            const nextTuning: Tuning = { name: 'Standard', notes: presetNotes, description: 'Default tuning' }
+            setSelectedTuning(nextTuning)
+            setTuning(resolveTuningOctaves(instrument, presetNotes))
+        }
         // The new instrument's voice list is a different set of ids entirely
         // (e.g. bass's "Slap 1" doesn't exist for violin) — reset to its
         // first/default voice rather than keeping a stale, meaningless id.
@@ -125,7 +139,17 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     // Instrument panel's Strings dropdown for a 6-string guitar tuning. This
     // previously had no effect at all: InstrumentSelector reported the new
     // string count, but nothing consumed it.
+    //
+    // For drums this is the "Pieces" count instead — swapping to a specific
+    // real kit configuration (see DRUM_KIT_SIZES) rather than chromatically
+    // extending/trimming, since piece counts aren't just "add one more".
     const setStringCount = (count: number) => {
+        if (selectedInstrument === 'drums') {
+            const pieces = getKitPieces(count)
+            setSelectedTuning(prev => ({ ...prev, notes: pieces }))
+            setTuning(pieces)
+            return
+        }
         const adjustedNotes = resolveStringCount(selectedTuning.notes, count)
         const nextTuning: Tuning = { ...selectedTuning, notes: adjustedNotes }
         setSelectedTuning(nextTuning)
@@ -521,8 +545,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 note.fret = [note.fret]
             }
 
-            // ✅ Compute missing tab from pitch
-            if (note.pitch.length > 0 && (!note.string || !note.fret)) {
+            // ✅ Compute missing tab from pitch — skipped for drums, where
+            // `pitch` already holds a DrumPieceId (not a real note) and
+            // `string`/`fret` are supplied directly by the Drum Input tool.
+            if (selectedInstrument !== 'drums' && note.pitch.length > 0 && (!note.string || !note.fret)) {
                 const strings: number[] = []
                 const frets: number[] = []
                 note.pitch.forEach(p => {
@@ -534,8 +560,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 note.fret = frets
             }
 
-            // ✅ Compute missing pitch from tab
-            if ((!note.pitch || note.pitch.length === 0) && note.string && note.fret) {
+            // ✅ Compute missing pitch from tab (skipped for drums — see above)
+            if (selectedInstrument !== 'drums' && (!note.pitch || note.pitch.length === 0) && note.string && note.fret) {
                 const pitches: string[] = []
                 note.string.forEach((s, i) => {
                     let f: number = 0
@@ -770,7 +796,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             if (note.string != null && !Array.isArray(note.string)) note.string = [note.string]
             if (note.fret != null && !Array.isArray(note.fret)) note.fret = [note.fret]
 
-            if (note.pitch.length > 0 && (!note.string || !note.fret)) {
+            if (selectedInstrument !== 'drums' && note.pitch.length > 0 && (!note.string || !note.fret)) {
                 const strings: number[] = []
                 const frets: number[] = []
                 note.pitch.forEach(p => {
@@ -781,7 +807,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 note.string = strings
                 note.fret = frets
             }
-            if ((!note.pitch || note.pitch.length === 0) && note.string && note.fret) {
+            if (selectedInstrument !== 'drums' && (!note.pitch || note.pitch.length === 0) && note.string && note.fret) {
                 const pitches: string[] = []
                 note.string.forEach((s, i) => {
                     let f = 0
@@ -840,7 +866,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                             }
 
                             // ✅ Compute missing tab from pitch
-                            if (updated.pitch.length > 0 && (!updated.string || !updated.fret)) {
+                            if (selectedInstrument !== 'drums' && updated.pitch.length > 0 && (!updated.string || !updated.fret)) {
                                 const strings: number[] = []
                                 const frets: number[] = []
                                 updated.pitch.forEach(p => {
@@ -853,7 +879,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                             }
 
                             // ✅ Compute missing pitch from tab
-                            if ((!updated.pitch || updated.pitch.length === 0) && updated.string && updated.fret) {
+                            if (selectedInstrument !== 'drums' && (!updated.pitch || updated.pitch.length === 0) && updated.string && updated.fret) {
                                 const pitches: string[] = []
                                 updated.string.forEach((s, i) => {
                                     let f: number = 0
