@@ -1,11 +1,14 @@
 // src/utils/drumKits.ts
 //
 // Data model for the Drums instrument: which pieces exist, what MIDI note
-// each one maps to for playback (General MIDI Percussion Key Map, played
-// through soundfont-player's 'percussion' instrument), and where each piece
-// sits on a percussion staff for notation (a standard-ish convention shared
-// by most notation software — position via a treble-clef-equivalent key,
-// notehead via VexFlow's glyph-code suffix, e.g. "x2" for an "x" notehead).
+// each one maps to for playback, which category of "real instrument" sound
+// stands in for it (see src/tools/playback.ts — soundfont-player's sample
+// set has no true multi-sample "one instrument per drum" percussion kit, so
+// each category is voiced by a distinct real GM instrument instead), and
+// where each piece sits on a percussion staff for notation (a standard-ish
+// convention shared by most notation software — position via a
+// treble-clef-equivalent key, notehead via VexFlow's glyph-code suffix,
+// e.g. "x2" for an "x" notehead).
 
 export type DrumPieceId =
     | 'kick'
@@ -22,11 +25,17 @@ export type DrumPieceId =
     | 'crash'
     | 'china'
 
+// Which family of drum sound this piece belongs to — used to pick a
+// distinct playback timbre per category (see DRUM_CATEGORY_SOUNDFONTS in
+// src/tools/playback.ts) so a kick doesn't sound like a cymbal pitch-shifted.
+export type DrumCategory = 'kick' | 'snare' | 'tom' | 'hihat' | 'cymbal'
+
 export interface DrumPieceDef {
     id: DrumPieceId
     label: string
-    // General MIDI Percussion Key Map note number — soundfont-player's
-    // `percussion` instrument maps each of these to a distinct real sample.
+    category: DrumCategory
+    // A General MIDI-ish note number — just a distinct pitch within this
+    // piece's category voice (see playback.ts), not a real percussion key.
     midi: number
     // VexFlow StaveNote key (letter/octave), percussion-clef position.
     notationKey: string
@@ -37,19 +46,19 @@ export interface DrumPieceDef {
 }
 
 export const DRUM_PIECES: Record<DrumPieceId, DrumPieceDef> = {
-    kick: { id: 'kick', label: 'Kick', midi: 36, notationKey: 'f/4' },
-    floor2: { id: 'floor2', label: 'Floor Tom 2', midi: 41, notationKey: 'g/4' },
-    floor1: { id: 'floor1', label: 'Floor Tom', midi: 45, notationKey: 'a/4' },
-    snare: { id: 'snare', label: 'Snare', midi: 38, notationKey: 'b/4' },
-    rack3: { id: 'rack3', label: 'Low Rack Tom', midi: 47, notationKey: 'c/5' },
-    rack2: { id: 'rack2', label: 'Mid Rack Tom', midi: 48, notationKey: 'd/5' },
-    rack1: { id: 'rack1', label: 'High Rack Tom', midi: 50, notationKey: 'e/5' },
-    hihat_closed: { id: 'hihat_closed', label: 'Hi-Hat (Closed)', midi: 42, notationKey: 'f/5', notehead: 'x2' },
-    hihat_open: { id: 'hihat_open', label: 'Hi-Hat (Open)', midi: 46, notationKey: 'f/5', notehead: 'x3' },
-    hihat_pedal: { id: 'hihat_pedal', label: 'Hi-Hat (Pedal)', midi: 44, notationKey: 'd/4', notehead: 'x2' },
-    ride: { id: 'ride', label: 'Ride', midi: 51, notationKey: 'g/5', notehead: 'x2' },
-    crash: { id: 'crash', label: 'Crash', midi: 49, notationKey: 'a/5', notehead: 'x2' },
-    china: { id: 'china', label: 'China', midi: 52, notationKey: 'b/5', notehead: 'x2' },
+    kick: { id: 'kick', label: 'Kick', category: 'kick', midi: 36, notationKey: 'f/4' },
+    floor2: { id: 'floor2', label: 'Floor Tom 2', category: 'tom', midi: 41, notationKey: 'g/4' },
+    floor1: { id: 'floor1', label: 'Floor Tom', category: 'tom', midi: 45, notationKey: 'a/4' },
+    snare: { id: 'snare', label: 'Snare', category: 'snare', midi: 38, notationKey: 'b/4' },
+    rack3: { id: 'rack3', label: 'Low Rack Tom', category: 'tom', midi: 47, notationKey: 'c/5' },
+    rack2: { id: 'rack2', label: 'Mid Rack Tom', category: 'tom', midi: 48, notationKey: 'd/5' },
+    rack1: { id: 'rack1', label: 'High Rack Tom', category: 'tom', midi: 50, notationKey: 'e/5' },
+    hihat_closed: { id: 'hihat_closed', label: 'Hi-Hat (Closed)', category: 'hihat', midi: 42, notationKey: 'f/5', notehead: 'x2' },
+    hihat_open: { id: 'hihat_open', label: 'Hi-Hat (Open)', category: 'hihat', midi: 46, notationKey: 'f/5', notehead: 'x3' },
+    hihat_pedal: { id: 'hihat_pedal', label: 'Hi-Hat (Pedal)', category: 'hihat', midi: 44, notationKey: 'd/4', notehead: 'x2' },
+    ride: { id: 'ride', label: 'Ride', category: 'cymbal', midi: 51, notationKey: 'g/5', notehead: 'x2' },
+    crash: { id: 'crash', label: 'Crash', category: 'cymbal', midi: 49, notationKey: 'a/5', notehead: 'x2' },
+    china: { id: 'china', label: 'China', category: 'cymbal', midi: 52, notationKey: 'b/5', notehead: 'x2' },
 }
 
 // Pieces always present regardless of kit size — hi-hat and the two most

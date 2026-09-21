@@ -44,7 +44,7 @@ export function usePlayback() {
         const engine = engineRef.current
         if (!engine) return
 
-        const schedule = buildPlaybackSchedule(measures, tempo, selectedInstrument)
+        const schedule = buildPlaybackSchedule(measures, tempo, selectedInstrument, selectedVoice)
         if (schedule.length === 0) return
 
         setError(null)

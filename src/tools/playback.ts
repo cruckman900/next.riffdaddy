@@ -8,15 +8,23 @@
 import { instrument as loadInstrument, Player } from 'soundfont-player'
 import { Measure, MusicNote } from '@/types/music'
 import { durationToBeats, getOrderedMeasureItems } from './duration'
-import { DRUM_PIECES, DrumPieceId } from '@/utils/drumKits'
+import { DRUM_PIECES, DrumCategory, DrumPieceId } from '@/utils/drumKits'
+
+export interface PlaybackNote {
+    pitch: string // soundfont-player note name/MIDI number
+    // Which real instrument sample plays this specific note — only set for
+    // drums (see resolveDrumSoundfont); every other instrument uses the one
+    // instrument loaded for the whole tab, so this stays undefined.
+    soundfontName?: string
+}
 
 export interface PlaybackEvent {
     measureId: string
     measureIndex: number
     noteId: string
-    time: number       // seconds from the start of playback
-    duration: number   // seconds
-    pitches: string[]  // e.g. ['E4', 'G#4'] — soundfont-player note names
+    time: number         // seconds from the start of playback
+    duration: number     // seconds
+    notes: PlaybackNote[]
 }
 
 export interface VoiceOption {
@@ -24,9 +32,16 @@ export interface VoiceOption {
     label: string
     soundfontName: string
     // Which of soundfont-player's two bundled sample sets this voice needs —
-    // only 'percussion' (real per-piece drum samples) requires FluidR3_GM
-    // specifically; everything else uses the default (MusyngKite).
+    // everything currently uses the default (MusyngKite).
     soundfont?: 'FluidR3_GM' | 'MusyngKite'
+    // Drums only: soundfont-player's bundled sample set has no true
+    // multi-sample "one instrument per drum" percussion kit (its 'percussion'
+    // name is listed in the manifest but 404s on the actually hosted files —
+    // confirmed live), so each drum *category* is instead voiced by a
+    // distinct real GM instrument sample, pitch-shifted within that category
+    // only (see resolveDrumSoundfont/DRUM_PIECES). This is what makes a kick
+    // actually sound different from a snare, tom, hi-hat, or cymbal.
+    drumCategorySoundfonts?: Record<DrumCategory, string>
 }
 
 // General MIDI has distinct patches for different guitar/bass/string timbres
@@ -67,16 +82,34 @@ const INSTRUMENT_VOICES: Record<string, VoiceOption[]> = {
     // soundfont-player's bundled sample set doesn't actually host a real
     // "one instrument, every MIDI note is a different drum" percussion kit
     // (its own `percussion` name is listed in the manifest but 404s on the
-    // actual hosted files — confirmed live). Both voices below are instead a
-    // single real pitched instrument, reused across every piece's distinct
-    // GM note number (see DRUM_PIECES/resolvePlaybackPitch) so each piece
-    // still gets its own audibly different pitch/tone: 'taiko_drum' is a
-    // real acoustic drum sample (deep, punchy, non-synthetic) for "Acoustic
-    // Kit", 'synth_drum' is a synthesized tone for "Electronic Kit" (a
-    // lightweight 808/909-style approximation).
+    // actual hosted files — confirmed live). Each voice below instead maps
+    // every drum *category* (kick/snare/tom/hi-hat/cymbal) to its own real
+    // GM instrument sample — chosen so the categories are audibly distinct
+    // families of sound, not one drum retuned — and only pitch-shifts
+    // within a category (e.g. the three toms are the same 'melodic_tom'
+    // sample at three different pitches, which is exactly what that GM
+    // instrument is for).
     drums: [
-        { id: 'acoustic_kit', label: 'Acoustic Kit', soundfontName: 'taiko_drum' },
-        { id: 'electronic_kit', label: 'Electronic Kit', soundfontName: 'synth_drum' },
+        {
+            id: 'acoustic_kit', label: 'Acoustic Kit', soundfontName: 'taiko_drum',
+            drumCategorySoundfonts: {
+                kick: 'taiko_drum',       // deep, resonant, real acoustic drum sample
+                snare: 'woodblock',       // sharp, short transient stands in for a snare crack
+                tom: 'melodic_tom',       // GM's actual "tuned toms" instrument
+                hihat: 'agogo',           // short metallic tick
+                cymbal: 'reverse_cymbal', // the only real cymbal-timbre sample available
+            },
+        },
+        {
+            id: 'electronic_kit', label: 'Electronic Kit', soundfontName: 'synth_drum',
+            drumCategorySoundfonts: {
+                kick: 'synth_drum',       // synthesized 808/909-style low tone
+                snare: 'steel_drums',     // bright, punchy, distinct from the kick/tom tone
+                tom: 'synth_drum',        // same synth voice as kick, pitched per tom (like a real drum machine)
+                hihat: 'tinkle_bell',     // bright, short, digital-feeling tick
+                cymbal: 'reverse_cymbal', // still the only cymbal-timbre sample available
+            },
+        },
     ],
 }
 
@@ -99,8 +132,8 @@ export function instrumentSoundName(instrumentKey: string, voiceId?: string): Pa
  * actually needs to play it: a real pitch name for every pitched
  * instrument, or a stringified MIDI note number for drums — each piece's
  * `midi` value (see DRUM_PIECES) is just a distinct number that pitch-shifts
- * whichever single drum voice is loaded (soundfont-player's `.play()`
- * accepts either a note name or a raw number).
+ * within its category's instrument (soundfont-player's `.play()` accepts
+ * either a note name or a raw number).
  */
 export function resolvePlaybackPitch(instrumentKey: string, rawPitch: string): string {
     if (instrumentKey !== 'drums') return rawPitch
@@ -109,14 +142,28 @@ export function resolvePlaybackPitch(instrumentKey: string, rawPitch: string): s
 }
 
 /**
+ * Resolves which real GM instrument sample should play one drum piece for
+ * the given voice — see VoiceOption.drumCategorySoundfonts. Returns
+ * undefined for non-drum pitches (the engine then just uses the single
+ * instrument loaded for the whole tab).
+ */
+export function resolveDrumSoundfont(voiceId: string | undefined, rawPitch: string): string | undefined {
+    const voice = voiceOption('drums', voiceId)
+    const piece = DRUM_PIECES[rawPitch as DrumPieceId]
+    if (!piece) return undefined
+    return voice.drumCategorySoundfonts?.[piece.category] ?? voice.soundfontName
+}
+
+/**
  * Flattens every measure's notes+rests (in true chronological order, not
  * array order — see getOrderedMeasureItems) into a single absolute-time
  * schedule. Rests simply advance the clock; only notes produce events.
- * `instrumentKey` is only needed to resolve drum pieces to their playable
- * MIDI numbers (see resolvePlaybackPitch) — every other instrument's pitch
- * strings pass straight through unchanged.
+ * `instrumentKey`/`voiceId` are only needed to resolve drum pieces to their
+ * playable MIDI numbers and per-category instrument sample (see
+ * resolvePlaybackPitch/resolveDrumSoundfont) — every other instrument's
+ * pitch strings pass straight through unchanged.
  */
-export function buildPlaybackSchedule(measures: Measure[], tempo: number, instrumentKey = 'guitar'): PlaybackEvent[] {
+export function buildPlaybackSchedule(measures: Measure[], tempo: number, instrumentKey = 'guitar', voiceId?: string): PlaybackEvent[] {
     const secondsPerBeat = 60 / Math.max(1, tempo)
     const events: PlaybackEvent[] = []
     let time = 0
@@ -128,15 +175,18 @@ export function buildPlaybackSchedule(measures: Measure[], tempo: number, instru
             if (type === 'note') {
                 const note = item as MusicNote
                 const rawPitches = Array.isArray(note.pitch) ? note.pitch : note.pitch ? [note.pitch] : []
-                const pitches = rawPitches.map(p => resolvePlaybackPitch(instrumentKey, p))
-                if (pitches.length > 0) {
+                const notes: PlaybackNote[] = rawPitches.map(p => ({
+                    pitch: resolvePlaybackPitch(instrumentKey, p),
+                    soundfontName: instrumentKey === 'drums' ? resolveDrumSoundfont(voiceId, p) : undefined,
+                }))
+                if (notes.length > 0) {
                     events.push({
                         measureId: measure.id,
                         measureIndex,
                         noteId: note.id,
                         time,
                         duration: seconds,
-                        pitches,
+                        notes,
                     })
                 }
             }
@@ -154,13 +204,22 @@ export function getScheduleDuration(schedule: PlaybackEvent[]): number {
 
 /**
  * Thin wrapper around soundfont-player that owns the AudioContext + loaded
- * instrument, and schedules/cancels playback. Kept framework-agnostic (no
- * React) so it can be driven by a simple hook.
+ * instrument(s), and schedules/cancels playback. Kept framework-agnostic
+ * (no React) so it can be driven by a simple hook.
+ *
+ * Every non-drum instrument loads exactly one `Player`. Drums are the
+ * exception: a kit's voice maps several *categories* to different real GM
+ * instrument samples (see VoiceOption.drumCategorySoundfonts), so multiple
+ * players are loaded at once and each note picks the right one by the
+ * `soundfontName` PlaybackEvent attached to it.
  */
 export class PlaybackEngine {
     private ac: AudioContext | null = null
     private player: Player | null = null
     private loadedInstrument: string | null = null
+    private drumPlayers: Map<string, Player> = new Map()
+    private loadedDrumVoice: string | null = null
+    private isDrumMode = false
     private timers: ReturnType<typeof setTimeout>[] = []
     private activeNodes: AudioNode[] = []
 
@@ -173,13 +232,34 @@ export class PlaybackEngine {
     }
 
     async ensureInstrument(instrumentKey: string, voiceId?: string): Promise<void> {
-        const voice = voiceOption(instrumentKey, voiceId)
-        const soundName = (voice?.soundfontName ?? 'acoustic_grand_piano') as Parameters<typeof loadInstrument>[1]
-        // Cache key includes the soundfont set — 'percussion' only exists in
-        // FluidR3_GM, distinct from every other voice's default MusyngKite.
-        const cacheKey = `${soundName}:${voice?.soundfont ?? 'default'}`
         const ac = this.getContext()
         if (ac.state === 'suspended') await ac.resume()
+
+        if (instrumentKey === 'drums') {
+            const voice = voiceOption('drums', voiceId)
+            const uniqueNames = Array.from(new Set(Object.values(voice.drumCategorySoundfonts ?? {})))
+            const alreadyLoaded = this.isDrumMode && this.loadedDrumVoice === voice.id
+                && uniqueNames.every(name => this.drumPlayers.has(name))
+            if (alreadyLoaded) return
+
+            const players = await Promise.all(
+                uniqueNames.map(name => loadInstrument(ac, name as Parameters<typeof loadInstrument>[1]))
+            )
+            this.drumPlayers = new Map(uniqueNames.map((name, i) => [name, players[i]]))
+            this.loadedDrumVoice = voice.id
+            this.isDrumMode = true
+            this.player = null
+            this.loadedInstrument = null
+            return
+        }
+
+        this.isDrumMode = false
+        this.drumPlayers = new Map()
+        this.loadedDrumVoice = null
+
+        const voice = voiceOption(instrumentKey, voiceId)
+        const soundName = (voice?.soundfontName ?? 'acoustic_grand_piano') as Parameters<typeof loadInstrument>[1]
+        const cacheKey = `${soundName}:${voice?.soundfont ?? 'default'}`
         if (this.player && this.loadedInstrument === cacheKey) return
         this.player = await loadInstrument(ac, soundName, voice?.soundfont ? { soundfont: voice.soundfont } : undefined)
         this.loadedInstrument = cacheKey
@@ -192,13 +272,18 @@ export class PlaybackEngine {
      */
     play(schedule: PlaybackEvent[], opts: { onMeasureChange?: (measureIndex: number) => void; onDone?: () => void } = {}) {
         this.stop()
-        if (!this.player) return
+        if (!this.isDrumMode && !this.player) return
+        if (this.isDrumMode && this.drumPlayers.size === 0) return
         const ac = this.getContext()
         const startAt = ac.currentTime + 0.05
 
         schedule.forEach(event => {
-            event.pitches.forEach(pitch => {
-                const node = this.player!.play(pitch, startAt + event.time, {
+            event.notes.forEach(({ pitch, soundfontName }) => {
+                const player = this.isDrumMode
+                    ? (soundfontName && this.drumPlayers.get(soundfontName)) || this.drumPlayers.values().next().value
+                    : this.player
+                if (!player) return
+                const node = player.play(pitch, startAt + event.time, {
                     duration: event.duration * 0.95,
                     gain: 1,
                 })
@@ -229,6 +314,13 @@ export class PlaybackEngine {
                 // no-op — stop() can throw if nothing is currently playing
             }
         }
+        this.drumPlayers.forEach(player => {
+            try {
+                player.stop()
+            } catch {
+                // no-op — stop() can throw if nothing is currently playing
+            }
+        })
         this.activeNodes = []
     }
 
@@ -238,5 +330,8 @@ export class PlaybackEngine {
         this.ac = null
         this.player = null
         this.loadedInstrument = null
+        this.drumPlayers = new Map()
+        this.loadedDrumVoice = null
+        this.isDrumMode = false
     }
 }
