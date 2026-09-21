@@ -47,7 +47,10 @@ const STACK: Tech[] = [
     { icon: FaFilePdf, label: 'Paged.js' },
 ]
 
-// Duplicate the list so the CSS marquee loop is seamless.
+// The list renders twice back-to-back (not deduped) so the marquee keyframe
+// (see .animate-marquee in globals.css) can translate by exactly -50% —
+// precisely one copy's width — for a seamless, gapless infinite loop instead
+// of a bare list that would visibly snap back to its start.
 const LOOPED_STACK = [...STACK, ...STACK]
 
 export default function TechStackMarquee() {

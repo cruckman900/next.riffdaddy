@@ -86,12 +86,22 @@
     }
   }
 
+  /* Used by TechStackMarquee (About page) — the marquee track renders its
+     item list exactly twice back-to-back (see LOOPED_STACK there) at
+     `width: max-content`, so translating from 0 to exactly -50% moves the
+     track by precisely one copy's width: the moment the first copy has
+     scrolled fully out of view, the second copy is sitting exactly where
+     the first one started, and the loop restarts with zero visible seam
+     or gap. (The previous ±100% version translated by the *track's own*
+     full doubled width each way — four total widths of travel — so the
+     content spent long stretches fully off-screen instead of flowing
+     continuously.) */
   @keyframes marquee {
-    0% {
-      transform: translateX(100%);
+    from {
+      transform: translateX(0);
     }
-    100% {
-      transform: translateX(-100%);
+    to {
+      transform: translateX(-50%);
     }
   }
 

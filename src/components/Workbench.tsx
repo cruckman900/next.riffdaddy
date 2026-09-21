@@ -37,6 +37,15 @@ export default function Workbench() {
 
     useEffect(() => {
         function handleKey(e: KeyboardEvent) {
+            // Ignore shortcut digits while the user is typing in a form
+            // field (e.g. the Metadata tool's Year field) — without this,
+            // pressing "1" through "6" while composing text silently
+            // hijacks the keystroke to switch tools instead of typing it.
+            const target = e.target as HTMLElement | null
+            const tag = target?.tagName
+            const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable
+            if (isTyping) return
+
             const entry = Object.values(TOOL_REGISTRY).find(t => t.shortcut === e.key)
             if (entry) setActiveTool(entry.id)
         }

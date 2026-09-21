@@ -32,7 +32,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
     const theme = useTheme()
 
     const [viewMode, setViewMode] = useState<'tab' | 'staff' | 'combined'>('tab')
-    const { measures, getMeasureBeatCount, metadata } = useMusic()
+    const { measures, getMeasureBeatCount, metadata, selectedTuning } = useMusic()
     const sheetRef = useRef<HTMLDivElement>(null)
     const [printing, setPrinting] = useState(false)
 
@@ -50,6 +50,12 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
         }
     }
 
+    // Tuning is always meaningful (it defaults to "Standard" — never blank),
+    // so unlike the fields below it isn't conditionally included — the whole
+    // point of the Metadata tool's "reference only" tuning readout is that
+    // it actually shows up on the score, not just in the tool panel.
+    const tuningLabel = `${selectedTuning.name} Tuning (${selectedTuning.notes.join(' ')})`
+
     // Only build a subtitle line out of fields that are actually populated,
     // so an empty score doesn't show a header full of "·" separators.
     const subtitleParts = [
@@ -59,6 +65,7 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
         metadata.year,
         metadata.capo > 0 && `Capo ${metadata.capo}`,
         metadata.difficulty,
+        tuningLabel,
     ].filter(Boolean)
     const hasMetadataHeader = Boolean(metadata.title) || subtitleParts.length > 0
 
@@ -67,6 +74,15 @@ export default function ScorePreview({ setActiveMeasureId, activeMeasureId }: Sc
     useEffect(() => {
         function handleKey(e: KeyboardEvent) {
             if (!measures.length) return
+
+            // Same guard as Workbench's tool-shortcut listener — arrow keys
+            // need to move a text cursor (or a number input's spinner) when
+            // typing, not hijack measure navigation/view switching.
+            const target = e.target as HTMLElement | null
+            const tag = target?.tagName
+            const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable
+            if (isTyping) return
+
             const currentIndex = measures.findIndex(m => m.id === activeMeasureId)
 
             if (e.key === 'ArrowRight') {

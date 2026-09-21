@@ -181,6 +181,13 @@ export default function TabRenderer({ activeMeasureId }: CombinedRendererProps) 
             if (!note) return
             const svgEl = el as unknown as SVGGraphicsElement & HTMLElement
             svgEl.style.cursor = 'pointer'
+            // VexFlow's SVG root always sets pointer-events="none" (it's not
+            // meant to be interactive out of the box), which is inherited by
+            // every child including this note — without overriding it here,
+            // real mouse clicks pass straight through to whatever's behind
+            // the SVG (the row's wrapper div) instead of ever reaching this
+            // element, even though its own click listener is attached fine.
+            svgEl.style.pointerEvents = 'auto'
             if (isNoteSelected(measure.id, note.id)) {
               highlightNoteElement(svgEl)
             }

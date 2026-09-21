@@ -196,6 +196,10 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                         if (!note) return
                         const svgEl = el as unknown as SVGGraphicsElement & HTMLElement
                         svgEl.style.cursor = 'pointer'
+                        // See the matching comment in TabRenderer.tsx —
+                        // VexFlow's SVG root disables pointer-events by
+                        // default, inherited by every child unless overridden.
+                        svgEl.style.pointerEvents = 'auto'
                         if (isNoteSelected(measure.id, note.id)) {
                             highlightNoteElement(svgEl)
                         }
@@ -234,6 +238,7 @@ export default function CombinedRenderer({ activeMeasureId }: CombinedRendererPr
                         const note = entry.item as MusicNote
                         const svgEl = el as unknown as SVGGraphicsElement & HTMLElement
                         svgEl.style.cursor = 'pointer'
+                        svgEl.style.pointerEvents = 'auto'
                         if (isNoteSelected(measure.id, note.id)) {
                             highlightNoteElement(svgEl)
                         }

@@ -170,6 +170,10 @@ export default function StaffRenderer({ activeMeasureId }: CombinedRendererProps
             const note = entry.item as MusicNote
             const svgEl = el as unknown as SVGGraphicsElement & HTMLElement
             svgEl.style.cursor = 'pointer'
+            // See the matching comment in TabRenderer.tsx — VexFlow's SVG
+            // root disables pointer-events by default, which every child
+            // (including this note) inherits unless overridden.
+            svgEl.style.pointerEvents = 'auto'
             if (isNoteSelected(measure.id, note.id)) {
               highlightNoteElement(svgEl)
             }
